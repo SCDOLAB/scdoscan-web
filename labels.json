@@ -22,7 +22,7 @@
     "test",
     "demo"
    ],
-   "note": "Test address for the OTC/remittance demo."
+   "note": "Test address for the test-token settlement demo (test tokens only, no real value)."
   },
   "0x1f79c58b13f17d833b77860a908f49d2c3c42a40": {
    "label": "Demo Customer B (Payout Agent)",
@@ -31,7 +31,7 @@
     "test",
     "demo"
    ],
-   "note": "Test address for the OTC/remittance demo."
+   "note": "Test address for the test-token settlement demo (test tokens only, no real value)."
   },
   "0xb51199e09c98d0a797629519a049db7954f04381": {
    "label": "Shard0 Miner (coinbase)",

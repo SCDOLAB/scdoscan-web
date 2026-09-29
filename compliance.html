@@ -30,18 +30,15 @@ a:hover{text-decoration:underline}
 .section-title{display:flex;align-items:center;gap:10px;margin:26px 0 12px;font-size:18px;font-weight:700;color:#e6edf3}
 .section-title .tag{font-size:10px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;padding:2px 8px;border-radius:10px}
 .tag.ok{background:#238636;color:#fff}
-.tag.plan{background:#9e6a03;color:#fff}
 .tag.info{background:#1f6feb;color:#fff}
 .lead{color:#8b949e;font-size:13px;margin:-4px 0 14px}
 .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
 .card{background:#161b22;border:1px solid #30363d;border-radius:10px;padding:18px 20px}
 .card.feature{border-color:#238636;box-shadow:0 0 0 1px #238636 inset;background:linear-gradient(180deg,#0f2417 0%,#161b22 60%)}
-.card.planned{border-style:dashed;border-color:#9e6a03}
 .card h3{margin:0 0 4px;font-size:16px;color:#e6edf3;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .card .sub{margin:0 0 12px;color:#8b949e;font-size:13px}
 .status{font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;text-transform:uppercase;letter-spacing:.4px}
 .status.ok{background:#238636;color:#fff}
-.status.plan{background:#9e6a03;color:#fff}
 dl.kv{margin:0;display:grid;grid-template-columns:minmax(120px,38%) 1fr;font-size:13px}
 dl.kv dt,dl.kv dd{margin:0;padding:7px 0;border-bottom:1px solid #21262d}
 dl.kv dt{color:#8b949e;padding-right:12px}
@@ -51,14 +48,6 @@ dl.kv dd.good{color:#3fb950;font-weight:600}
 .verify{display:inline-block;margin-top:12px;font-size:13px;font-weight:600}
 .verify small{display:block;font-weight:400;color:#8b949e}
 .note{font-size:12px;color:#8b949e;margin:10px 0 0}
-.banner{border:1px solid #9e6a03;background:#2a1f06;color:#e3b341;border-radius:8px;padding:10px 14px;font-size:13px;margin-bottom:14px}
-.types{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:6px}
-.type{background:#0d1117;border:1px solid #30363d;border-radius:8px;padding:12px}
-.type b{display:block;color:#e6edf3;font-size:13px;margin-bottom:4px}
-.type b .code{color:#d29922;font-family:ui-monospace,Consolas,monospace;font-weight:700;margin-left:4px}
-.type p{margin:0;font-size:12px;color:#8b949e}
-.type .st{margin-top:8px;font-size:12px;font-weight:600;color:#e3b341}
-.type .st.planned{color:#8b949e}
 .zh-card{margin-top:16px}
 .zh-card ul.list li{margin:5px 0}
 ul.list{margin:0;padding-left:18px;font-size:13px}
@@ -72,7 +61,6 @@ ul.links li span{color:#8b949e}
 .scdo-compliance-foot{text-align:center;padding:22px 16px 26px;margin-top:28px;border-top:1px solid #21262d;font-size:12px;color:#6e7681;line-height:1.8}
 .scdo-compliance-foot a{color:#8b949e}
 .scdo-compliance-foot a:hover{color:#58a6ff}
-@media (max-width:860px){.types{grid-template-columns:1fr}}
 @media (max-width:768px){
   .topbar{gap:8px;padding:8px 12px}
   .topbar nav a{margin-right:10px;font-size:13px}
@@ -96,12 +84,12 @@ ul.links li span{color:#8b949e}
 
 <section class="hero">
   <h1>Compliance &amp; <span class="hl">Regulatory Status</span></h1>
-  <p>SCDO Scan is operated by <b style="color:#e6edf3">9Y9 PTY LTD</b>, an Australian company registered with AUSTRAC as a Digital Currency Exchange provider. Our goal is real-world remittance use, built on registered, auditable foundations.</p>
+  <p>SCDO Scan is operated by <b style="color:#e6edf3">9Y9 PTY LTD</b>, an Australian company registered with AUSTRAC as a Digital Currency Exchange provider.</p>
+  <p style="font-size:13px;color:#8b949e">Registration with AUSTRAC does not mean AUSTRAC endorses or approves 9Y9 PTY LTD, SCDO, or any product or service.</p>
   <div class="pills">
-    <span class="pill ok">&#10003; AUSTRAC Registered DCE &middot; DCE100714503-001</span>
-    <span class="pill ok">&#10003; AFCA Member 124589</span>
-    <span class="pill ok">&#10003; ABN 19 600 445 118</span>
-    <span class="pill plan">RNP &amp; IND remittance &middot; Under assessment</span>
+    <span class="pill ok">AUSTRAC Registered DCE &middot; DCE100714503-001</span>
+    <span class="pill ok">AFCA Member 124589</span>
+    <span class="pill ok">ABN 19 600 445 118</span>
   </div>
 </section>
 
@@ -175,28 +163,12 @@ ul.links li span{color:#8b949e}
     </div>
   </div>
 
-  <h2 class="section-title">Remittance registrations <span class="tag plan">Not yet granted</span></h2>
-  <div class="banner"><b>Lodged with AUSTRAC, under assessment (not yet granted).</b> 9Y9 PTY LTD has applied for registration as a Remittance Network Provider (RNP) and as an Independent Remittance Dealer (IND). Neither has been granted, and no remittance service is offered today. This page will be updated if and when a registration is granted.</div>
-
-  <div class="card planned" id="remittance">
-    <h3>AUSTRAC Remittance Sector Register <span class="status plan">Under assessment</span></h3>
-    <p class="sub">Registration categories under the AML/CTF Act 2006, as defined by AUSTRAC, and the current status of each for 9Y9 PTY LTD:</p>
-    <div class="types">
-      <div class="type"><b>Remittance Network Provider<span class="code">RNP</span></b><p>Operates a network of remittance affiliates by providing the systems and services that let affiliates provide remittance services.</p><div class="st">Status: application lodged with AUSTRAC, under assessment (not yet granted)</div></div>
-      <div class="type"><b>Independent Remittance Dealer<span class="code">IND</span></b><p>Provides remittance services using its own systems and processes.</p><div class="st">Status: application lodged with AUSTRAC, under assessment (not yet granted)</div></div>
-      <div class="type"><b>Affiliate of a Remittance Network Provider<span class="code">AFF</span></b><p>Provides remittance services to customers as part of a network facilitated by a remittance network provider.</p><div class="st planned">Status: planned (no application lodged)</div></div>
-    </div>
-    <p class="note">No remittance service is offered today.</p>
-    <a class="verify" href="https://online.apps.austrac.gov.au/rsr/" target="_blank" rel="noopener">AUSTRAC Remittance Sector Register search &#8599;<small>online.apps.austrac.gov.au/rsr</small></a>
-  </div>
-
   <div class="card zh-card" id="zh" lang="zh-CN">
     <h3>中文说明</h3>
     <ul class="list">
       <li><b>数字货币兑换（DCE）登记：</b>9Y9 PTY LTD 已在 AUSTRAC 登记为数字货币兑换服务提供商，登记号 DCE100714503-001，自 2020年10月9日起登记，已续期至 2029年3月14日。</li>
-      <li><b>汇款网络提供商（RNP）和独立汇款商（IND）：</b>申请已提交 AUSTRAC，正在审核中（尚未获批）。</li>
-      <li><b>汇款联营商（AFF）：</b>计划中（尚未提交申请）。</li>
-      <li>目前不提供任何汇款服务。</li>
+      <li>AFCA 会员编号 124589。</li>
+      <li>在 AUSTRAC 注册不代表 AUSTRAC 认可或背书本公司、SCDO 或任何产品和服务。</li>
     </ul>
   </div>
 
@@ -226,7 +198,6 @@ ul.links li span{color:#8b949e}
   <div class="card">
     <ul class="links">
       <li><a href="https://online.apps.austrac.gov.au/vaspr" target="_blank" rel="noopener">AUSTRAC public register (digital currency / virtual asset service providers) &#8599;</a><span>search ABN 19600445118</span></li>
-      <li><a href="https://online.apps.austrac.gov.au/rsr/" target="_blank" rel="noopener">AUSTRAC Remittance Sector Register &#8599;</a><span>RNP &amp; IND: under assessment &middot; AFF: planned</span></li>
       <li><a href="https://my.afca.org.au/ff-search/" target="_blank" rel="noopener">AFCA Financial Firm Search &#8599;</a><span>member 124589</span></li>
       <li><a href="https://abr.business.gov.au/ABN/View?abn=19600445118" target="_blank" rel="noopener">ABN Lookup &mdash; 9Y9 PTY LTD &#8599;</a><span>ABN 19 600 445 118</span></li>
       <li><a href="https://connectonline.asic.gov.au/RegistrySearch/faces/landing/SearchRegisters.jspx" target="_blank" rel="noopener">ASIC Connect registry search &#8599;</a><span>ACN 600 445 118</span></li>
@@ -234,11 +205,12 @@ ul.links li span{color:#8b949e}
     </ul>
   </div>
 
-  <p class="disclaimer">Registration or membership with a regulator or scheme is not an endorsement of any product or service by that body. Please use the official links above to confirm current status. Information on this page is current as at 29 September 2026.</p>
+  <p class="disclaimer">Registration with AUSTRAC does not mean AUSTRAC endorses or approves 9Y9 PTY LTD, SCDO, or any product or service. Membership of AFCA or registration with any other body is likewise not an endorsement by that body. Please use the official links above to confirm current status. Information on this page is current as at 29 September 2026.</p>
 </main>
 
 <footer class="scdo-compliance-foot" id="scdo-compliance-foot">
   <a href="/compliance.html">AUSTRAC Registered DCE &middot; DCE100714503-001 &middot; AFCA Member 124589 &middot; 9Y9 PTY LTD ABN 19 600 445 118</a><br>
+  <span>Registration with AUSTRAC does not mean AUSTRAC endorses or approves 9Y9 PTY LTD, SCDO, or any product or service.</span><br>
   <span>SCDO Mainnet Explorer &middot; <a href="/#/">Home</a> &middot; <a href="mailto:admin@apeccapital.org">admin@apeccapital.org</a></span>
 </footer>
 </body>
