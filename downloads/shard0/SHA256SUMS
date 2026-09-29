@@ -1,0 +1,7 @@
+857ef53017a499d03b34e8137288c8842eb05e8ceddb89105b2087b8cafadd6f  core-geth-scdo-linux-amd64
+0d5350224e4068f4c9f89ce07fcdd73ec3d8ede4857bd2056c51e01fa7468d12  scdo-shard0-genesis.json
+188b940a694fc33faecf03ca606a6cb0c2119ab2507603a56f6d65a2aec030e1  core-geth-scdo-dag-fix.patch
+e5ab603cecfc808205ea986c13e8724b1b73ca0f74311e62c31219d42e74100f  scdo-shard0-core-geth-darwin-arm64.tar.gz
+6700ddfdf7dd2e760a832e9f6dfc67f990094842cc0ba619e45c0a591002aa03  core-geth-scdo-darwin-nocgo.patch
+ab7689864b174112a4d1ae67f523a116cb924d0cafee86abfdc4103d403da272  scdo-shard0-gpu-miner-windows-amd64.zip
+fb8c6555f1c46a995ccdb39dbd7f80216884d154a933cc5b41429768b560b32a  scdo-shard0-gpu-miner-linux-amd64.tar.gz

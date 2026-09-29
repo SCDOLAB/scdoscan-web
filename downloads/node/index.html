@@ -1,0 +1,54 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Download SCDO node · 下载 SCDO 节点</title><link rel="icon" href="/favicon.svg">
+<style>body{margin:0;background:#0b0f17;color:#dbe4f0;font:14px/1.6 system-ui,-apple-system,"Segoe UI",Roboto,"PingFang SC","Microsoft YaHei",sans-serif}
+main{max-width:1000px;margin:0 auto;padding:24px}a{color:#4da3ff}h1{font-size:22px}h2{font-size:16px;margin-top:26px}
+table{width:100%;border-collapse:collapse;background:#131a26;border:1px solid #223047;border-radius:10px}td,th{padding:8px 10px;border-bottom:1px solid #223047;text-align:left}
+th{color:#8394ad;font-weight:500;font-size:12px;text-transform:uppercase}.h{font-family:ui-monospace,Consolas,monospace;font-size:11px;color:#8394ad;word-break:break-all}
+pre{background:#131a26;border:1px solid #223047;border-radius:8px;padding:10px 12px;overflow-x:auto}.m{color:#8394ad}</style></head><body><main>
+<p><a href="/">← scdoscan.io</a> · <a href="/nodes.html">Online nodes / 在线节点</a></p>
+<h1>Run an SCDO node / 运行 SCDO 节点</h1>
+<p>Full node + CPU solo miner for the SCDO legacy chain (shards 1–4), built from <a href="https://github.com/SCDOLAB/go-scdo">SCDOLAB/go-scdo</a> (commit cd31d1c, same code as the public nodes).
+Bootstrap nodes are pre-configured. No wallets or private keys are included.<br>
+<span class="m">全节点 + CPU 单机挖矿（旧链分片 1–4），基于 SCDOLAB/go-scdo 源码编译，已预置引导节点，不含任何钱包或私钥。</span></p>
+<table><tr><th>File</th><th>Platform</th><th>Size</th><th>SHA256</th></tr>
+<tr><td><a href="scdo-node-linux-amd64.tar.gz">scdo-node-linux-amd64.tar.gz</a></td><td>Linux x86_64 (static, any distro)</td><td>10.2 MB</td><td class="h">f17fdb3500409276d34f330e25215343f56bd3c97f948d7a4448be1ef52dc957</td></tr>
+<tr><td><a href="scdo-node-windows-amd64.zip">scdo-node-windows-amd64.zip</a></td><td>Windows 10/11 x64</td><td>9.6 MB</td><td class="h">7bcb110b0d2b267b9dbe6cf33c80a7b5af00f497ca998e9260d2c9993f129b31</td></tr>
+<tr><td><a href="scdo-node-darwin-amd64.tar.gz">scdo-node-darwin-amd64.tar.gz</a></td><td>macOS 10.13+ (Intel x86_64; Apple Silicon via Rosetta 2) · experimental, untested on a real Mac / 实验性，未经真机测试</td><td>9.9 MB</td><td class="h">a5bb23e509d16c28b246f0f5453dbde2c3e04c8e45ac34a4fb544eb28e0726ff</td></tr>
+<tr><td><a href="Dockerfile">Dockerfile</a></td><td>Docker image (downloads + verifies the Linux release)</td><td>1.3 KB</td><td class="h">59ee44adcbbf60503f4f3afd72a5fbaf1a72dd0bb52e4578ef4df339fe4ea7fc</td></tr>
+<tr><td><a href="docker-compose.yml">docker-compose.yml</a></td><td>Docker Compose example</td><td>0.7 KB</td><td class="h">694306f2021550e3b391c131dadde42f5f20803fa96fc3d0c2716172a8c65128</td></tr>
+<tr><td><a href="README.md">README.md</a></td><td>README (EN + 中文)</td><td>5.3 KB</td><td class="h">2822c05c35ccd0a9faf4af29076f9b1a0143c1639ec1637adeaba48caf0dc778</td></tr>
+<tr><td><a href="SHA256SUMS">SHA256SUMS</a></td><td>Checksums</td><td>0.5 KB</td><td class="h"></td></tr>
+</table>
+<h2>Linux</h2>
+<pre>curl -fLO https://scdoscan.io/downloads/node/scdo-node-linux-amd64.tar.gz
+curl -fLO https://scdoscan.io/downloads/node/SHA256SUMS
+sha256sum -c --ignore-missing SHA256SUMS
+tar xzf scdo-node-linux-amd64.tar.gz &amp;&amp; cd scdo-node-linux-amd64
+./start.sh 1                                   # sync shard 1 (1-4) / 同步分片 1
+./start.sh --mine 1S01...your address... --threads 4   # solo-mine / 单机挖矿
+./status.sh 1                                  # height &amp; peers / 高度与连接数</pre>
+<h2>Windows</h2>
+<p>Unzip <code>scdo-node-windows-amd64.zip</code>, then in that folder run <code>start.bat 1</code> (sync) or <code>start.bat --mine 1S01... --threads 4</code> (mine); <code>status.bat 1</code> shows progress.
+The .exe files are unsigned — SmartScreen may ask for confirmation.<br><span class="m">解压后在文件夹中运行 <code>start.bat 1</code>（同步）或 <code>start.bat --mine 1S01... --threads 4</code>（挖矿），<code>status.bat 1</code> 查看进度。exe 未签名，SmartScreen 可能提示确认。</span></p>
+<h2>macOS</h2>
+<p><b>Experimental:</b> cross-compiled on Linux and <b>not yet tested on a real Mac</b> — feedback welcome. Intel (x86_64) build; on Apple Silicon (M1–M4) it runs via Rosetta 2 (the old Go 1.12 toolchain required by the consensus library has no native arm64 support).
+The binaries are not signed/notarized, so remove the Gatekeeper quarantine flag once after extracting.<br>
+<span class="m">实验性版本：在 Linux 上交叉编译，<b>尚未在真实 Mac 上测试</b>，欢迎反馈。本包为 Intel（x86_64）版本，Apple 芯片（M1–M4）通过 Rosetta 2 运行（共识库所需的 Go 1.12 不支持原生 arm64）。程序未经 Apple 签名/公证，解压后需先移除 Gatekeeper 隔离属性。</span></p>
+<pre>curl -fLO https://scdoscan.io/downloads/node/scdo-node-darwin-amd64.tar.gz
+curl -fLO https://scdoscan.io/downloads/node/SHA256SUMS
+grep darwin SHA256SUMS | shasum -a 256 -c
+tar xzf scdo-node-darwin-amd64.tar.gz &amp;&amp; cd scdo-node-darwin-amd64
+xattr -dr com.apple.quarantine .               # Gatekeeper: allow unsigned binaries / 移除隔离属性
+./start.sh 1                                   # sync shard 1 (1-4) / 同步分片 1
+./status.sh 1                                  # height &amp; peers / 高度与连接数</pre>
+<h2>Docker</h2>
+<pre>curl -fLO https://scdoscan.io/downloads/node/Dockerfile
+curl -fLO https://scdoscan.io/downloads/node/docker-compose.yml
+docker compose up -d        # edit SHARD / MINE_ADDRESS in docker-compose.yml first</pre>
+<h2>Notes / 说明</h2>
+<ul><li>No address yet? <code>./scdo-client key --shard 1</code> creates one — keep the private key offline. / 没有地址？用 <code>scdo-client key --shard 1</code> 生成，私钥请离线保存。</li>
+<li>First sync downloads the full shard history (millions of blocks, tens of GB, many hours). Mining pays only once synced. / 首次同步耗时较长，同步完成后挖矿才有收益。</li>
+<li>Ports (shard 1/2/3/4): P2P 8057/8058/8059/8056 TCP+UDP (open for inbound if you can); RPC 8037/8038/8039/8036 stays on 127.0.0.1.</li>
+<li>Shard0 (EVM, chainId 5680) runs core-geth (Ethash PoW): node binaries, genesis and README at <a href="/downloads/shard0/">/downloads/shard0/</a>. / Shard0（EVM，chainId 5680）使用 core-geth，下载见 <a href="/downloads/shard0/">/downloads/shard0/</a>。</li></ul>
+<p class="m">Built 2026-09-28 · <a href="README.md">README</a></p>
+</main></body></html>

@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Shard0 load test 2026-09-28 · scdoscan.io</title>
+<link rel="icon" href="/favicon.svg">
+<style>
+body{margin:0;background:#0d1117;color:#c9d1d9;font:14px/1.6 -apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif}
+main{max-width:900px;margin:0 auto;padding:28px 18px 60px}
+h1{font-size:22px;color:#e6edf3;margin:0 0 4px}h2{font-size:16px;color:#e6edf3;margin:26px 0 8px}
+a{color:#58a6ff}.tag{display:inline-block;padding:1px 8px;background:#6e40c9;color:#fff;border-radius:3px;font-size:12px;vertical-align:middle}
+table{border-collapse:collapse;width:100%;font-size:13px}td,th{border-top:1px solid #30363d;padding:6px 8px;text-align:left;vertical-align:top}th{color:#8b949e;font-weight:600}
+code{background:#161b22;padding:1px 5px;border-radius:3px;font-size:12px;word-break:break-all}.muted{color:#8b949e}
+</style></head><body><main>
+<p class="muted"><a href="/">← scdoscan.io</a></p>
+<h1>Shard0 load test, 2026-09-28 <span class="tag">Load test</span></h1>
+<p class="muted">SCDO shard0 · core-geth Ethash PoW · chainId 5680</p>
+
+<p>On 2026-09-28 between 23:22 and 23:33 (UTC+8) we ran a stepped throughput test on shard0. It sent
+<b>39,377 simple transfers</b>: EIP-1559 self-transfers of 1 wei (21,000 gas each) from the shard0 faucet
+<a href="/#/address?address=0x42c4854a51127f2d9d770f0d4aeca0683f72c0e4"><code>0x42c4854A…c0e4</code></a> back to itself.
+They are in blocks <b>3430–3489</b>. The fees came to about 0.0085 SCDO and went to our own miner. No funds were created and no user accounts were involved.</p>
+
+<p>These transactions are tagged <span class="tag">Load test</span> and are <b>hidden from the default transaction lists</b>: the homepage "Latest Transactions" for Shard 0 and the faucet's address page.
+They stay indexed and can still be looked up:</p>
+<ul>
+<li>Any single tx page, e.g. <a href="/#/tx?txhash=0x80b12fc8c6fa3abac46ac37df70e08711c952073ad1e2fb25702d91077e0f1bb">0x80b12fc8c6fa3aba…</a>. The page shows the <span class="tag">Load test</span> tag.</li>
+<li>The faucet address page has a "show them" link under the Shard0 Transactions table.</li>
+<li>API: <a href="/enhance/shard0/txs?loadtest=1"><code>/enhance/shard0/txs?loadtest=1</code></a>,
+<a href="/enhance/shard0/address_txs?addr=0x42c4854a51127f2d9d770f0d4aeca0683f72c0e4&amp;loadtest=1"><code>/enhance/shard0/address_txs?addr=0x42c4…c0e4&amp;loadtest=1</code></a>,
+<code>/enhance/shard0/tx?hash=&lt;txhash&gt;</code> (field <code>"tag":"loadtest"</code>).</li>
+<li>Rule: <a href="/labels.json"><code>/labels.json</code></a> → <code>txTags.loadtest</code>. It matches from = to = faucet, value = 1 wei, no calldata, blocks 3400–3500.</li>
+</ul>
+
+<h2>Results</h2>
+<table>
+<tr><th>Measure</th><th>Value</th></tr>
+<tr><td>Run 2, whole window (blocks 3466–3489, 258 s)</td><td><b>24,058 txs = 93.2 TPS</b> average, average block time 10.75 s, 10 of 24 blocks full</td></tr>
+<tr><td>Best 2-minute window (blocks 3477–3488)</td><td>12,162 txs in 122 s = <b>99.7 TPS</b></td></tr>
+<tr><td>Best ≥60 s window (blocks 3466–3474)</td><td>8,175 txs in 74 s = 110.5 TPS</td></tr>
+<tr><td>Run 1 (ramp 10 → 50 → 100 tx/s, blocks 3432–3459)</td><td>15,299 txs, 53.7 TPS overall. This includes the ramp, so it is not a capacity figure.</td></tr>
+<tr><td>RPC submissions</td><td>0 rejected. Average latency 2.4–2.8 ms.</td></tr>
+<tr><td>Sampled block 3479</td><td>1,219 txs, all status success</td></tr>
+</table>
+<p><b>What this means:</b> shard0 sustains about <b>90–100 TPS</b> of simple transfers today.
+The hard cap is 30M gas ÷ 21,000 = 1,428 transfers per block, which is about 110 TPS at the 13 s block target.
+Token transfers (35–50k gas) would reach about half that. Blocks are sometimes not full even with a backlog. This is because a PoW block found 1–5 s after the previous one only holds the transactions that were in the sealing template at that moment.</p>
+<p class="muted">Test tool: a small Go sender run on the node host against its local RPC. It stops itself automatically at &gt;20% RPC errors or when the backlog exceeds the txpool limit.</p>
+</main></body></html>

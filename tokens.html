@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="zh"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SCDO Tokens</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#0d1117;color:#e6edf3;font-family:-apple-system,sans-serif;padding:12px;max-width:480px;margin:0 auto}
+h1{color:#58a6ff;font-size:20px;margin:12px 0}
+.card{background:#161b22;border:1px solid #30363d;border-radius:12px;padding:14px;margin:10px 0}
+.badge{background:#238636;color:white;padding:2px 8px;border-radius:10px;font-size:11px}
+.addr{font-family:monospace;font-size:11px;color:#8b949e;word-break:break-all}
+.row{padding:6px 0;font-size:13px}
+.fn{background:#1f6feb;color:white;padding:1px 6px;border-radius:4px;font-size:10px}
+.label-tag{background:#da3633;color:white;padding:1px 6px;border-radius:4px;font-size:10px;margin-left:4px}
+input{width:100%;background:#0d1117;border:1px solid #30363d;color:#e6edf3;padding:10px;border-radius:6px;margin-top:4px}
+button{background:#238636;color:white;border:none;padding:10px;border-radius:6px;width:100%;margin-top:6px;cursor:pointer}
+canvas{width:100%;height:120px;margin-top:8px}
+</style></head><body>
+<h1>Token Tracker</h1>
+<div class="card">
+<h3>SCDOT <span class="badge">ERC-20 Verified</span></h3>
+<div class="row">Supply: 1,000,000 SCDOT</div>
+<div class="row">Contract:</div><div class="addr">1S01b0c7fc67e306be07453bab4e1854bc833b0002</div>
+<div class="row" style="margin-top:6px">AMM:</div><div class="addr">1S0146543ef8ea2eaec816d6c20cd330a71e920032</div>
+</div>
+<div class="card">
+<b>Check Balance</b>
+<input id="addr" placeholder="Enter address">
+<button onclick="checkBal()">Check</button>
+<div id="bal" style="margin-top:8px;font-size:13px"></div>
+<canvas id="chart"></canvas>
+</div>
+<div class="card"><b>Recent Activity</b><div id="txlist"></div></div>
+<script>
+let LABELS={};
+fetch('/api/labels').then(r=>r.json()).then(d=>LABELS=d.labels||{});
+function checkBal(){
+  let a=document.getElementById('addr').value.trim();
+  if(!a)return;
+  fetch('/api/balance/'+a).then(r=>r.json()).then(d=>{
+    let bal=parseInt(d.balance||0)/1e18;
+    let tag=d.label?'<span class="label-tag">'+d.label+'</span>':'';
+    document.getElementById('bal').innerHTML='Balance: <b>'+bal.toFixed(2)+' SCDOT</b> '+tag;
+  });
+  fetch('/api/history/'+a).then(r=>r.json()).then(d=>drawChart(d.history||[]));
+}
+function drawChart(pts){
+  let c=document.getElementById('chart'),ctx=c.getContext('2d');
+  c.width=c.offsetWidth*2;c.height=240;
+  let max=Math.max(...pts.map(p=>p.balance/1e18),1);
+  ctx.strokeStyle='#3fb950';ctx.lineWidth=2;ctx.beginPath();
+  pts.forEach((p,i)=>{
+    let x=i/(pts.length-1)*c.width;
+    let y=c.height-(p.balance/1e18/max)*c.height;
+    i?ctx.lineTo(x,y):ctx.moveTo(x,y);
+  });
+  ctx.stroke();
+}
+fetch('/api/token/transfers').then(r=>r.json()).then(d=>{
+  let h='';
+  d.transfers.forEach(t=>{
+    let fl=t.fromLabel?'<span class="label-tag">'+t.fromLabel+'</span>':'';
+    let tl=t.toLabel?'<span class="label-tag">'+t.toLabel+'</span>':'';
+    h+='<div class="row" style="border-bottom:1px solid #21262d;padding:8px 0">'+
+      '<span class="fn">'+t.function+'</span> '+fl+tl+
+      '<br><span style="font-size:11px;color:#8b949e">blk '+t.block+'</span></div>';
+  });
+  document.getElementById('txlist').innerHTML=h||'<div class="row">No activity</div>';
+});
+</script></body></html>

@@ -1,0 +1,993 @@
+{
+ "address": "0xb042c1833687d05cba414f04ec4013744ddeadcc",
+ "chainId": 5680,
+ "contractName": "SCDOTestUSD",
+ "sourceFile": "SCDOTestUSD.sol",
+ "license": "MIT",
+ "compiler": "solc 0.8.24+commit.e11b9ed9.Linux.g++",
+ "compilerVersion": "v0.8.24+commit.e11b9ed9",
+ "optimizer": {
+  "enabled": true,
+  "runs": 200
+ },
+ "evmVersion": "paris",
+ "match": "full",
+ "matchNote": "compiled deployedBytecode == eth_getCode byte-for-byte, including the CBOR metadata hash (source text identical)",
+ "codeBytes": 4339,
+ "codeSha256": "f80a09ccec87a7d9db5c78154d9624392a4fb2adba2058f7bdbcf8cad1d98e54",
+ "verifiedAt": "2026-09-28T15:52:44Z",
+ "verifiedAtBlock": 3610,
+ "method": "https://scdoscan.io/verified/METHOD.txt",
+ "creationTx": "0x194553c1ea075cc2c160c8e9fbea486d57999e74045ed86bb7e0dc49ac869508",
+ "creationBlock": 44,
+ "deployer": "0xe6422826efc630634e959f5da7f8163fbdb9f8d2",
+ "constructorArgs": "0x",
+ "creationInputMatches": true,
+ "source": "// SPDX-License-Identifier: MIT\npragma solidity 0.8.24;\n\n/**\n * @title  SCDO Test USD (tUSDT) -- TEST SETTLEMENT TOKEN, NO VALUE\n * @notice Demonstration token for an internal OTC / exchange settlement proof of concept\n *         operated by 9Y9 PTY LTD on SCDO shard0 (chainId 5680).\n *         THIS IS A TEST TOKEN. IT HAS NO MONETARY VALUE, IS NOT REDEEMABLE FOR USD, USDT\n *         OR ANYTHING ELSE, IS NOT ISSUED OR OFFERED TO THE PUBLIC, IS NOT AFFILIATED WITH\n *         TETHER, AND IS NOT A STABLECOIN, DEPOSIT, STORED-VALUE FACILITY OR FINANCIAL PRODUCT.\n * @dev    Self-contained ERC-20 (no external imports) with:\n *         - owner-only mint     (models an OTC-desk deposit being recorded)\n *         - owner-only burnFrom (models an OTC redemption); holders may burn their own balance\n *         - pausable transfers/mint/burn (circuit breaker)\n *         - owner-managed blocklist (freeze/unfreeze) as an AML control demo: a frozen address\n *           cannot send, receive, approve, spend allowances, be minted to, or self-burn.\n *           The owner can still burnFrom a frozen address (e.g. court-ordered destruction).\n *         - two-step ownership transfer\n *         Decimals = 6 (matches USDT on major chains, so amounts map 1:1 to USDT micro-units).\n */\ncontract SCDOTestUSD {\n    // ------------------------------------------------------------------ metadata\n    string public constant name = \"SCDO Test USD (TEST ONLY - NO VALUE)\";\n    string public constant symbol = \"tUSDT\";\n    uint8 public constant decimals = 6;\n    string public constant disclaimer =\n        \"TEST TOKEN ONLY. No monetary value. Not redeemable. Not issued or offered to the public. \"\n        \"Not affiliated with Tether. Internal OTC-settlement demo by 9Y9 PTY LTD on SCDO shard0 (chainId 5680).\";\n\n    // ------------------------------------------------------------------ state\n    uint256 public totalSupply;\n    mapping(address => uint256) public balanceOf;\n    mapping(address => mapping(address => uint256)) public allowance;\n    mapping(address => bool) public isFrozen;\n\n    address public owner;\n    address public pendingOwner;\n    bool public paused;\n\n    // ------------------------------------------------------------------ events\n    event Transfer(address indexed from, address indexed to, uint256 value);\n    event Approval(address indexed owner, address indexed spender, uint256 value);\n    event Mint(address indexed to, uint256 value, bytes32 indexed ref);\n    event Burn(address indexed from, uint256 value, bytes32 indexed ref);\n    event Frozen(address indexed account, bytes32 indexed ref);\n    event Unfrozen(address indexed account, bytes32 indexed ref);\n    event Paused(address indexed account);\n    event Unpaused(address indexed account);\n    event OwnershipTransferStarted(address indexed previousOwner, address indexed newOwner);\n    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);\n\n    // ------------------------------------------------------------------ errors\n    error NotOwner();\n    error NotPendingOwner();\n    error EnforcedPause();\n    error ExpectedPause();\n    error ZeroAddress();\n    error AccountFrozen(address account);\n    error InsufficientBalance(uint256 available, uint256 required);\n    error InsufficientAllowance(uint256 available, uint256 required);\n\n    // ------------------------------------------------------------------ modifiers\n    modifier onlyOwner() {\n        if (msg.sender != owner) revert NotOwner();\n        _;\n    }\n\n    modifier whenNotPaused() {\n        if (paused) revert EnforcedPause();\n        _;\n    }\n\n    modifier notFrozen(address account) {\n        if (isFrozen[account]) revert AccountFrozen(account);\n        _;\n    }\n\n    constructor() {\n        owner = msg.sender;\n        emit OwnershipTransferred(address(0), msg.sender);\n    }\n\n    // ------------------------------------------------------------------ ERC-20\n    function transfer(address to, uint256 value)\n        external whenNotPaused notFrozen(msg.sender) notFrozen(to) returns (bool)\n    {\n        _transfer(msg.sender, to, value);\n        return true;\n    }\n\n    function approve(address spender, uint256 value)\n        external notFrozen(msg.sender) notFrozen(spender) returns (bool)\n    {\n        if (spender == address(0)) revert ZeroAddress();\n        allowance[msg.sender][spender] = value;\n        emit Approval(msg.sender, spender, value);\n        return true;\n    }\n\n    function transferFrom(address from, address to, uint256 value)\n        external whenNotPaused notFrozen(msg.sender) notFrozen(from) notFrozen(to) returns (bool)\n    {\n        uint256 current = allowance[from][msg.sender];\n        if (current != type(uint256).max) {\n            if (current < value) revert InsufficientAllowance(current, value);\n            unchecked {\n                allowance[from][msg.sender] = current - value;\n            }\n        }\n        _transfer(from, to, value);\n        return true;\n    }\n\n    // ------------------------------------------------------------------ issuer ops\n    /// @notice Record a (test) OTC-desk deposit by minting tUSDT. `ref` = off-chain deposit reference.\n    function mint(address to, uint256 value, bytes32 ref) external onlyOwner whenNotPaused notFrozen(to) {\n        if (to == address(0)) revert ZeroAddress();\n        totalSupply += value;\n        unchecked {\n            balanceOf[to] += value; // cannot overflow: bounded by totalSupply\n        }\n        emit Transfer(address(0), to, value);\n        emit Mint(to, value, ref);\n    }\n\n    /// @notice Settle a (test) OTC redemption by burning tUSDT held by `from`.\n    function burnFrom(address from, uint256 value, bytes32 ref) external onlyOwner whenNotPaused {\n        _burn(from, value, ref);\n    }\n\n    /// @notice Holder burns its own tokens (e.g. customer handing back tokens for redemption).\n    function burn(uint256 value, bytes32 ref) external whenNotPaused notFrozen(msg.sender) {\n        _burn(msg.sender, value, ref);\n    }\n\n    // ------------------------------------------------------------------ compliance (AML demo)\n    /// @notice Freeze an address (blocklist). `ref` = off-chain case / alert reference.\n    function freeze(address account, bytes32 ref) external onlyOwner {\n        if (account == address(0)) revert ZeroAddress();\n        isFrozen[account] = true;\n        emit Frozen(account, ref);\n    }\n\n    function unfreeze(address account, bytes32 ref) external onlyOwner {\n        isFrozen[account] = false;\n        emit Unfrozen(account, ref);\n    }\n\n    function pause() external onlyOwner {\n        if (paused) revert EnforcedPause();\n        paused = true;\n        emit Paused(msg.sender);\n    }\n\n    function unpause() external onlyOwner {\n        if (!paused) revert ExpectedPause();\n        paused = false;\n        emit Unpaused(msg.sender);\n    }\n\n    // ------------------------------------------------------------------ ownership (2-step)\n    function transferOwnership(address newOwner) external onlyOwner {\n        pendingOwner = newOwner;\n        emit OwnershipTransferStarted(owner, newOwner);\n    }\n\n    function acceptOwnership() external {\n        if (msg.sender != pendingOwner) revert NotPendingOwner();\n        emit OwnershipTransferred(owner, msg.sender);\n        owner = msg.sender;\n        pendingOwner = address(0);\n    }\n\n    // ------------------------------------------------------------------ internals\n    function _transfer(address from, address to, uint256 value) internal {\n        if (to == address(0)) revert ZeroAddress();\n        uint256 bal = balanceOf[from];\n        if (bal < value) revert InsufficientBalance(bal, value);\n        unchecked {\n            balanceOf[from] = bal - value;\n            balanceOf[to] += value; // cannot overflow: bounded by totalSupply\n        }\n        emit Transfer(from, to, value);\n    }\n\n    function _burn(address from, uint256 value, bytes32 ref) internal {\n        uint256 bal = balanceOf[from];\n        if (bal < value) revert InsufficientBalance(bal, value);\n        unchecked {\n            balanceOf[from] = bal - value;\n            totalSupply -= value; // cannot underflow: value <= bal <= totalSupply\n        }\n        emit Transfer(from, address(0), value);\n        emit Burn(from, value, ref);\n    }\n}\n",
+ "abi": [
+  {
+   "inputs": [],
+   "stateMutability": "nonpayable",
+   "type": "constructor"
+  },
+  {
+   "inputs": [
+    {
+     "internalType": "address",
+     "name": "account",
+     "type": "address"
+    }
+   ],
+   "name": "AccountFrozen",
+   "type": "error"
+  },
+  {
+   "inputs": [],
+   "name": "EnforcedPause",
+   "type": "error"
+  },
+  {
+   "inputs": [],
+   "name": "ExpectedPause",
+   "type": "error"
+  },
+  {
+   "inputs": [
+    {
+     "internalType": "uint256",
+     "name": "available",
+     "type": "uint256"
+    },
+    {
+     "internalType": "uint256",
+     "name": "required",
+     "type": "uint256"
+    }
+   ],
+   "name": "InsufficientAllowance",
+   "type": "error"
+  },
+  {
+   "inputs": [
+    {
+     "internalType": "uint256",
+     "name": "available",
+     "type": "uint256"
+    },
+    {
+     "internalType": "uint256",
+     "name": "required",
+     "type": "uint256"
+    }
+   ],
+   "name": "InsufficientBalance",
+   "type": "error"
+  },
+  {
+   "inputs": [],
+   "name": "NotOwner",
+   "type": "error"
+  },
+  {
+   "inputs": [],
+   "name": "NotPendingOwner",
+   "type": "error"
+  },
+  {
+   "inputs": [],
+   "name": "ZeroAddress",
+   "type": "error"
+  },
+  {
+   "anonymous": false,
+   "inputs": [
+    {
+     "indexed": true,
+     "internalType": "address",
+     "name": "owner",
+     "type": "address"
+    },
+    {
+     "indexed": true,
+     "internalType": "address",
+     "name": "spender",
+     "type": "address"
+    },
+    {
+     "indexed": false,
+     "internalType": "uint256",
+     "name": "value",
+     "type": "uint256"
+    }
+   ],
+   "name": "Approval",
+   "type": "event"
+  },
+  {
+   "anonymous": false,
+   "inputs": [
+    {
+     "indexed": true,
+     "internalType": "address",
+     "name": "from",
+     "type": "address"
+    },
+    {
+     "indexed": false,
+     "internalType": "uint256",
+     "name": "value",
+     "type": "uint256"
+    },
+    {
+     "indexed": true,
+     "internalType": "bytes32",
+     "name": "ref",
+     "type": "bytes32"
+    }
+   ],
+   "name": "Burn",
+   "type": "event"
+  },
+  {
+   "anonymous": false,
+   "inputs": [
+    {
+     "indexed": true,
+     "internalType": "address",
+     "name": "account",
+     "type": "address"
+    },
+    {
+     "indexed": true,
+     "internalType": "bytes32",
+     "name": "ref",
+     "type": "bytes32"
+    }
+   ],
+   "name": "Frozen",
+   "type": "event"
+  },
+  {
+   "anonymous": false,
+   "inputs": [
+    {
+     "indexed": true,
+     "internalType": "address",
+     "name": "to",
+     "type": "address"
+    },
+    {
+     "indexed": false,
+     "internalType": "uint256",
+     "name": "value",
+     "type": "uint256"
+    },
+    {
+     "indexed": true,
+     "internalType": "bytes32",
+     "name": "ref",
+     "type": "bytes32"
+    }
+   ],
+   "name": "Mint",
+   "type": "event"
+  },
+  {
+   "anonymous": false,
+   "inputs": [
+    {
+     "indexed": true,
+     "internalType": "address",
+     "name": "previousOwner",
+     "type": "address"
+    },
+    {
+     "indexed": true,
+     "internalType": "address",
+     "name": "newOwner",
+     "type": "address"
+    }
+   ],
+   "name": "OwnershipTransferStarted",
+   "type": "event"
+  },
+  {
+   "anonymous": false,
+   "inputs": [
+    {
+     "indexed": true,
+     "internalType": "address",
+     "name": "previousOwner",
+     "type": "address"
+    },
+    {
+     "indexed": true,
+     "internalType": "address",
+     "name": "newOwner",
+     "type": "address"
+    }
+   ],
+   "name": "OwnershipTransferred",
+   "type": "event"
+  },
+  {
+   "anonymous": false,
+   "inputs": [
+    {
+     "indexed": true,
+     "internalType": "address",
+     "name": "account",
+     "type": "address"
+    }
+   ],
+   "name": "Paused",
+   "type": "event"
+  },
+  {
+   "anonymous": false,
+   "inputs": [
+    {
+     "indexed": true,
+     "internalType": "address",
+     "name": "from",
+     "type": "address"
+    },
+    {
+     "indexed": true,
+     "internalType": "address",
+     "name": "to",
+     "type": "address"
+    },
+    {
+     "indexed": false,
+     "internalType": "uint256",
+     "name": "value",
+     "type": "uint256"
+    }
+   ],
+   "name": "Transfer",
+   "type": "event"
+  },
+  {
+   "anonymous": false,
+   "inputs": [
+    {
+     "indexed": true,
+     "internalType": "address",
+     "name": "account",
+     "type": "address"
+    },
+    {
+     "indexed": true,
+     "internalType": "bytes32",
+     "name": "ref",
+     "type": "bytes32"
+    }
+   ],
+   "name": "Unfrozen",
+   "type": "event"
+  },
+  {
+   "anonymous": false,
+   "inputs": [
+    {
+     "indexed": true,
+     "internalType": "address",
+     "name": "account",
+     "type": "address"
+    }
+   ],
+   "name": "Unpaused",
+   "type": "event"
+  },
+  {
+   "inputs": [],
+   "name": "acceptOwnership",
+   "outputs": [],
+   "stateMutability": "nonpayable",
+   "type": "function"
+  },
+  {
+   "inputs": [
+    {
+     "internalType": "address",
+     "name": "",
+     "type": "address"
+    },
+    {
+     "internalType": "address",
+     "name": "",
+     "type": "address"
+    }
+   ],
+   "name": "allowance",
+   "outputs": [
+    {
+     "internalType": "uint256",
+     "name": "",
+     "type": "uint256"
+    }
+   ],
+   "stateMutability": "view",
+   "type": "function"
+  },
+  {
+   "inputs": [
+    {
+     "internalType": "address",
+     "name": "spender",
+     "type": "address"
+    },
+    {
+     "internalType": "uint256",
+     "name": "value",
+     "type": "uint256"
+    }
+   ],
+   "name": "approve",
+   "outputs": [
+    {
+     "internalType": "bool",
+     "name": "",
+     "type": "bool"
+    }
+   ],
+   "stateMutability": "nonpayable",
+   "type": "function"
+  },
+  {
+   "inputs": [
+    {
+     "internalType": "address",
+     "name": "",
+     "type": "address"
+    }
+   ],
+   "name": "balanceOf",
+   "outputs": [
+    {
+     "internalType": "uint256",
+     "name": "",
+     "type": "uint256"
+    }
+   ],
+   "stateMutability": "view",
+   "type": "function"
+  },
+  {
+   "inputs": [
+    {
+     "internalType": "uint256",
+     "name": "value",
+     "type": "uint256"
+    },
+    {
+     "internalType": "bytes32",
+     "name": "ref",
+     "type": "bytes32"
+    }
+   ],
+   "name": "burn",
+   "outputs": [],
+   "stateMutability": "nonpayable",
+   "type": "function"
+  },
+  {
+   "inputs": [
+    {
+     "internalType": "address",
+     "name": "from",
+     "type": "address"
+    },
+    {
+     "internalType": "uint256",
+     "name": "value",
+     "type": "uint256"
+    },
+    {
+     "internalType": "bytes32",
+     "name": "ref",
+     "type": "bytes32"
+    }
+   ],
+   "name": "burnFrom",
+   "outputs": [],
+   "stateMutability": "nonpayable",
+   "type": "function"
+  },
+  {
+   "inputs": [],
+   "name": "decimals",
+   "outputs": [
+    {
+     "internalType": "uint8",
+     "name": "",
+     "type": "uint8"
+    }
+   ],
+   "stateMutability": "view",
+   "type": "function"
+  },
+  {
+   "inputs": [],
+   "name": "disclaimer",
+   "outputs": [
+    {
+     "internalType": "string",
+     "name": "",
+     "type": "string"
+    }
+   ],
+   "stateMutability": "view",
+   "type": "function"
+  },
+  {
+   "inputs": [
+    {
+     "internalType": "address",
+     "name": "account",
+     "type": "address"
+    },
+    {
+     "internalType": "bytes32",
+     "name": "ref",
+     "type": "bytes32"
+    }
+   ],
+   "name": "freeze",
+   "outputs": [],
+   "stateMutability": "nonpayable",
+   "type": "function"
+  },
+  {
+   "inputs": [
+    {
+     "internalType": "address",
+     "name": "",
+     "type": "address"
+    }
+   ],
+   "name": "isFrozen",
+   "outputs": [
+    {
+     "internalType": "bool",
+     "name": "",
+     "type": "bool"
+    }
+   ],
+   "stateMutability": "view",
+   "type": "function"
+  },
+  {
+   "inputs": [
+    {
+     "internalType": "address",
+     "name": "to",
+     "type": "address"
+    },
+    {
+     "internalType": "uint256",
+     "name": "value",
+     "type": "uint256"
+    },
+    {
+     "internalType": "bytes32",
+     "name": "ref",
+     "type": "bytes32"
+    }
+   ],
+   "name": "mint",
+   "outputs": [],
+   "stateMutability": "nonpayable",
+   "type": "function"
+  },
+  {
+   "inputs": [],
+   "name": "name",
+   "outputs": [
+    {
+     "internalType": "string",
+     "name": "",
+     "type": "string"
+    }
+   ],
+   "stateMutability": "view",
+   "type": "function"
+  },
+  {
+   "inputs": [],
+   "name": "owner",
+   "outputs": [
+    {
+     "internalType": "address",
+     "name": "",
+     "type": "address"
+    }
+   ],
+   "stateMutability": "view",
+   "type": "function"
+  },
+  {
+   "inputs": [],
+   "name": "pause",
+   "outputs": [],
+   "stateMutability": "nonpayable",
+   "type": "function"
+  },
+  {
+   "inputs": [],
+   "name": "paused",
+   "outputs": [
+    {
+     "internalType": "bool",
+     "name": "",
+     "type": "bool"
+    }
+   ],
+   "stateMutability": "view",
+   "type": "function"
+  },
+  {
+   "inputs": [],
+   "name": "pendingOwner",
+   "outputs": [
+    {
+     "internalType": "address",
+     "name": "",
+     "type": "address"
+    }
+   ],
+   "stateMutability": "view",
+   "type": "function"
+  },
+  {
+   "inputs": [],
+   "name": "symbol",
+   "outputs": [
+    {
+     "internalType": "string",
+     "name": "",
+     "type": "string"
+    }
+   ],
+   "stateMutability": "view",
+   "type": "function"
+  },
+  {
+   "inputs": [],
+   "name": "totalSupply",
+   "outputs": [
+    {
+     "internalType": "uint256",
+     "name": "",
+     "type": "uint256"
+    }
+   ],
+   "stateMutability": "view",
+   "type": "function"
+  },
+  {
+   "inputs": [
+    {
+     "internalType": "address",
+     "name": "to",
+     "type": "address"
+    },
+    {
+     "internalType": "uint256",
+     "name": "value",
+     "type": "uint256"
+    }
+   ],
+   "name": "transfer",
+   "outputs": [
+    {
+     "internalType": "bool",
+     "name": "",
+     "type": "bool"
+    }
+   ],
+   "stateMutability": "nonpayable",
+   "type": "function"
+  },
+  {
+   "inputs": [
+    {
+     "internalType": "address",
+     "name": "from",
+     "type": "address"
+    },
+    {
+     "internalType": "address",
+     "name": "to",
+     "type": "address"
+    },
+    {
+     "internalType": "uint256",
+     "name": "value",
+     "type": "uint256"
+    }
+   ],
+   "name": "transferFrom",
+   "outputs": [
+    {
+     "internalType": "bool",
+     "name": "",
+     "type": "bool"
+    }
+   ],
+   "stateMutability": "nonpayable",
+   "type": "function"
+  },
+  {
+   "inputs": [
+    {
+     "internalType": "address",
+     "name": "newOwner",
+     "type": "address"
+    }
+   ],
+   "name": "transferOwnership",
+   "outputs": [],
+   "stateMutability": "nonpayable",
+   "type": "function"
+  },
+  {
+   "inputs": [
+    {
+     "internalType": "address",
+     "name": "account",
+     "type": "address"
+    },
+    {
+     "internalType": "bytes32",
+     "name": "ref",
+     "type": "bytes32"
+    }
+   ],
+   "name": "unfreeze",
+   "outputs": [],
+   "stateMutability": "nonpayable",
+   "type": "function"
+  },
+  {
+   "inputs": [],
+   "name": "unpause",
+   "outputs": [],
+   "stateMutability": "nonpayable",
+   "type": "function"
+  }
+ ],
+ "compilerSettings": {
+  "optimizer": {
+   "enabled": true,
+   "runs": 200
+  },
+  "evmVersion": "paris"
+ },
+ "standardJsonInput": "/verified/0xb042c1833687d05cba414f04ec4013744ddeadcc.standard-input.json",
+ "panel": {
+  "name": "SCDOTestUSD",
+  "fns": [
+   {
+    "n": "acceptOwnership",
+    "s": "0x79ba5097",
+    "m": "nonpayable",
+    "i": [],
+    "o": []
+   },
+   {
+    "n": "allowance",
+    "s": "0xdd62ed3e",
+    "m": "view",
+    "i": [
+     [
+      "address",
+      "arg0"
+     ],
+     [
+      "address",
+      "arg1"
+     ]
+    ],
+    "o": [
+     "uint256"
+    ]
+   },
+   {
+    "n": "approve",
+    "s": "0x095ea7b3",
+    "m": "nonpayable",
+    "i": [
+     [
+      "address",
+      "spender"
+     ],
+     [
+      "uint256",
+      "value"
+     ]
+    ],
+    "o": [
+     "bool"
+    ]
+   },
+   {
+    "n": "balanceOf",
+    "s": "0x70a08231",
+    "m": "view",
+    "i": [
+     [
+      "address",
+      "arg0"
+     ]
+    ],
+    "o": [
+     "uint256"
+    ]
+   },
+   {
+    "n": "burn",
+    "s": "0xbcf64e05",
+    "m": "nonpayable",
+    "i": [
+     [
+      "uint256",
+      "value"
+     ],
+     [
+      "bytes32",
+      "ref"
+     ]
+    ],
+    "o": []
+   },
+   {
+    "n": "burnFrom",
+    "s": "0x95b809bd",
+    "m": "nonpayable",
+    "i": [
+     [
+      "address",
+      "from"
+     ],
+     [
+      "uint256",
+      "value"
+     ],
+     [
+      "bytes32",
+      "ref"
+     ]
+    ],
+    "o": []
+   },
+   {
+    "n": "decimals",
+    "s": "0x313ce567",
+    "m": "view",
+    "i": [],
+    "o": [
+     "uint8"
+    ]
+   },
+   {
+    "n": "disclaimer",
+    "s": "0x4214f62a",
+    "m": "view",
+    "i": [],
+    "o": [
+     "string"
+    ]
+   },
+   {
+    "n": "freeze",
+    "s": "0x4a12e253",
+    "m": "nonpayable",
+    "i": [
+     [
+      "address",
+      "account"
+     ],
+     [
+      "bytes32",
+      "ref"
+     ]
+    ],
+    "o": []
+   },
+   {
+    "n": "isFrozen",
+    "s": "0xe5839836",
+    "m": "view",
+    "i": [
+     [
+      "address",
+      "arg0"
+     ]
+    ],
+    "o": [
+     "bool"
+    ]
+   },
+   {
+    "n": "mint",
+    "s": "0x1e458bee",
+    "m": "nonpayable",
+    "i": [
+     [
+      "address",
+      "to"
+     ],
+     [
+      "uint256",
+      "value"
+     ],
+     [
+      "bytes32",
+      "ref"
+     ]
+    ],
+    "o": []
+   },
+   {
+    "n": "name",
+    "s": "0x06fdde03",
+    "m": "view",
+    "i": [],
+    "o": [
+     "string"
+    ]
+   },
+   {
+    "n": "owner",
+    "s": "0x8da5cb5b",
+    "m": "view",
+    "i": [],
+    "o": [
+     "address"
+    ]
+   },
+   {
+    "n": "pause",
+    "s": "0x8456cb59",
+    "m": "nonpayable",
+    "i": [],
+    "o": []
+   },
+   {
+    "n": "paused",
+    "s": "0x5c975abb",
+    "m": "view",
+    "i": [],
+    "o": [
+     "bool"
+    ]
+   },
+   {
+    "n": "pendingOwner",
+    "s": "0xe30c3978",
+    "m": "view",
+    "i": [],
+    "o": [
+     "address"
+    ]
+   },
+   {
+    "n": "symbol",
+    "s": "0x95d89b41",
+    "m": "view",
+    "i": [],
+    "o": [
+     "string"
+    ]
+   },
+   {
+    "n": "totalSupply",
+    "s": "0x18160ddd",
+    "m": "view",
+    "i": [],
+    "o": [
+     "uint256"
+    ]
+   },
+   {
+    "n": "transfer",
+    "s": "0xa9059cbb",
+    "m": "nonpayable",
+    "i": [
+     [
+      "address",
+      "to"
+     ],
+     [
+      "uint256",
+      "value"
+     ]
+    ],
+    "o": [
+     "bool"
+    ]
+   },
+   {
+    "n": "transferFrom",
+    "s": "0x23b872dd",
+    "m": "nonpayable",
+    "i": [
+     [
+      "address",
+      "from"
+     ],
+     [
+      "address",
+      "to"
+     ],
+     [
+      "uint256",
+      "value"
+     ]
+    ],
+    "o": [
+     "bool"
+    ]
+   },
+   {
+    "n": "transferOwnership",
+    "s": "0xf2fde38b",
+    "m": "nonpayable",
+    "i": [
+     [
+      "address",
+      "newOwner"
+     ]
+    ],
+    "o": []
+   },
+   {
+    "n": "unfreeze",
+    "s": "0x84ebcb41",
+    "m": "nonpayable",
+    "i": [
+     [
+      "address",
+      "account"
+     ],
+     [
+      "bytes32",
+      "ref"
+     ]
+    ],
+    "o": []
+   },
+   {
+    "n": "unpause",
+    "s": "0x3f4ba83a",
+    "m": "nonpayable",
+    "i": [],
+    "o": []
+   }
+  ],
+  "decimals": 6,
+  "symbol": "tUSDT"
+ }
+}

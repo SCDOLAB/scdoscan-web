@@ -1,0 +1,24 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SCDO shard0 node &amp; GPU mining downloads</title>
+<style>body{font-family:system-ui,-apple-system,Segoe UI,sans-serif;background:#0d1117;color:#c9d1d9;max-width:900px;margin:30px auto;padding:0 16px;line-height:1.6}a{color:#58a6ff}code,pre{background:#161b22;border-radius:4px;padding:2px 6px;font-size:13px;word-break:break-all}pre{padding:10px;white-space:pre-wrap}table{border-collapse:collapse;width:100%}td,th{border-bottom:1px solid #30363d;padding:6px;text-align:left;vertical-align:top}</style></head><body>
+<h1><img src="/brand/scdo-shard0-icon.svg" alt="" aria-hidden="true" width="36" height="36" style="vertical-align:-7px;margin-right:10px">SCDO shard0 node downloads</h1>
+<p>Shard0 is an EVM chain on <b>core-geth v1.12.23 (Ethash PoW)</b>, chainId / networkId <b>5680 (0x1630)</b>, P2P port 30368.</p>
+<table><tr><th>file</th><th>platform / notes</th></tr>
+<tr><td><a href="scdo-shard0-gpu-miner-windows-amd64.zip"><b>scdo-shard0-gpu-miner-windows-amd64.zip</b></a></td><td><b>GPU mining, Windows (NVIDIA)</b>: own core-geth node (rewards to your address) + scdo-stratum proxy + start-mining.bat (edit one line: your wallet). Downloads Rigel 1.23.2 from its official GitHub release and checks its SHA256. See README inside and <a href="/mine/#gpu">the mining guide</a>.</td></tr>
+<tr><td><a href="scdo-shard0-gpu-miner-linux-amd64.tar.gz"><b>scdo-shard0-gpu-miner-linux-amd64.tar.gz</b></a></td><td><b>GPU mining, Linux (NVIDIA)</b>: same as above with start-mining.sh (<code>WALLET=0x... ./start-mining.sh</code>)</td></tr>
+<tr><td><a href="core-geth-scdo-linux-amd64">core-geth-scdo-linux-amd64</a></td><td>Linux x86-64, static binary (runs on old glibc, e.g. CentOS 8)</td></tr>
+<tr><td><a href="scdo-shard0-core-geth-darwin-arm64.tar.gz">scdo-shard0-core-geth-darwin-arm64.tar.gz</a></td><td>macOS Apple Silicon (M1/M2/M3/M4), macOS 11+: binary + genesis + start.sh + README. CGO-free cross-build, not notarized, <b>not yet test-run on a real Mac</b> (see README inside)</td></tr>
+<tr><td><a href="scdo-shard0-genesis.json">scdo-shard0-genesis.json</a></td><td>genesis (hash 0xbbb083…70cb12)</td></tr>
+<tr><td><a href="core-geth-scdo-dag-fix.patch">core-geth-scdo-dag-fix.patch</a></td><td>source patch used for the Linux build (ethash DAG cleanup underflow fix)</td></tr>
+<tr><td><a href="core-geth-scdo-darwin-nocgo.patch">core-geth-scdo-darwin-nocgo.patch</a></td><td>source patch used for the macOS build (DAG fix + CGO-free build split)</td></tr>
+<tr><td><a href="SHA256SUMS">SHA256SUMS</a></td><td>checksums</td></tr></table>
+<h2>Run (Linux)</h2>
+<pre>./core-geth-scdo-linux-amd64 --datadir ./scdo0 init scdo-shard0-genesis.json
+./core-geth-scdo-linux-amd64 --datadir ./scdo0 --networkid 5680 --port 30368 --syncmode full \
+  --bootnodes enode://1d2c370db7c419349e2313f20023f6b379f946990042b9b42df45cb56e4c3487df0d36c52cd81308fcdf312450f758a6213fcac21213e94a71af4a3c9392601f@82.223.19.88:30368 \
+  --http --http.addr 127.0.0.1 --http.port 8545 --http.api eth,net,web3</pre>
+<h2>Run (macOS Apple Silicon)</h2>
+<pre>tar xzf scdo-shard0-core-geth-darwin-arm64.tar.gz &amp;&amp; cd scdo-shard0-core-geth-darwin-arm64 &amp;&amp; ./start.sh</pre>
+<p>Bootnode: <code>enode://1d2c370db7c419349e2313f20023f6b379f946990042b9b42df45cb56e4c3487df0d36c52cd81308fcdf312450f758a6213fcac21213e94a71af4a3c9392601f@82.223.19.88:30368</code></p>
+<p>Public RPC: <code>https://scdoscan.io/rpc/0</code> · Mining guide: <a href="/mine/#gpu">/mine/</a> · Explorer: <a href="/">scdoscan.io</a></p>
+</body></html>

@@ -1,0 +1,230 @@
+diff --git a/consensus/ethash/ethash.go b/consensus/ethash/ethash.go
+index 978e6ee..98d3614 100644
+--- a/consensus/ethash/ethash.go
++++ b/consensus/ethash/ethash.go
+@@ -359,7 +359,7 @@ func (c *cache) generate(dir string, limit int, lock bool, test bool) {
+ 				// Else the file is unrecognized (unknown name format), leave it alone.
+ 				continue
+ 			}
+-			if e <= c.epoch-uint64(limit) || e > c.epoch+1 {
++			if (c.epoch >= uint64(limit) && e <= c.epoch-uint64(limit)) || e > c.epoch+1 { // SCDO patch: uint64 underflow fix
+ 				if err := os.Remove(file); err == nil {
+ 					logger.Debug("Deleted ethash cache file", "target.epoch", e, "file", file)
+ 				} else {
+@@ -472,7 +472,8 @@ func (d *dataset) generate(dir string, limit int, lock bool, test bool) {
+ 				// Else the file is unrecognized (unknown name format), leave it alone.
+ 				continue
+ 			}
+-			if e <= d.epoch-uint64(limit) || e > d.epoch+1 {
++			// SCDO patch 2026-09-28: avoid uint64 underflow for epoch < limit, which deleted the live epoch-0/1 DAG file
++			if (d.epoch >= uint64(limit) && e <= d.epoch-uint64(limit)) || e > d.epoch+1 {
+ 				if err := os.Remove(file); err == nil {
+ 					logger.Debug("Deleted ethash full file", "target.epoch", e, "file", file)
+ 				} else {
+diff --git a/consensus/lyra2/lyra2.go b/consensus/lyra2/lyra2.go
+index a17794f..9058fbb 100644
+--- a/consensus/lyra2/lyra2.go
++++ b/consensus/lyra2/lyra2.go
+@@ -1,20 +1,10 @@
+ package lyra2
+ 
+-/*
+-#cgo CFLAGS: -std=gnu99
+-#include "Lyra2.h"
+-#include <stdlib.h>
+-*/
+-import "C"
+ import (
+-	"encoding/binary"
+-	"math/big"
+ 	"math/rand"
+ 	"sync"
+ 	"time"
+-	"unsafe"
+ 
+-	"github.com/ethereum/go-ethereum/common"
+ 	"github.com/ethereum/go-ethereum/consensus"
+ 	"github.com/ethereum/go-ethereum/log"
+ 	"github.com/ethereum/go-ethereum/metrics"
+@@ -80,34 +70,6 @@ func NewTester(notify []string, noverify bool) *Lyra2 {
+ 	return lyra2
+ }
+ 
+-func (lyra2 *Lyra2) calcHash(headerBytes []byte, nonce uint64, tcost int) *big.Int {
+-	var lyra2_ctx unsafe.Pointer = C.LYRA2_create()
+-	result := lyra2.compute(lyra2_ctx, headerBytes, nonce, tcost)
+-	C.LYRA2_destroy(lyra2_ctx)
+-
+-	return result.Big()
+-}
+-
+-func bytesToHash(in unsafe.Pointer) common.Hash {
+-	return *(*common.Hash)(in)
+-}
+-
+-func (lyra2 *Lyra2) compute(ctx unsafe.Pointer, blockBytes []byte, nonce uint64, tcost int) common.Hash {
+-	binary.BigEndian.PutUint64(blockBytes[len(blockBytes)-8:], nonce)
+-
+-	var in unsafe.Pointer = C.CBytes(blockBytes)
+-	var out unsafe.Pointer = C.malloc(common.HashLength)
+-
+-	C.LYRA2(ctx, out, common.HashLength, in, C.int32_t(len(blockBytes)), C.int32_t(tcost))
+-
+-	hash := bytesToHash(out)
+-
+-	C.free(in)
+-	C.free(out)
+-
+-	return hash
+-}
+-
+ func (lyra2 *Lyra2) Close() error {
+ 	return nil
+ }
+diff --git a/core/vm/evm.go b/core/vm/evm.go
+index 6625fbf..3c600df 100644
+--- a/core/vm/evm.go
++++ b/core/vm/evm.go
+@@ -21,7 +21,6 @@ import (
+ 	"math/big"
+ 	"sync/atomic"
+ 
+-	"github.com/ethereum/evmc/v7/bindings/go/evmc"
+ 	"github.com/ethereum/go-ethereum/common"
+ 	"github.com/ethereum/go-ethereum/core/types"
+ 	"github.com/ethereum/go-ethereum/crypto"
+@@ -171,11 +170,11 @@ func NewEVM(blockCtx BlockContext, txCtx TxContext, statedb StateDB, chainConfig
+ 	// In some implementations, EWASM may be configured with a block number.
+ 	// In this implementation, the interpreter is configured globally instead.
+ 	if config.EWASMInterpreter != "" {
+-		evm.interpreters = append(evm.interpreters, &EVMC{ewasmModule, evm, evmc.CapabilityEWASM, false})
++		evm.interpreters = append(evm.interpreters, newEVMCInterpreter(evm, true))
+ 	}
+ 
+ 	if config.EVMInterpreter != "" {
+-		evm.interpreters = append(evm.interpreters, &EVMC{evmModule, evm, evmc.CapabilityEVM1, false})
++		evm.interpreters = append(evm.interpreters, newEVMCInterpreter(evm, false))
+ 	} else {
+ 		evm.interpreters = append(evm.interpreters, NewEVMInterpreter(evm))
+ 	}
+diff --git a/core/vm/evmc.go b/core/vm/evmc.go
+index ec338c4..5c5d7e5 100644
+--- a/core/vm/evmc.go
++++ b/core/vm/evmc.go
+@@ -1,3 +1,5 @@
++//go:build cgo
++
+ // Copyright 2019 The go-ethereum Authors
+ // This file is part of the go-ethereum library.
+ //
+@@ -425,3 +427,11 @@ func (evm *EVMC) CanRun(code []byte) bool {
+ 	}
+ 	return evm.cap == required
+ }
++
++// newEVMCInterpreter (SCDO build split): EVMC interpreters exist only in CGO builds.
++func newEVMCInterpreter(evm *EVM, ewasm bool) Interpreter {
++	if ewasm {
++		return &EVMC{ewasmModule, evm, evmc.CapabilityEWASM, false}
++	}
++	return &EVMC{evmModule, evm, evmc.CapabilityEVM1, false}
++}
+diff --git a/consensus/lyra2/lyra2_cgo.go b/consensus/lyra2/lyra2_cgo.go
+new file mode 100644
+index 0000000..6d6af8d
+--- /dev/null
++++ b/consensus/lyra2/lyra2_cgo.go
+@@ -0,0 +1,45 @@
++//go:build cgo
++
++package lyra2
++
++/*
++#cgo CFLAGS: -std=gnu99
++#include "Lyra2.h"
++#include <stdlib.h>
++*/
++import "C"
++import (
++	"encoding/binary"
++	"math/big"
++	"unsafe"
++
++	"github.com/ethereum/go-ethereum/common"
++)
++
++func (lyra2 *Lyra2) calcHash(headerBytes []byte, nonce uint64, tcost int) *big.Int {
++	var lyra2_ctx unsafe.Pointer = C.LYRA2_create()
++	result := lyra2.compute(lyra2_ctx, headerBytes, nonce, tcost)
++	C.LYRA2_destroy(lyra2_ctx)
++
++	return result.Big()
++}
++
++func bytesToHash(in unsafe.Pointer) common.Hash {
++	return *(*common.Hash)(in)
++}
++
++func (lyra2 *Lyra2) compute(ctx unsafe.Pointer, blockBytes []byte, nonce uint64, tcost int) common.Hash {
++	binary.BigEndian.PutUint64(blockBytes[len(blockBytes)-8:], nonce)
++
++	var in unsafe.Pointer = C.CBytes(blockBytes)
++	var out unsafe.Pointer = C.malloc(common.HashLength)
++
++	C.LYRA2(ctx, out, common.HashLength, in, C.int32_t(len(blockBytes)), C.int32_t(tcost))
++
++	hash := bytesToHash(out)
++
++	C.free(in)
++	C.free(out)
++
++	return hash
++}
+diff --git a/consensus/lyra2/lyra2_nocgo.go b/consensus/lyra2/lyra2_nocgo.go
+new file mode 100644
+index 0000000..83b477d
+--- /dev/null
++++ b/consensus/lyra2/lyra2_nocgo.go
+@@ -0,0 +1,18 @@
++//go:build !cgo
++
++// SCDO darwin/arm64 build (CGO_ENABLED=0): Lyra2 (MintMe) PoW hashing needs the C implementation.
++// It is not used by SCDO shard0 (Ethash); any Lyra2 seal fails verification in this build.
++package lyra2
++
++import (
++	"math/big"
++
++	"github.com/ethereum/go-ethereum/log"
++)
++
++var maxHash = new(big.Int).Sub(new(big.Int).Lsh(big.NewInt(1), 256), big.NewInt(1))
++
++func (lyra2 *Lyra2) calcHash(headerBytes []byte, nonce uint64, tcost int) *big.Int {
++	log.Error("Lyra2 PoW is not available in this CGO-disabled build")
++	return new(big.Int).Set(maxHash)
++}
+diff --git a/core/vm/evmc_nocgo.go b/core/vm/evmc_nocgo.go
+new file mode 100644
+index 0000000..763dd60
+--- /dev/null
++++ b/core/vm/evmc_nocgo.go
+@@ -0,0 +1,18 @@
++//go:build !cgo
++
++// SCDO darwin/arm64 build (CGO_ENABLED=0): external EVMC VMs (--vm.evm / --vm.ewasm) need cgo.
++// The built-in Go EVM (default) is unaffected.
++package vm
++
++import "github.com/ethereum/go-ethereum/log"
++
++func InitEVMCEVM(config string) {
++	log.Crit("EVMC (--vm.evm) is not supported in this CGO-disabled build")
++}
++func InitEVMCEwasm(config string) {
++	log.Crit("EVMC (--vm.ewasm) is not supported in this CGO-disabled build")
++}
++
++func newEVMCInterpreter(evm *EVM, ewasm bool) Interpreter {
++	panic("EVMC interpreters are not supported in this CGO-disabled build")
++}

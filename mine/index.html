@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mining &amp; Running a Node | SCDO Scan</title>
+<meta name="description" content="How SCDO is secured by proof-of-work mining and independent nodes: current status of shard0, legacy shards 1-4 guide, and node downloads.">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<style>
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:#0d1117;color:#c9d1d9;font-family:-apple-system,"Segoe UI",Roboto,"PingFang SC","Microsoft YaHei",sans-serif;line-height:1.6}
+a{color:#58a6ff;text-decoration:none}a:hover{text-decoration:underline}
+code{font-family:ui-monospace,Consolas,monospace;background:#1c2128;padding:1px 5px;border-radius:4px;font-size:12px;color:#3fb950}
+.topbar{background:#161b22;border-bottom:1px solid #30363d;display:flex;align-items:center;gap:24px;padding:12px 24px;flex-wrap:wrap}
+.topbar .logo{color:#58a6ff;font-size:18px;font-weight:700;line-height:1.4}
+.topbar .logo a.home{color:#58a6ff}
+.topbar .logo #nav-wallet{margin-left:16px;font-size:16px;font-weight:600;color:#4CAF50;vertical-align:middle}
+.topbar nav{flex:1}
+.topbar nav a{color:#c9d1d9;margin-right:16px;white-space:nowrap;display:inline-block}
+.topbar nav a.active{color:#58a6ff;font-weight:600}
+.lang{display:inline-flex;border:1px solid #30363d;border-radius:8px;overflow:hidden}
+.lang button{background:#0d1117;color:#8b949e;border:0;padding:5px 11px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit}
+.lang button.on{background:#1f6feb;color:#fff}
+.hero{background:linear-gradient(135deg,#0d1117 0%,#161b22 50%,#1a1f35 100%);border-bottom:2px solid #1f6feb;padding:34px 20px 28px;text-align:center}
+.hero h1{margin:0 0 8px;font-size:28px;font-weight:800;color:#e6edf3;line-height:1.25}
+.hero h1 .hl{color:#58a6ff}
+.hero p{margin:0 auto;max-width:720px;color:#8b949e;font-size:14px}
+.stats{display:flex;flex-wrap:wrap;justify-content:center;gap:10px;margin-top:18px}
+.stat{background:#161b22;border:1px solid #30363d;border-radius:10px;padding:10px 16px;min-width:130px}
+.stat .v{font-size:18px;font-weight:700;color:#3fb950;font-family:ui-monospace,Consolas,monospace}
+.stat .l{font-size:11px;color:#8b949e;text-transform:uppercase}
+.container{max-width:1000px;margin:0 auto;padding:22px 20px 8px}
+h2{margin:28px 0 12px;font-size:19px;color:#e6edf3;scroll-margin-top:12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.tag{font-size:10px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;padding:2px 8px;border-radius:10px;color:#fff}
+.tag.live{background:#238636}.tag.soon{background:#9e6a03}.tag.arch{background:#6e7681}.tag.ok{background:#238636}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.card{background:#161b22;border:1px solid #30363d;border-radius:10px;padding:16px 18px}
+.card h3{margin:0 0 8px;font-size:15px;color:#e6edf3;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.card p{margin:0 0 8px;font-size:13px}
+.card.feature{border-color:#238636;background:linear-gradient(180deg,#0f2417 0%,#161b22 60%)}
+.card.dashed{border-style:dashed;border-color:#9e6a03}
+ul.list{margin:0;padding-left:18px;font-size:13px}ul.list li{margin:6px 0}ul.list b{color:#e6edf3}
+.dl{list-style:none;margin:0;padding:0;font-size:13px}
+.dl li{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;padding:10px 0;border-bottom:1px solid #21262d}
+.dl li:last-child{border-bottom:0}
+.dl li span.d{color:#8b949e;font-size:12px;display:block}
+.btn{display:inline-block;border-radius:10px;padding:10px 16px;font-size:14px;font-weight:700;text-decoration:none!important;margin:4px 6px 0 0}
+.btn.green{background:#238636;color:#fff}.btn.sec{background:#0d1117;color:#e6edf3;border:1px solid #30363d}.btn.sec:hover{border-color:#58a6ff}
+.note{font-size:12px;color:#8b949e}
+.foot{text-align:center;padding:22px 16px 26px;margin-top:30px;border-top:1px solid #21262d;font-size:12px;color:#6e7681;line-height:1.8}
+.foot a{color:#8b949e}.foot a:hover{color:#58a6ff}
+body[data-lang="en"] .zh{display:none!important}
+body[data-lang="zh"] .en{display:none!important}
+@media (max-width:768px){
+  .topbar{gap:8px;padding:8px 12px}.topbar nav{order:3;flex-basis:100%}.topbar nav a{margin-right:10px;font-size:13px}
+  .hero{padding:24px 14px 20px}.hero h1{font-size:22px}
+  .container{padding:14px 12px 4px}.grid{grid-template-columns:1fr;gap:12px}.card{padding:14px}
+  .stat{min-width:0;flex:1 1 40%}
+}
+</style>
+</head>
+<body data-lang="en">
+<header class="topbar">
+  <div class="logo"><a class="home" href="/#/">SCDO Scan</a><a href="/wallet/?v=2" id="nav-wallet">Wallet</a></div>
+  <nav><a href="/#/">Home</a><a href="/start.html">Get Started</a><a href="/mine/" class="active" aria-current="page">Mining</a><a href="/compliance.html">Compliance</a></nav>
+  <div class="lang" role="group" aria-label="Language"><button type="button" data-set-lang="en" class="on">EN</button><button type="button" data-set-lang="zh">中文</button></div>
+</header>
+
+<section class="hero">
+  <h1><span class="en">Mining &amp; nodes: <span class="hl">securing the network</span></span><span class="zh">挖矿与节点：<span class="hl">守护网络安全</span></span></h1>
+  <p class="en">SCDO is a proof-of-work chain. Miners bundle transactions into blocks and make the chain's history expensive to rewrite; independent nodes check every block and serve the network. Both keep SCDO open and verifiable.</p>
+  <p class="zh">SCDO 是工作量证明（PoW）链。矿工把交易打包成区块，使链上历史难以被篡改；独立节点校验每一个区块并为网络提供服务。二者共同保证 SCDO 的开放与可验证。</p>
+  <div class="stats">
+    <div class="stat"><div class="v" id="s-h">-</div><div class="l"><span class="en">Shard0 block</span><span class="zh">Shard0 区块高度</span></div></div>
+    <div class="stat"><div class="v" id="s-bt">-</div><div class="l"><span class="en">Avg block time</span><span class="zh">平均出块时间</span></div></div>
+    <div class="stat"><div class="v">PoW</div><div class="l"><span class="en">Consensus</span><span class="zh">共识</span></div></div>
+  </div>
+</section>
+
+<main class="container">
+  <h2><span class="en">Current status</span><span class="zh">当前状态</span></h2>
+  <div class="grid">
+    <div class="card feature">
+      <h3>Shard0 <span class="en">(main chain)</span><span class="zh">（主链）</span> <span class="tag live">Live</span></h3>
+      <p class="en">Shard0 is the SCDO main chain: a real <b>Ethash proof-of-work</b> EVM chain (chain ID 5680) running on <b>core-geth</b>, the Ethereum Classic client. Anyone with a GPU can mine it and anyone can run a full node that verifies every block. See <a href="#gpu">Mine shard0 with a GPU</a>.</p>
+      <p class="zh">Shard0 是 SCDO 主链：运行在 <b>core-geth</b>（以太坊经典客户端）上的真实 <b>Ethash 工作量证明</b> EVM 链（Chain ID 5680）。任何人都可以用 GPU 挖矿，也可以运行校验每个区块的全节点。详见<a href="#gpu">用 GPU 挖 shard0</a>。</p>
+      <p class="en">You can already use shard0 today with MetaMask through the public RPC: <a href="/start.html">Get Started &rarr;</a></p>
+      <p class="zh">现在即可通过公共 RPC 用 MetaMask 使用 shard0：<a href="/start.html?lang=zh">新手入门 &rarr;</a></p>
+    </div>
+    <div class="card">
+      <h3><span class="en">Shards 1&ndash;4 (legacy)</span><span class="zh">Shard 1&ndash;4（旧链）</span> <span class="tag arch">Archived</span></h3>
+      <p class="en">The original go-scdo chains (ZPoW, CPU mining, addresses like <code>1S01&hellip;</code>) are archived legacy chains. Their history remains searchable on the explorer. The legacy software and setup guide stay available for people who want to run a legacy node.</p>
+      <p class="zh">最初的 go-scdo 链（ZPoW、CPU 挖矿，地址形如 <code>1S01&hellip;</code>）已归档为旧链，历史数据仍可在浏览器中查询。旧版软件与搭建指南继续提供，供希望运行旧链节点的用户使用。</p>
+      <a class="btn sec" href="/mine.html"><span class="en">Legacy node guide</span><span class="zh">旧链节点指南</span></a><a class="btn sec" href="/quickstart.html"><span class="en">Legacy one-command setup</span><span class="zh">旧链一键安装</span></a>
+    </div>
+  </div>
+
+  <h2 id="gpu"><span class="en">Mine shard0 with a GPU</span><span class="zh">用 GPU 挖 shard0</span></h2>
+  <div class="card">
+    <p class="en">Algorithm <b>Ethash</b> (same as pre-merge Ethereum, 30,000-block epochs, <b>not</b> etchash) &middot; chain ID / network ID <b>5680</b> &middot; P2P port <b>30368</b> &middot; block target ~13&nbsp;s &middot; epoch-0 DAG ≈1&nbsp;GB. You mine through <b>your own node</b>, so block rewards go to the address you choose.</p>
+    <p class="zh">算法 <b>Ethash</b>（与合并前的以太坊相同，每 30,000 块一个纪元，<b>不是</b> etchash）&middot; Chain ID / Network ID <b>5680</b> &middot; P2P 端口 <b>30368</b> &middot; 目标出块约 13 秒 &middot; 纪元 0 的 DAG 约 1&nbsp;GB。通过<b>你自己的节点</b>挖矿，出块奖励进入你指定的地址。</p>
+    <ol class="list en">
+      <li><b>Easiest &ndash; Windows + NVIDIA GPU</b> (RTX 20/30/40/50 series): download <a href="/downloads/shard0/scdo-shard0-gpu-miner-windows-amd64.zip">scdo-shard0-gpu-miner-windows-amd64.zip</a>, unzip to e.g. <code>C:\scdo-miner</code>, add that folder as a Windows Defender exclusion (every GPU miner is flagged as a &ldquo;potentially unwanted app&rdquo;), open <code>start-mining.bat</code> in Notepad, set <code>set WALLET=0x&hellip;</code> to your address and double-click it. It starts a local core-geth node (rewards to your address) and a small stratum proxy, downloads the NVIDIA miner <a href="https://github.com/rigelminer/rigel/releases/tag/1.23.2" rel="noopener">Rigel 1.23.2</a> from its official release (SHA256-checked; closed source, 0.7% dev fee) and starts mining once the node has synced. Linux: <a href="/downloads/shard0/scdo-shard0-gpu-miner-linux-amd64.tar.gz">scdo-shard0-gpu-miner-linux-amd64.tar.gz</a>, <code>WALLET=0x&hellip; ./start-mining.sh</code>.</li>
+      <li><b>Manual / other miners</b>: initialise once with <code>./core-geth-scdo-linux-amd64 --datadir ./scdo0 init scdo-shard0-genesis.json</code>, run the node <b>without</b> <code>--mine</code>:<br><code style="word-break:break-all">./core-geth-scdo-linux-amd64 --datadir ./scdo0 --networkid 5680 --port 30368 --syncmode full --bootnodes enode://1d2c370db7c419349e2313f20023f6b379f946990042b9b42df45cb56e4c3487df0d36c52cd81308fcdf312450f758a6213fcac21213e94a71af4a3c9392601f@82.223.19.88:30368 --http --http.addr 127.0.0.1 --http.port 8545 --http.api eth,net,web3,miner --miner.etherbase 0xYOUR_ADDRESS</code><br>then the proxy from the package, which starts getwork mining only after the node has synced:<br><code style="word-break:break-all">./scdo-stratum -rpc http://127.0.0.1:8545 -listen 127.0.0.1:3333 -autostart -ref-rpc https://scdoscan.io/rpc/0</code><br>and point any Ethash stratum miner at <code>127.0.0.1:3333</code>, e.g. <code>rigel -a ethash -o ethproxy+tcp://127.0.0.1:3333 -u 0xYOUR_ADDRESS</code> or <code>lolMiner --algo ETHASH --pool 127.0.0.1:3333 --user 0xYOUR_ADDRESS --ethstratum ETHPROXY</code>.</li>
+      <li>Do not mine before your node has synced: a fresh node would otherwise build its own chain from the genesis block. getwork miners such as ethminer can still use <code>http://127.0.0.1:8545</code>, but ethminer&rsquo;s last release (2019) predates RTX 40/50 cards.</li>
+    </ol>
+    <ol class="list zh">
+      <li><b>最简单：Windows + NVIDIA 显卡</b>（RTX 20/30/40/50 系列）：下载 <a href="/downloads/shard0/scdo-shard0-gpu-miner-windows-amd64.zip">scdo-shard0-gpu-miner-windows-amd64.zip</a>，解压到例如 <code>C:\scdo-miner</code>，在 Windows Defender 中把该文件夹加入排除项（所有 GPU 挖矿软件都会被标记为“可能不需要的应用”），用记事本打开 <code>start-mining.bat</code>，把 <code>set WALLET=0x&hellip;</code> 改成你的地址，然后双击运行。它会启动本地 core-geth 节点（奖励进入你的地址）和一个小型 Stratum 代理，从官方发布页下载 NVIDIA 挖矿软件 <a href="https://github.com/rigelminer/rigel/releases/tag/1.23.2" rel="noopener">Rigel 1.23.2</a>（校验 SHA256；闭源，开发者费 0.7%），节点同步完成后自动开始挖矿。Linux：<a href="/downloads/shard0/scdo-shard0-gpu-miner-linux-amd64.tar.gz">scdo-shard0-gpu-miner-linux-amd64.tar.gz</a>，运行 <code>WALLET=0x&hellip; ./start-mining.sh</code>。</li>
+      <li><b>手动 / 其他挖矿软件</b>：首次初始化 <code>./core-geth-scdo-linux-amd64 --datadir ./scdo0 init scdo-shard0-genesis.json</code>，运行节点（<b>不要</b>加 <code>--mine</code>）：<br><code style="word-break:break-all">./core-geth-scdo-linux-amd64 --datadir ./scdo0 --networkid 5680 --port 30368 --syncmode full --bootnodes enode://1d2c370db7c419349e2313f20023f6b379f946990042b9b42df45cb56e4c3487df0d36c52cd81308fcdf312450f758a6213fcac21213e94a71af4a3c9392601f@82.223.19.88:30368 --http --http.addr 127.0.0.1 --http.port 8545 --http.api eth,net,web3,miner --miner.etherbase 0xYOUR_ADDRESS</code><br>再运行安装包里的代理（节点同步完成后才开始 getwork 挖矿）：<br><code style="word-break:break-all">./scdo-stratum -rpc http://127.0.0.1:8545 -listen 127.0.0.1:3333 -autostart -ref-rpc https://scdoscan.io/rpc/0</code><br>然后把任意 Ethash Stratum 挖矿软件指向 <code>127.0.0.1:3333</code>，例如 <code>rigel -a ethash -o ethproxy+tcp://127.0.0.1:3333 -u 0xYOUR_ADDRESS</code> 或 <code>lolMiner --algo ETHASH --pool 127.0.0.1:3333 --user 0xYOUR_ADDRESS --ethstratum ETHPROXY</code>。</li>
+      <li>节点同步完成前不要挖矿，否则新节点会从创世块开始自建一条链。ethminer 等 getwork 挖矿软件仍可直接连接 <code>http://127.0.0.1:8545</code>，但 ethminer 最后一次发布是 2019 年，早于 RTX 40/50 系列显卡。</li>
+    </ol>
+    <p class="note en">Each block pays the miner the standard Ethash block reward (2 SCDO) plus fees. This is a network-security function; SCDO makes no promise of earnings (see below).</p>
+    <p class="note zh">每个区块按标准 Ethash 规则向矿工发放区块奖励（2 SCDO）及手续费。挖矿的目的是保障网络安全，SCDO 不作任何收益承诺（见下文）。</p>
+  </div>
+
+  <h2><span class="en">Before you start</span><span class="zh">开始之前</span></h2>
+  <div class="card">
+    <ul class="list en">
+      <li>You need a PC or server (Windows / Linux / macOS) that can stay online; phones are not suitable.</li>
+      <li>Mining uses electricity and hardware. Its purpose is to secure the network. <b>SCDO makes no promise of earnings, rewards or returns</b> from mining or running a node.</li>
+      <li>There is no mining pool: you mine solo against your own node. Only download node software from scdoscan.io (checksums provided) or build core-geth yourself, and never enter a wallet recovery phrase into mining or node software.</li>
+    </ul>
+    <ul class="list zh">
+      <li>需要一台可长期在线的电脑或服务器（Windows / Linux / macOS），手机不适用。</li>
+      <li>挖矿会消耗电力与硬件，其目的在于保障网络安全。<b>SCDO 不对挖矿或运行节点作出任何收益、奖励或回报承诺。</b></li>
+      <li>目前没有矿池：你通过自己的节点单独挖矿。请只从 scdoscan.io 下载节点软件（提供校验值）或自行编译 core-geth，切勿在挖矿或节点软件中输入钱包助记词。</li>
+    </ul>
+  </div>
+
+  <h2 id="downloads"><span class="en">Downloads</span><span class="zh">下载</span></h2>
+  <div class="card">
+    <ul class="dl">
+      <li><div><b>SCDO shard0 node</b> <span class="d en">core-geth v1.12.23, Linux x86_64 static build: <a href="/downloads/shard0/core-geth-scdo-linux-amd64">core-geth-scdo-linux-amd64</a> &middot; <a href="/downloads/shard0/scdo-shard0-genesis.json">genesis</a> &middot; <a href="/downloads/shard0/core-geth-scdo-dag-fix.patch">patch</a> &middot; <a href="/downloads/shard0/SHA256SUMS">SHA256SUMS</a>. Windows: included in the GPU mining package below; macOS Apple Silicon (not yet tested on a Mac): <a href="/downloads/shard0/">downloads</a>.</span><span class="d zh">core-geth v1.12.23，Linux x86_64 静态版：<a href="/downloads/shard0/core-geth-scdo-linux-amd64">core-geth-scdo-linux-amd64</a> &middot; <a href="/downloads/shard0/scdo-shard0-genesis.json">创世文件</a> &middot; <a href="/downloads/shard0/core-geth-scdo-dag-fix.patch">补丁</a> &middot; <a href="/downloads/shard0/SHA256SUMS">SHA256SUMS</a>。Windows：已包含在下方 GPU 挖矿包中；macOS Apple Silicon（尚未在真机测试）：见<a href="/downloads/shard0/">下载目录</a>。</span></div><span class="tag ok"><span class="en">Available</span><span class="zh">可下载</span></span></li>
+      <li><div><b>GPU mining package</b> <span class="d en">Windows / Linux, NVIDIA: <a href="/downloads/shard0/scdo-shard0-gpu-miner-windows-amd64.zip">Windows zip</a> &middot; <a href="/downloads/shard0/scdo-shard0-gpu-miner-linux-amd64.tar.gz">Linux tar.gz</a> &middot; <a href="/downloads/shard0/SHA256SUMS">SHA256SUMS</a>. Own node + scdo-stratum proxy; the miner (<a href="https://github.com/rigelminer/rigel" rel="noopener">Rigel</a>, third-party) is downloaded from its official release. See <a href="#gpu">instructions</a>.</span><span class="d zh">Windows / Linux，NVIDIA：<a href="/downloads/shard0/scdo-shard0-gpu-miner-windows-amd64.zip">Windows 压缩包</a> &middot; <a href="/downloads/shard0/scdo-shard0-gpu-miner-linux-amd64.tar.gz">Linux 压缩包</a> &middot; <a href="/downloads/shard0/SHA256SUMS">SHA256SUMS</a>。自带节点与 scdo-stratum 代理；挖矿软件（第三方 <a href="https://github.com/rigelminer/rigel" rel="noopener">Rigel</a>）从其官方发布页下载，见<a href="#gpu">说明</a>。</span></div><span class="tag ok"><span class="en">Available</span><span class="zh">可下载</span></span></li>
+      <li><div><b>Legacy go-scdo (shards 1&ndash;4)</b> <span class="d en">Linux x86_64 binaries: <a href="/downloads/scdo-node-linux-amd64">scdo-node</a> &middot; <a href="/downloads/scdo-client-linux-amd64">scdo-client</a> &middot; <a href="/downloads/SHA256SUMS">SHA256SUMS</a></span><span class="d zh">Linux x86_64 程序：<a href="/downloads/scdo-node-linux-amd64">scdo-node</a> &middot; <a href="/downloads/scdo-client-linux-amd64">scdo-client</a> &middot; <a href="/downloads/SHA256SUMS">SHA256SUMS</a></span></div><span class="tag ok"><span class="en">Available</span><span class="zh">可下载</span></span></li>
+    </ul>
+    <p class="note en" style="margin:10px 0 0">Verify downloads with <code>sha256sum -c SHA256SUMS</code>. This list is updated as new packages are published.</p>
+    <p class="note zh" style="margin:10px 0 0">下载后可用 <code>sha256sum -c SHA256SUMS</code> 校验。新安装包发布后本列表会同步更新。</p>
+  </div>
+
+  <h2><span class="en">Compliance</span><span class="zh">合规</span></h2>
+  <div class="card">
+    <p class="en">9Y9 PTY LTD is registered with AUSTRAC as a digital currency exchange provider (DCE100714503-001). See the <a href="/compliance.html">Compliance page</a>. No remittance service is offered at this time. Nothing on this page is financial or investment advice.</p>
+    <p class="zh">9Y9 PTY LTD 已在 AUSTRAC 登记为数字货币兑换服务提供商（DCE100714503-001），详见<a href="/compliance.html">合规页面</a>。目前不提供汇款服务。本页内容不构成任何财务或投资建议。</p>
+  </div>
+</main>
+
+<footer class="foot">
+  <div><a href="/compliance.html">9Y9 PTY LTD is registered with AUSTRAC as a digital currency exchange provider (DCE100714503-001)</a></div>
+  <div><a href="/#/">Explorer</a> &middot; <a href="/start.html">Get Started</a> &middot; <a href="/mine/">Mining &amp; Nodes</a> &middot; <a href="/compliance.html">Compliance</a></div>
+</footer>
+<script>
+(function(){
+  function setLang(l){
+    l=l==='zh'?'zh':'en';document.body.setAttribute('data-lang',l);document.documentElement.lang=l==='zh'?'zh-CN':'en';
+    Array.prototype.forEach.call(document.querySelectorAll('[data-set-lang]'),function(b){b.classList.toggle('on',b.getAttribute('data-set-lang')===l);});
+    try{localStorage.setItem('scdoLang',l);}catch(e){}
+  }
+  var q=(location.search.match(/[?&]lang=(zh|en)/)||[])[1],saved=null;try{saved=localStorage.getItem('scdoLang');}catch(e){}
+  setLang(q||saved||'en');
+  Array.prototype.forEach.call(document.querySelectorAll('[data-set-lang]'),function(b){b.addEventListener('click',function(){setLang(b.getAttribute('data-set-lang'));});});
+  fetch('/api/v1/network/summary',{cache:'no-store'}).then(function(r){return r.json();}).then(function(d){
+    var s=(d.data||[]).filter(function(x){return x.id===0;})[0];if(!s)return;
+    document.getElementById('s-h').textContent='#'+Number(s.height).toLocaleString();
+    if(s.avgBlockTime)document.getElementById('s-bt').textContent=Number(s.avgBlockTime).toFixed(1)+'s';
+  }).catch(function(){});
+})();
+</script>
+</body>
+</html>

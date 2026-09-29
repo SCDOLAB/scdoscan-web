@@ -1,0 +1,120 @@
+{
+ "_meta": {
+  "version": 2,
+  "updated": "2026-09-29",
+  "chain": "SCDO shard0 (core-geth Ethash PoW, chainId 5680)",
+  "note": "Display labels for scdoscan.io. Keys are lowercase 0x addresses. TEST/demo entries have no monetary value. 'txTags' tags groups of transactions (not addresses); tagged txs are hidden from default lists but stay queryable."
+ },
+ "labels": {
+  "0xe6422826efc630634e959f5da7f8163fbdb9f8d2": {
+   "label": "Demo OTC Desk (token owner)",
+   "type": "eoa",
+   "tags": [
+    "test",
+    "demo"
+   ],
+   "note": "Deployer/owner of the tUSDT and tAUD test tokens."
+  },
+  "0xe587dc5771bdf6521395107e52f7fecd7446b841": {
+   "label": "Demo Customer A (Sender AU)",
+   "type": "eoa",
+   "tags": [
+    "test",
+    "demo"
+   ],
+   "note": "Test address for the OTC/remittance demo."
+  },
+  "0x1f79c58b13f17d833b77860a908f49d2c3c42a40": {
+   "label": "Demo Customer B (Payout Agent)",
+   "type": "eoa",
+   "tags": [
+    "test",
+    "demo"
+   ],
+   "note": "Test address for the OTC/remittance demo."
+  },
+  "0xb51199e09c98d0a797629519a049db7954f04381": {
+   "label": "Shard0 Miner (coinbase)",
+   "type": "miner",
+   "tags": [
+    "system"
+   ],
+   "note": "Etherbase (block reward + fee recipient) of the SCDO core-geth shard0 miner on 82.223.19.88."
+  },
+  "0xb042c1833687d05cba414f04ec4013744ddeadcc": {
+   "label": "tUSDT Test Token",
+   "type": "contract",
+   "tags": [
+    "test",
+    "no-value"
+   ],
+   "note": "SCDO Test USD (TEST ONLY - NO VALUE), 6 decimals, owner mint/burn, pausable, freeze blocklist. Not affiliated with Tether; not issued to the public. Deployed on core-geth PoW shard0 (chainId 5680).",
+   "symbol": "tUSDT",
+   "decimals": 6
+  },
+  "0x13c22e6944eeeca58768dcaaa03dd485fb8c9ad0": {
+   "label": "tAUD Test Token",
+   "type": "contract",
+   "tags": [
+    "test",
+    "no-value"
+   ],
+   "note": "SCDO Test AUD (TEST ONLY - NO VALUE), 2 decimals. Internal settlement demo, not issued to the public. Deployed on core-geth PoW shard0 (chainId 5680).",
+   "symbol": "tAUD",
+   "decimals": 2
+  },
+  "0x8fdd7095b4eec841d6aea7b855fa2954d74a083e": {
+   "label": "tUSDT Test Token (superseded run 1)",
+   "type": "contract",
+   "tags": [
+    "test",
+    "no-value",
+    "superseded"
+   ],
+   "note": "First tUSDT demo deployment on the new chain; its disclaimer text still said chainId 568, so it was redeployed as 0xb042c183... Supply 0.",
+   "symbol": "tUSDT",
+   "decimals": 6
+  },
+  "0x42c4854a51127f2d9d770f0d4aeca0683f72c0e4": {
+   "label": "Shard0 Faucet",
+   "type": "eoa",
+   "tags": [
+    "system",
+    "faucet",
+    "load-test-sender"
+   ],
+   "note": "Sends 0.01 SCDO per claim via https://scdoscan.io/rpc/0/faucet (1 per address per 24h, 1 per IP per hour). Also the sender of the 2026-09-28 load test (39,377 1-wei self-transfers, blocks 3430-3489, tagged 'Load test' and hidden from default lists)."
+  }
+ },
+ "notes": {
+  "faucet": "The shard0 faucet sends real signed transactions from 0x42c4854a51127f2d9d770f0d4aeca0683f72c0e4 (0.01 SCDO per claim).",
+  "loadtest": "Load-test txs are tagged by the shard0 indexer (field tag='loadtest'); see txTags.loadtest and https://scdoscan.io/loadtest.html."
+ },
+ "txTags": {
+  "loadtest": {
+   "label": "Load test",
+   "description": "Stepped TPS load test, 2026-09-28 23:22-23:33 UTC+8: 39,377 EIP-1559 self-transfers of 1 wei (21,000 gas) from the shard0 faucet to itself. Fees (~0.0085 SCDO) went to our own miner; no funds were created. Hidden from default transaction lists; still indexed and queryable.",
+   "rule": {
+    "from": "0x42c4854a51127f2d9d770f0d4aeca0683f72c0e4",
+    "to": "0x42c4854a51127f2d9d770f0d4aeca0683f72c0e4",
+    "value": "0x1",
+    "inputBytes": 0,
+    "blockRange": [
+     3400,
+     3500
+    ]
+   },
+   "observedBlocks": [
+    3430,
+    3489
+   ],
+   "count": 39377,
+   "query": {
+    "all": "/enhance/shard0/txs?loadtest=1",
+    "faucet": "/enhance/shard0/address_txs?addr=0x42c4854a51127f2d9d770f0d4aeca0683f72c0e4&loadtest=1",
+    "single": "/enhance/shard0/tx?hash=<txhash>"
+   },
+   "report": "/loadtest.html"
+  }
+ }
+}

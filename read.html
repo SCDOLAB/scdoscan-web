@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="zh"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Contract - SCDOT</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#0d1117;color:#e6edf3;font-family:-apple-system,sans-serif;padding:12px;max-width:480px;margin:0 auto}
+h1{color:#58a6ff;font-size:18px;margin:12px 0}
+.card{background:#161b22;border:1px solid #30363d;border-radius:12px;padding:14px;margin:10px 0}
+.fn-row{padding:10px 0;border-bottom:1px solid #21262d}
+.fn-name{font-family:monospace;font-size:13px;color:#79c0ff}
+.result{font-size:12px;color:#3fb950;margin-top:4px;font-family:monospace;word-break:break-all}
+button{background:#238636;color:white;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;font-size:12px;margin-top:4px}
+pre{background:#0d1117;padding:10px;border-radius:6px;font-size:11px;overflow-x:auto;max-height:300px;overflow-y:auto;color:#8b949e;white-space:pre-wrap}
+.badge{background:#238636;color:white;padding:2px 8px;border-radius:10px;font-size:11px}
+</style></head><body>
+<h1>Contract <span class="badge">Verified</span></h1>
+<div class="card" style="font-size:12px;color:#8b949e">
+SCDOT Token<br><span style="font-family:monospace">1S01b0c7fc...0002</span>
+</div>
+<div class="card">
+<b>Read Contract</b>
+<div class="fn-row"><div class="fn-name">name()</div><button onclick="call('0x06fdde03','name')">Query</button><div class="result" id="name"></div></div>
+<div class="fn-row"><div class="fn-name">symbol()</div><button onclick="call('0x95d89b41','symbol')">Query</button><div class="result" id="symbol"></div></div>
+<div class="fn-row"><div class="fn-name">totalSupply()</div><button onclick="call('0x18160ddd','supply')">Query</button><div class="result" id="supply"></div></div>
+<div class="fn-row"><div class="fn-name">getPrice() [AMM]</div><button onclick="callAmm('0x98d5fdca','price')">Query</button><div class="result" id="price"></div></div>
+</div>
+<div class="card"><b>Source Code</b><pre id="src">Loading...</pre></div>
+<script>
+const NODE="http://74.208.207.184:8037";
+const TOKEN="1S01b0c7fc67e306be07453bab4e1854bc833b0002";
+const AMM="1S0146543ef8ea2eaec816d6c20cd330a71e920032";
+async function rpc(to,data){
+  const r=await fetch(NODE,{method:"POST",headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({jsonrpc:"2.0",method:"scdo_call",params:[to,data,"latest"],id:1})});
+  return (await r.json()).result?.result||"0x0";
+}
+async function call(sel,id){
+  let r=await rpc(TOKEN,sel);
+  if(id==="name"||id==="symbol"){
+    let hex=r.replace(/^0x/,"");
+    let len=parseInt(hex.substr(64,64),16);
+    let s="";for(let i=0;i<len;i++)s+=String.fromCharCode(parseInt(hex.substr(128+i*2,2),16));
+    document.getElementById(id).textContent=s;
+  } else document.getElementById(id).textContent=(parseInt(r,16)/1e18).toLocaleString();
+}
+async function callAmm(sel,id){
+  let r=await rpc(AMM,sel);
+  let hex=r.replace(/^0x/,"");
+  let s=parseInt(hex.substr(0,64),16),t=parseInt(hex.substr(64,64),16);
+  document.getElementById(id).textContent=(s/1e8).toFixed(4)+" SCDO / "+(t/1e18).toFixed(2)+" SCDOT";
+}
+fetch('/api/contract/source').then(r=>r.json()).then(d=>{
+  document.getElementById('src').textContent=d.token;
+});
+</script></body></html>

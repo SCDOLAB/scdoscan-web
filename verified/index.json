@@ -1,0 +1,19 @@
+{
+ "chainId": 5680,
+ "contracts": {
+  "0xb042c1833687d05cba414f04ec4013744ddeadcc": {
+   "contractName": "SCDOTestUSD",
+   "compiler": "solc 0.8.24+commit.e11b9ed9.Linux.g++",
+   "match": "full",
+   "verifiedAt": "2026-09-28T15:52:44Z",
+   "codeSha256": "f80a09ccec87a7d9db5c78154d9624392a4fb2adba2058f7bdbcf8cad1d98e54"
+  },
+  "0x13c22e6944eeeca58768dcaaa03dd485fb8c9ad0": {
+   "contractName": "SCDOTestAUD",
+   "compiler": "solc 0.8.24+commit.e11b9ed9.Linux.g++",
+   "match": "full",
+   "verifiedAt": "2026-09-28T15:52:46Z",
+   "codeSha256": "3102bd74cc097ca587d89ecc605f40bc4aa444cc3281f7fb4e1f0d5fda3dc904"
+  }
+ }
+}

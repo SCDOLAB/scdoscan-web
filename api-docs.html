@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html><head><title>SCDO Scan API Documentation</title>
+<style>
+body{font-family:monospace;max-width:900px;margin:40px auto;background:#0d1117;color:#c9d1d9;padding:20px}
+h1{color:#58a6ff}h2{color:#3fb950;margin-top:30px}
+table{width:100%;border-collapse:collapse;margin:10px 0}
+td,th{border:1px solid #30363d;padding:8px;text-align:left}
+th{background:#161b22;color:#8b949e}
+code{background:#161b22;padding:2px 6px;border-radius:4px;color:#a5d6ff}
+.method{color:#f85149;font-weight:bold}
+</style></head><body>
+<h1>SCDO Scan API</h1>
+<p>Base URL: <code>https://api.scdoscan.io/api/v1</code></p>
+
+<h2>Statistics</h2>
+<table><tr><th>Method</th><th>Endpoint</th><th>Description</th></tr>
+<tr><td class="method">GET</td><td><code>/blockcount</code></td><td>Total blocks across all shards</td></tr>
+<tr><td class="method">GET</td><td><code>/txcount</code></td><td>Total transactions</td></tr>
+<tr><td class="method">GET</td><td><code>/accountcount</code></td><td>Total accounts</td></tr>
+<tr><td class="method">GET</td><td><code>/Avegas</code></td><td>Average gas price</td></tr>
+<tr><td class="method">GET</td><td><code>/blockTxsTps?times=1</code></td><td>Transactions per second</td></tr>
+<tr><td class="method">GET</td><td><code>/pendingtxs?page=1&size=10</code></td><td>Pending transactions</td></tr>
+</table>
+
+<h2>Blocks</h2>
+<table><tr><th>Method</th><th>Endpoint</th><th>Description</th></tr>
+<tr><td class="method">GET</td><td><code>/blocks?p=1&ps=20&s=1</code></td><td>Block list (p=page, ps=pageSize, s=shard)</td></tr>
+<tr><td class="method">GET</td><td><code>/block?hash=0x...</code></td><td>Block detail by hash</td></tr>
+<tr><td class="method">GET</td><td><code>/block?height=12345</code></td><td>Block detail by height</td></tr>
+</table>
+
+<h2>Transactions</h2>
+<table><tr><th>Method</th><th>Endpoint</th><th>Description</th></tr>
+<tr><td class="method">GET</td><td><code>/txs?p=1&ps=25</code></td><td>Transaction list</td></tr>
+<tr><td class="method">GET</td><td><code>/tx?txhash=0x...</code></td><td>Transaction detail</td></tr>
+</table>
+
+<h2>Accounts</h2>
+<table><tr><th>Method</th><th>Endpoint</th><th>Description</th></tr>
+<tr><td class="method">GET</td><td><code>/accounts?size=20</code></td><td>Top accounts by balance</td></tr>
+<tr><td class="method">GET</td><td><code>/account?address=1S...</code></td><td>Account detail</td></tr>
+<tr><td class="method">GET</td><td><code>/accountSrc20?address=1S...</code></td><td>SRC-20 token holdings</td></tr>
+</table>
+
+<h2>Charts</h2>
+<table><tr><th>Method</th><th>Endpoint</th><th>Description</th></tr>
+<tr><td class="method">GET</td><td><code>/chart/difficulty</code></td><td>Network difficulty over time</td></tr>
+<tr><td class="method">GET</td><td><code>/chart/hashrate</code></td><td>Network hashrate</td></tr>
+<tr><td class="method">GET</td><td><code>/chart/blocktime</code></td><td>Average block time</td></tr>
+</table>
+
+<h2>Tokens (SRC-20)</h2>
+<table><tr><th>Method</th><th>Endpoint</th><th>Description</th></tr>
+<tr><td class="method">GET</td><td><code>/tokens</code></td><td>Token list</td></tr>
+<tr><td class="method">GET</td><td><code>/token?contract=1S...</code></td><td>Token detail</td></tr>
+</table>
+</body></html>

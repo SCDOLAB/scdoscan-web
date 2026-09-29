@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SCDO Nodes · Online network nodes</title>
+<link rel="icon" href="/favicon.svg">
+<style>
+:root{--bg:#0b0f17;--card:#131a26;--line:#223047;--txt:#dbe4f0;--mut:#8394ad;--acc:#4da3ff;--ok:#2ecc71;--warn:#f1c40f;--bad:#e74c3c}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--txt);font:14px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,"PingFang SC","Microsoft YaHei",sans-serif}
+a{color:var(--acc);text-decoration:none}a:hover{text-decoration:underline}
+header{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;padding:16px 24px;border-bottom:1px solid var(--line)}
+header h1{font-size:20px;margin:0}header nav a{margin-left:16px}
+main{max-width:1200px;margin:0 auto;padding:20px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:18px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+.card .k{color:var(--mut);font-size:12px;text-transform:uppercase;letter-spacing:.04em}.card .v{font-size:22px;font-weight:600;margin-top:2px}
+.card .s{color:var(--mut);font-size:12px}
+.bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:8px 0 12px}
+select,input{background:var(--card);color:var(--txt);border:1px solid var(--line);border-radius:6px;padding:6px 8px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}.chip{background:var(--card);border:1px solid var(--line);border-radius:999px;padding:3px 10px;font-size:12px;color:var(--mut)}
+.chip b{color:var(--txt)}
+.tw{overflow-x:auto;background:var(--card);border:1px solid var(--line);border-radius:10px}
+table{width:100%;border-collapse:collapse;min-width:760px}th,td{padding:8px 10px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}
+th{color:var(--mut);font-weight:500;font-size:12px;text-transform:uppercase;cursor:pointer;user-select:none}tr:last-child td{border-bottom:0}
+td.num{font-variant-numeric:tabular-nums}.dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px}
+.ok{color:var(--ok)}.warn{color:var(--warn)}.bad{color:var(--bad)}.mut{color:var(--mut)}
+.tag{font-size:11px;padding:1px 7px;border-radius:4px;border:1px solid var(--line);color:var(--mut)}.tag.b{color:var(--acc);border-color:#2a4d77}
+footer{color:var(--mut);font-size:12px;margin:18px 0 30px}.err{background:#3a1717;border:1px solid #6b2626;padding:10px;border-radius:8px;display:none}
+</style>
+</head>
+<body>
+<header>
+  <h1>SCDO Network Nodes <span class="mut" style="font-size:14px;font-weight:400">· 在线节点</span></h1>
+  <nav><a href="/">Explorer</a><a href="/downloads/node/">Run a node / 运行节点</a><a href="/nodes.json">nodes.json</a></nav>
+</header>
+<main>
+  <div id="err" class="err">Could not load nodes.json.</div>
+  <div class="cards" id="cards"></div>
+  <div class="chips" id="countries"></div>
+  <div class="bar">
+    <label>Shard <select id="fShard"><option value="">All</option><option>1</option><option>2</option><option>3</option><option>4</option></select></label>
+    <label>Type <select id="fRole"><option value="">All</option><option value="bootstrap">Bootstrap</option><option value="seed">Seed</option><option value="peer">Peer</option></select></label>
+    <label><input type="checkbox" id="fOnline" checked> Online only</label>
+    <input id="fText" placeholder="Filter country / IP…">
+    <span class="mut" id="upd"></span>
+  </div>
+  <div class="tw"><table>
+    <thead><tr>
+      <th data-k="online">Status</th><th data-k="shard">Shard</th><th data-k="role">Type</th><th data-k="ip">Address</th>
+      <th data-k="height">Height</th><th data-k="synced">Sync</th><th data-k="reachable">P2P reachable</th><th data-k="country">Location</th><th data-k="last_seen">Last seen</th>
+    </tr></thead>
+    <tbody id="rows"></tbody>
+  </table></div>
+  <footer>
+    Refreshed every 5 minutes. Bootstrap and seed nodes are probed directly; “peer” nodes are discovered from the bootstrap nodes’ peer lists
+    (last IP octet hidden, kept for 24 h). “P2P reachable” = the shard’s P2P port accepts inbound connections. Location is approximate (ip-api.com).<br>
+    每 5 分钟刷新。引导/种子节点直接探测；“peer” 节点来自引导节点的对等列表（隐藏 IP 末段，保留 24 小时）。位置信息仅供参考。
+    · <a href="/downloads/node/">Download the node / 下载节点</a>
+  </footer>
+</main>
+<script>
+(function(){
+  var data=null, sortK='shard', sortDir=1;
+  function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+  function flag(cc){if(!cc||cc.length!==2)return'';return String.fromCodePoint.apply(null,cc.toUpperCase().split('').map(function(c){return 127397+c.charCodeAt(0)}))}
+  function ago(t){if(!t)return'—';var s=Math.max(0,Math.round(Date.now()/1000-t));if(s<90)return'just now';if(s<5400)return Math.round(s/60)+' min ago';return Math.round(s/3600)+' h ago'}
+  function fmt(n){return n==null?'—':Number(n).toLocaleString('en-US')}
+  function render(){
+    if(!data)return;
+    var fs=document.getElementById('fShard').value, fr=document.getElementById('fRole').value,
+        fo=document.getElementById('fOnline').checked, ft=document.getElementById('fText').value.toLowerCase();
+    var list=data.nodes.filter(function(n){
+      if(fs&&String(n.shard)!==fs)return false; if(fr&&n.role!==fr)return false; if(fo&&!n.online)return false;
+      if(ft&&((n.ip||'')+' '+(n.country||'')+' '+(n.city||'')+' '+(n.country_code||'')).toLowerCase().indexOf(ft)<0)return false; return true});
+    list.sort(function(a,b){var x=a[sortK],y=b[sortK];if(x==null)x=-Infinity;if(y==null)y=-Infinity;if(typeof x==='boolean'){x=+x;y=+y}
+      return (x<y?-1:x>y?1:(a.shard-b.shard)||(((b.height||0)-(a.height||0))))*sortDir});
+    var tips=data.tips||{};
+    document.getElementById('rows').innerHTML=list.map(function(n){
+      var tip=tips[n.shard], sync;
+      if(n.height==null) sync='<span class="mut">unknown</span>';
+      else if(n.synced) sync='<span class="ok">synced</span>';
+      else sync='<span class="warn">'+(tip?(Math.floor(n.height/tip*1000)/10)+'%':'syncing')+'</span>';
+      var st=n.online?'<span class="dot" style="background:var(--ok)"></span>online':'<span class="dot" style="background:var(--bad)"></span><span class="mut">offline</span>';
+      var loc=n.country?flag(n.country_code)+' '+esc(n.country)+(n.city?' · '+esc(n.city):''):'<span class="mut">—</span>';
+      return '<tr><td>'+st+'</td><td>'+n.shard+'</td><td><span class="tag'+(n.role!=='peer'?' b':'')+'">'+esc(n.role)+'</span></td>'+
+        '<td class="num">'+esc(n.ip)+(n.role!=='peer'?':'+n.p2p_port:'')+'</td><td class="num">'+fmt(n.height)+'</td><td>'+sync+'</td>'+
+        '<td>'+(n.reachable?'<span class="ok">yes</span>':'<span class="mut">no</span>')+'</td><td>'+loc+'</td><td class="mut">'+ago(n.last_seen)+'</td></tr>'}).join('')
+      ||'<tr><td colspan="9" class="mut">No nodes match the filter.</td></tr>';
+  }
+  function summary(){
+    var s=data.summary, online=data.nodes.filter(function(n){return n.online}), ips={}, cc={};
+    online.forEach(function(n){ips[n.ip]=1; if(n.country){var k=n.country_code+'|'+n.country; cc[k]=(cc[k]||0)+1}});
+    var html='<div class="card"><div class="k">Online nodes</div><div class="v">'+s.online+'</div><div class="s">'+Object.keys(ips).length+' distinct hosts · '+s.reachable+' reachable</div></div>';
+    [1,2,3,4].forEach(function(sh){var b=s.by_shard[sh]||{};html+='<div class="card"><div class="k">Shard '+sh+'</div><div class="v">'+fmt(b.tip)+'</div><div class="s">'+(b.online||0)+' online nodes</div></div>'});
+    document.getElementById('cards').innerHTML=html;
+    document.getElementById('countries').innerHTML=Object.keys(cc).sort(function(a,b){return cc[b]-cc[a]}).map(function(k){var p=k.split('|');return '<span class="chip">'+flag(p[0])+' '+esc(p[1])+' <b>'+cc[k]+'</b></span>'}).join('');
+    document.getElementById('upd').textContent='Updated '+ago(data.generated_unix)+' ('+new Date(data.generated_unix*1000).toLocaleString()+')';
+  }
+  function load(){
+    fetch('/nodes.json?t='+Date.now(),{cache:'no-store'}).then(function(r){if(!r.ok)throw 0;return r.json()}).then(function(d){
+      data=d; document.getElementById('err').style.display='none'; summary(); render();
+    }).catch(function(){document.getElementById('err').style.display='block'});
+  }
+  ['fShard','fRole','fOnline','fText'].forEach(function(id){document.getElementById(id).addEventListener('input',render)});
+  document.querySelectorAll('th[data-k]').forEach(function(th){th.addEventListener('click',function(){var k=th.getAttribute('data-k');sortDir=(sortK===k)?-sortDir:1;sortK=k;render()})});
+  load(); setInterval(load,60000);
+})();
+</script>
+</body>
+</html>

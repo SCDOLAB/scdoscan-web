@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Legacy SCDO Node - Quick Start (shards 1-4, archived)</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+body { font-family: -apple-system, "Segoe UI", sans-serif; background: #0a0e1a; color: #e6edf3; min-height: 100vh; }
+.wrap { max-width: 500px; margin: 0 auto; padding: 16px; }
+h1 { text-align: center; margin: 16px 0 4px; font-size: 22px; }
+.sub { text-align: center; color: #8b949e; font-size: 13px; margin-bottom: 20px; }
+.card { background: #161b22; border: 1px solid #30363d; border-radius: 12px; padding: 16px; margin-bottom: 12px; }
+.card h2 { font-size: 15px; margin-bottom: 10px; color: #58a6ff; }
+input, select { width: 100%; padding: 14px; background: #0d1117; border: 1px solid #30363d; border-radius: 10px; color: #e6edf3; font-size: 15px; margin: 6px 0; }
+input:focus { outline: none; border-color: #58a6ff; }
+.big-btn { width: 100%; padding: 16px; background: #238636; border: none; border-radius: 12px; color: white; font-size: 17px; font-weight: 700; cursor: pointer; margin-top: 8px; }
+.big-btn:active { background: #2ea043; }
+.stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 16px 0; }
+.stat { background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 12px; text-align: center; }
+.stat .v { font-size: 20px; font-weight: 700; color: #3fb950; }
+.stat .l { font-size: 11px; color: #8b949e; margin-top: 2px; }
+.cmd-box { background: #0d1117; border: 1px solid #30363d; border-radius: 10px; padding: 14px; margin: 10px 0; position: relative; }
+.cmd-box .cmd { font-family: monospace; font-size: 12px; color: #3fb950; word-break: break-all; white-space: pre-wrap; line-height: 1.5; padding-right: 50px; }
+.copy { position: absolute; top: 10px; right: 10px; background: #238636; border: none; color: white; padding: 6px 12px; border-radius: 6px; font-size: 12px; cursor: pointer; }
+.hidden { display: none; }
+.step { display: flex; gap: 10px; margin: 10px 0; align-items: flex-start; }
+.n { background: #1f6feb; color: white; min-width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; }
+.t { font-size: 13px; line-height: 1.5; color: #c9d1d9; }
+.t code { background: #1c2128; padding: 2px 5px; border-radius: 4px; font-size: 11px; color: #3fb950; }
+.note { font-size: 12px; color: #8b949e; line-height: 1.5; margin-top: 8px; }
+a { color: #58a6ff; text-decoration: none; }
+.badge { display: inline-block; background: #1f6feb22; color: #58a6ff; padding: 2px 8px; border-radius: 10px; font-size: 11px; margin-left: 6px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Legacy node - Quick Start</h1>
+  <p class="sub">Solo mining with the go-scdo node (ZPoW, CPU) <span class="badge">legacy shards 1-4 &middot; archived</span></p>
+  <div class="card" id="scdo-legacy-notice" style="border-color:#9e6a03;background:#1d1606"><p class="note" style="margin-top:0;color:#e3b341">This guide is for the <b>legacy go-scdo chains (shards 1-4)</b>, which are archived. The SCDO main chain is <b>shard0</b> (EVM, chain ID 5680): see <a href="/start.html">Get Started</a> to use it with MetaMask, and <a href="/mine/">Mining &amp; Nodes</a> for shard0 node packages (coming soon). Mining is about securing the network; no earnings are promised.</p></div>
+
+  <!-- Stats (shard of your address, default shard 1) -->
+  <div class="stats">
+    <div class="stat"><div class="v" id="h">-</div><div class="l" id="hl">Shard 1 Height</div></div>
+    <div class="stat"><div class="v" id="bt">-</div><div class="l">Avg Block Time</div></div>
+    <div class="stat"><div class="v">ZPoW</div><div class="l">CPU algorithm</div></div>
+    <div class="stat"><div class="v">Solo</div><div class="l">No pool / no fee</div></div>
+  </div>
+
+  <div class="card">
+    <h2>Before you start</h2>
+    <p class="note" style="margin-top:0">Mining runs on a PC or server (Windows / Linux / macOS), not on a phone. There is currently no mining pool or stratum server: you run your own full node, it syncs the chain of your shard, then mines. The address you enter is set as the miner (coinbase) address of blocks your node mines. The first sync downloads the whole shard history (more than 6 million blocks, roughly 25 GB of disk) and can take many hours.</p>
+    <p class="note">Node software: Linux x86_64 <a href="/downloads/scdo-node-linux-amd64">scdo-node</a> + <a href="/downloads/scdo-client-linux-amd64">scdo-client</a> (<a href="/downloads/SHA256SUMS">SHA256SUMS</a>; or run <a href="/quickstart.html">the one-command setup</a>). Windows / macOS: <a href="https://github.com/scdoproject/go-scdo/releases" target="_blank">go-scdo releases</a> (contains <code>node</code> and <code>client</code>), or the Windows one-click miner package from the SCDO team. New packages: <a href="/mine/#downloads">Downloads</a>.</p>
+  </div>
+
+  <div class="card">
+    <h2>Fastest: Linux one command</h2>
+    <div class="cmd-box">
+      <div class="cmd" id="oneliner">curl -fsSL https://scdoscan.io/mine.sh -o mine.sh &amp;&amp; bash mine.sh</div>
+      <button class="copy" onclick="copyEl('oneliner')">Copy</button>
+    </div>
+    <p class="note">Linux x86_64, no root needed. It downloads scdo-node + scdo-client from scdoscan.io/downloads (checksum-verified), asks for your address, creates a node key for your shard with <code>client key --shard N</code>, writes node.json with the public seed nodes and starts the node + miner. Windows: use the one-click miner package (<code>start-miner.bat</code>). Or set things up by hand below.</p>
+  </div>
+
+  <!-- Setup form -->
+  <div id="setup">
+    <div class="card">
+      <h2>1. Your SCDO Address</h2>
+      <input type="text" id="addr" placeholder="1S01... / 2S02... / 3S03... / 4S04..." style="font-size:14px">
+      <p class="note">The prefix decides your shard (1S01 = shard 1, 2S02 = shard 2, ...). No address yet? Run <code>client key --shard 1</code> and keep the private key safe.</p>
+    </div>
+    <div class="card">
+      <h2>2. Your Machine</h2>
+      <select id="os">
+        <option value="linux">Linux / macOS</option>
+        <option value="windows">Windows PC</option>
+      </select>
+      <input type="number" id="threads" value="4" min="1" placeholder="CPU threads">
+    </div>
+    <button class="big-btn" onclick="start()">Generate My Config</button>
+  </div>
+
+  <!-- Result -->
+  <div id="result" class="hidden">
+    <div class="card">
+      <h2>3. Save this as node.json</h2>
+      <div class="cmd-box">
+        <div class="cmd" id="cfg"></div>
+        <button class="copy" onclick="copyEl('cfg')">Copy</button>
+      </div>
+      <p class="note">Replace <code>P2P_PRIVATE_KEY</code> with the private key printed by <code>client key --shard <span class="shardN">1</span></code> (use a separate key just for the node, not your wallet key).</p>
+    </div>
+    <div class="card">
+      <h2>4. Start the node + miner</h2>
+      <div class="cmd-box">
+        <div class="cmd" id="cmd"></div>
+        <button class="copy" onclick="copyEl('cmd')">Copy</button>
+      </div>
+      <p class="note">Check progress: <code>curl -s -X POST -H "Content-Type: application/json" -d '{"jsonrpc":"2.0","method":"scdo_getInfo","params":[],"id":1}' http://127.0.0.1:8037</code> — mining becomes useful once <code>CurrentBlockHeight</code> matches the explorer.</p>
+    </div>
+
+    <div class="card">
+      <h2>How it works</h2>
+      <div class="step"><div class="n">1</div><div class="t">Your node connects to the public SCDO P2P nodes for shard <span class="shardN">1</span> (<code id="seedList"></code>)</div></div>
+      <div class="step"><div class="n">2</div><div class="t">It downloads and verifies the full shard history</div></div>
+      <div class="step"><div class="n">3</div><div class="t">It mines new blocks with your CPU, helping secure the shard's history (no earnings are promised)</div></div>
+      <div class="step"><div class="n">4</div><div class="t">Track here: <a href="https://scdoscan.io" target="_blank">scdoscan.io</a></div></div>
+    </div>
+
+    <div class="card">
+      <h2>Your Address</h2>
+      <a href="https://scdoscan.io/#/address?address=" id="acctLink" target="_blank" style="font-size:13px">View my address →</a>
+    </div>
+
+    <button class="big-btn" style="background:#30363d;margin-top:8px" onclick="reset()">Edit Settings</button>
+  </div>
+</div>
+
+<script>
+// Public P2P endpoints (TCP+UDP). Port per shard: 1=8057, 2=8058, 3=8059, 4=8056.
+var HOSTS = ['74.208.207.184', '82.223.19.88', '217.160.65.210', '74.208.136.152'];
+var P2P = {1: 8057, 2: 8058, 3: 8059, 4: 8056};
+var EXTRA = {1: ['104.254.244.44:18058']};
+var shardSel = 1;
+function shardOf(a){ var m = /^([1-4])S0\1/.exec(a); return m ? parseInt(m[1], 10) : 0; }
+function seeds(){
+  var s = [];
+  [1, 2, 3, 4].forEach(function(sh){ HOSTS.forEach(function(h){ s.push(h + ':' + P2P[sh]); }); (EXTRA[sh] || []).forEach(function(e){ s.push(e); }); });
+  return s;
+}
+function start(){
+  var addr = document.getElementById('addr').value.trim();
+  var os = document.getElementById('os').value;
+  var th = parseInt(document.getElementById('threads').value, 10) || 4;
+  var sh = shardOf(addr);
+  if(addr.length < 42 || !sh){ alert('Enter a valid SCDO address starting with 1S01, 2S02, 3S03 or 4S04'); return; }
+  shardSel = sh;
+  var cfg = {
+    basic: { name: 'SCDO Miner', version: '1.0.0', dataDir: 'scdo-data', address: '0.0.0.0:8027', coinbase: addr, algorithm: 'zpow' },
+    p2p: { privateKey: 'P2P_PRIVATE_KEY', staticNodes: seeds(), address: '0.0.0.0:8057', networkID: 'net1' },
+    log: { isDebug: false, printLog: true },
+    httpServer: { address: '127.0.0.1:8037', crossorigins: ['*'], whiteHost: ['*'] },
+    genesis: { difficult: 1900000, shard: sh, timestamp: 1596942480 }
+  };
+  document.getElementById('cfg').textContent = JSON.stringify(cfg, null, 2);
+  var bin = os === 'windows' ? 'node.exe' : './node';
+  document.getElementById('cmd').textContent = bin + ' start -c node.json -m start --threads ' + th;
+  var list = HOSTS.map(function(h){ return h + ':' + P2P[sh]; }).concat(EXTRA[sh] || []);
+  document.getElementById('seedList').textContent = list.join(', ');
+  Array.prototype.forEach.call(document.querySelectorAll('.shardN'), function(e){ e.textContent = sh; });
+  document.getElementById('acctLink').href = 'https://scdoscan.io/#/address?address=' + addr;
+  document.getElementById('setup').classList.add('hidden');
+  document.getElementById('result').classList.remove('hidden');
+  loadStats();
+  try{ localStorage.setItem('scdo_addr', addr); localStorage.setItem('scdo_threads', th); }catch(e){}
+}
+function copyEl(id){
+  var t = document.getElementById(id).textContent;
+  navigator.clipboard.writeText(t).then(function(){ alert('Copied!'); });
+}
+function reset(){
+  document.getElementById('result').classList.add('hidden');
+  document.getElementById('setup').classList.remove('hidden');
+}
+try{
+  var a = localStorage.getItem('scdo_addr');
+  if(a){ document.getElementById('addr').value = a; }
+}catch(e){}
+function loadStats(){
+  fetch('/api/v1/network/summary', {cache: 'no-store'}).then(function(r){ return r.json(); }).then(function(d){
+    var s = (d.data || []).filter(function(x){ return x.id === shardSel; })[0];
+    if(s){
+      document.getElementById('hl').textContent = 'Shard ' + shardSel + ' Height';
+      document.getElementById('h').textContent = Number(s.height).toLocaleString();
+      if(s.avgBlockTime) document.getElementById('bt').textContent = Math.round(s.avgBlockTime) + 's';
+    }
+  }).catch(function(){});
+}
+loadStats();
+</script>
+</body>
+</html>

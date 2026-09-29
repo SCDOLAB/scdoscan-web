@@ -1,0 +1,1267 @@
+<html lang="en"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#0B0E11">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>SCDO Wallet</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{background:#0B0E11;color:#fff;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;padding:16px;padding-bottom:80px;max-width:480px;margin:0 auto;min-height:100vh}
+.logo{width:56px;height:56px;border-radius:16px;background:linear-gradient(135deg,#4CAF50,#1B5E20);text-align:center;line-height:56px;font-size:28px;margin:20px auto 8px;font-weight:700;box-shadow:0 4px 20px rgba(76,175,80,.3)}
+h1{text-align:center;font-size:20px;margin-bottom:4px}
+.sub{text-align:center;color:#666;font-size:12px;margin-bottom:24px}
+.card{background:#161920;border-radius:16px;padding:20px;margin-bottom:12px;border:1px solid #1E2128}
+.bal-label{color:#888;font-size:12px;margin-bottom:4px}
+.bal{font-size:32px;font-weight:700;letter-spacing:-.5px}
+.bal-sub{color:#666;font-size:12px;margin-top:4px}
+.addr{background:#0D1015;border-radius:10px;padding:10px 12px;font-size:11px;word-break:break-all;color:#4CAF50;margin-top:10px;font-family:monospace;line-height:1.5}
+.btn{background:#4CAF50;color:#fff;border:none;padding:15px;border-radius:12px;font-size:16px;font-weight:600;width:100%;margin-top:10px;cursor:pointer;transition:opacity .15s}
+.btn:active{opacity:.8;transform:scale(.98)}
+.btn2{background:#1A1D24;border:1px solid #2A2D34;color:#fff}
+.btn3{background:transparent;border:none;color:#4CAF50;padding:10px;cursor:pointer;font-size:14px}
+input,select{background:#0D1015;border:1px solid #2A2D34;color:#fff;padding:14px;border-radius:12px;font-size:15px;width:100%;margin-bottom:10px;outline:none}
+input:focus{border-color:#4CAF50}
+.hidden{display:none}
+#toast{position:fixed;top:20px;left:50%;transform:translateX(-50%);background:#1A1D24;border:1px solid #4CAF50;color:#4CAF50;padding:12px 24px;border-radius:12px;font-size:14px;z-index:9999;display:none;max-width:90%;text-align:center}
+.nav{display:flex;gap:6px;margin-bottom:16px;overflow-x:auto}
+.nav button{flex:1;min-width:56px;background:#161920;border:1px solid #1E2128;color:#888;padding:10px 4px;border-radius:12px;cursor:pointer;font-size:12px;white-space:nowrap}
+.nav button.active{background:#4CAF50;color:#fff;border-color:#4CAF50;font-weight:600}
+.qr-box{background:#fff;border-radius:16px;padding:20px;margin:16px auto;max-width:240px;text-align:center}
+.tx-item{display:flex;justify-content:space-between;align-items:center;padding:14px 0;border-bottom:1px solid #1E2128}
+.tx-item:last-child{border-bottom:none}
+.tx-dir{font-size:11px;padding:3px 8px;border-radius:6px;font-weight:600}
+.tx-in{background:#1B3A1D;color:#4CAF50}
+.tx-out{background:#3A1B1B;color:#ff6b6b}
+.tx-addr{font-size:11px;color:#888;font-family:monospace;word-break:break-all;max-width:180px}
+.tx-amt{font-size:14px;font-weight:600;text-align:right}
+.tx-time{font-size:10px;color:#555;margin-top:2px}
+.scan-btn{display:inline-flex;align-items:center;gap:4px;background:#0D1015;border:1px solid #2A2D34;color:#888;padding:8px 12px;border-radius:8px;cursor:pointer;font-size:13px;margin-bottom:10px}
+.section-title{font-size:14px;font-weight:600;margin-bottom:12px;color:#ccc}
+.token-row{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid #1E2128}
+.token-row:last-child{border-bottom:none}
+.token-icon{width:36px;height:36px;border-radius:10px;background:#1B3A1D;color:#4CAF50;text-align:center;line-height:36px;font-weight:700;font-size:13px;margin-right:12px}
+.token-info{flex:1}
+.token-name{font-size:14px;font-weight:600}
+.token-sym{font-size:11px;color:#666}
+.token-bal{font-size:14px;font-weight:600;text-align:right}
+.kyc-field{margin-bottom:10px}
+.kyc-field label{font-size:11px;color:#888;display:block;margin-bottom:4px}
+.kyc-status{padding:10px;border-radius:8px;font-size:12px;text-align:center;margin-bottom:12px}
+.kyc-done{background:#1B3A1D;color:#4CAF50}
+.kyc-pending{background:#3A351B;color:#FFC107}
+.spinner{display:inline-block;width:16px;height:16px;border:2px solid #333;border-top-color:#4CAF50;border-radius:50%;animation:spin .8s linear infinite;vertical-align:middle}
+@keyframes spin{to{transform:rotate(360deg)}}
+.confirm-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.8);z-index:2000;display:none;align-items:center;justify-content:center}.confirm-overlay.show{display:flex}
+.confirm-box{background:#1A1D24;border-radius:16px;padding:24px;max-width:360px;width:90%}
+.confirm-box h3{margin-bottom:12px;font-size:16px}
+.confirm-row{display:flex;justify-content:space-between;padding:6px 0;font-size:13px;border-bottom:1px solid #2A2D34}
+.confirm-row:last-child{border-bottom:none}
+.confirm-row span:first-child{color:#888}
+.about-row{display:flex;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px solid #1E2128;font-size:13px}
+.about-row span:first-child{color:#888;white-space:nowrap}
+.about-row span:last-child{text-align:right;word-break:break-word}
+.about-row a,.about-foot a{color:#4CAF50;text-decoration:none}
+.about-foot{text-align:center;font-size:11px;color:#555;margin-top:14px;line-height:1.8}
+.send-result{margin-top:10px;padding:10px 12px;background:#0D1015;border:1px solid #2A2D34;border-radius:10px;font-size:12px;color:#aaa;word-break:break-all;line-height:1.6}
+.send-result .h{font-family:monospace;color:#8ab4f8;font-size:11px}
+</style>
+</head>
+<body>
+<div id="toast"></div>
+
+<div id="s-welcome" class="hidden">
+  <div class="logo">S</div>
+  <h1>SCDO Wallet</h1>
+  <p class="sub">Secure · Fast · Decentralized</p>
+  <div class="card">
+    <input type="email" id="signup-email" placeholder="Email (for compliance records)" style="margin-bottom:8px">
+    <button class="btn" id="btn-create">Create New Wallet</button>
+    <button class="btn btn2" id="btn-create-mnemonic" style="margin-top:6px">Create with 12-word Phrase</button>
+    <button class="btn btn2" id="btn-import-show">Import Existing</button>
+  </div>
+  <div class="about-foot"><span class="wallet-version"></span> · 9Y9 Pty Ltd (APEC Capital) · AUSTRAC DCE100714503-001<br><a href="mailto:admin@apeccapital.org">admin@apeccapital.org</a> · <a href="./privacy.html" target="_blank" rel="noopener">Privacy Policy</a> · <a href="https://scdoscan.io/compliance.html" target="_blank" rel="noopener">Compliance</a></div>
+</div>
+
+<div id="s-import" class="hidden">
+  <div class="logo">S</div>
+  <h1>Import Wallet</h1>
+  <div class="card">
+    <input type="text" id="priv-in" placeholder="Private key (0x...)">
+    <div style="margin:8px 0;font-size:13px;color:#888">— or import 12-word phrase —</div>
+    <textarea id="mnemonic-in" rows="3" placeholder="word1 word2 ... word12" style="width:100%;padding:8px;border-radius:8px;border:1px solid #333;background:#111;color:#fff"></textarea>
+    <button class="btn" id="btn-import-mnemonic" style="margin-top:6px">Import Phrase</button>
+    <button class="btn" id="btn-import">Import Private Key</button>
+    <button class="btn btn2" onclick="show('s-welcome')">Back</button>
+  </div>
+</div>
+
+
+<div id="s-lock" class="hidden">
+  <div class="logo">S</div>
+  <h1>Unlock Wallet</h1>
+  <div class="card">
+    <input type="password" id="lock-pw" placeholder="Password">
+    <button class="btn" id="btn-unlock" style="margin-top:8px">Unlock</button>
+    <div id="lock-err" style="color:#ff6b6b;font-size:12px;margin-top:8px"></div>
+    <button class="btn btn2" id="btn-setpw" style="margin-top:6px">Set App Password</button>
+  </div>
+</div>
+
+<div id="s-home" class="hidden">
+  <div class="card" style="text-align:center">
+    <div class="bal-label">Total Balance</div>
+    <div class="bal" id="bal">0.00000000</div>
+    <div class="bal-sub">SCDO</div>
+    <div id="audt-line" style="font-size:14px;color:#8ab4f8;margin-top:6px">AUDT: 0.000000</div>
+    <div class="addr" id="addr" style="text-align:center;cursor:pointer" onclick="copyAddr()" title="Click to copy"></div>
+    <div id="net-status" style="font-size: 10px; color: #888; margin: 4px 0px;">Connecting…</div>
+  </div>
+
+  <div class="nav">
+    <button class="active" data-tab="send" onclick="switchTab('send',this)">Send</button>
+    <button data-tab="receive" onclick="switchTab('receive',this)">Receive</button>
+    <button data-tab="tokens" onclick="switchTab('tokens',this)">Tokens</button>
+    <button data-tab="kyc" onclick="switchTab('kyc',this)">KYC</button>
+    <button data-tab="nft" onclick="switchTab('nft',this)">NFT</button><button data-tab="dapp" onclick="switchTab('dapp',this)">DApp</button><button data-tab="history" onclick="switchTab('history',this)">History</button><button data-tab="about" onclick="switchTab('about',this)">About</button>
+  </div>
+
+  <div id="tab-send" class="card">
+    <div class="section-title">Send</div>
+    <div style="display:flex;gap:8px;margin-bottom:10px">
+      <button class="scan-btn" style="margin:0;display:none" onclick="startScan()">📷 Scan QR</button>
+      <select id="send-token" style="margin:0;flex:1">
+        <option value="SCDO">SCDO</option><option value="1S01f55b6c3c1122ff52931256fdc67af47bb50032">AUDT</option>
+      </select>
+    </div>
+    <input type="text" id="to" placeholder="To address (1S...)">
+    <div style="display:flex;gap:6px">
+      <input type="number" id="amt" placeholder="Amount" step="0.00000001" style="flex:1">
+      <button type="button" class="btn2" style="margin:0;padding:0 12px;font-size:11px" onclick="fillMax()">MAX</button>
+    </div>
+    <div id="travel-rule" class="hidden" style="margin:8px 0;padding:10px;background:#2d0d0d;border:1px solid #f8514944;border-radius:8px">
+      <div style="font-size:11px;color:#f85149;font-weight:700;margin-bottom:6px;">Travel Rule Required (&gt;= AUD 1,000)</div>
+      <input type="text" id="tr-name" placeholder="Beneficiary full name" style="margin-bottom:6px">
+      <input type="text" id="tr-address" placeholder="Beneficiary address / country" style="margin-bottom:6px">
+      <input type="text" id="tr-ref" placeholder="Transfer reference (optional)">
+    </div>
+    <div id="addr-book" style="margin:8px 0">
+      <div style="font-size:11px;color:#888;margin-bottom:4px">Address Book</div>
+      <div id="addr-list" style="display:flex;flex-wrap:wrap;gap:4px"></div>
+    </div>
+    <div id="fee-note" style="font-size:11px;color:#666;margin-bottom:8px">Gas fee: ~0.000021 SCDO</div>
+    <button class="btn" id="btn-send">Send</button>
+    <div id="send-result" class="send-result hidden"></div>
+  </div>
+
+  <div id="tab-receive" class="card hidden">
+    <div class="section-title" style="text-align:center">Receive</div>
+    <div class="qr-box"><div id="qr-canvas"></div></div>
+    <div class="addr" id="addr2" style="text-align:center"></div>
+    <p style="font-size:12px;color:#888;margin:10px 0">This same address receives:</p>
+    <div style="text-align:left;font-size:12px;color:#aaa;margin:8px 0;line-height:1.8">
+      • <b style="color:#4CAF50">SCDO</b> — native coin<br>
+      • <b style="color:#8ab4f8">AUDT</b> — AUD stablecoin (SCDOAUD)<br>
+      • Any ERC20 token added via "Add Token"
+    </div><button class="btn btn2" onclick="copyAddr()">Copy Address</button>
+  </div>
+
+  <div id="tab-tokens" class="card hidden">
+    <div class="section-title">Assets</div>
+    <div id="token-list"></div>
+    <div style="border-top:1px solid #1E2128;margin-top:8px;padding-top:12px">
+      <div style="font-size:12px;color:#888;margin-bottom:8px">Add Token (contract 0x...)</div>
+      <input type="text" id="token-contract" placeholder="0x...">
+      <button class="btn btn2" onclick="addToken()">Add Token</button>
+    </div>
+  </div>
+
+  <div id="tab-kyc" class="card hidden">
+    <div class="section-title">KYC Verification</div>
+    <div id="kyc-status"></div>
+    <div id="kyc-deploy" style="margin-bottom:12px">
+      <button class="btn btn2" onclick="deployKYC()" style="width:100%">Deploy KYC Contract</button>
+      <div id="kyc-deploy-status" style="font-size:12px;color:#888;margin-top:8px"></div>
+    </div>
+    <div id="kyc-form">
+      <div class="kyc-field"><label>Full Legal Name</label><input type="text" id="kyc-name" placeholder="As on ID"></div>
+      <div class="kyc-field"><label>Date of Birth</label><input type="text" id="kyc-dob" placeholder="YYYY-MM-DD" inputmode="numeric"></div>
+      <div class="kyc-field"><label>Country</label><input type="text" id="kyc-country" placeholder="e.g. Australia"></div>
+      <div class="kyc-field"><label>ID Type</label>
+        <select id="kyc-idtype"><option>Passport</option><option>Driver License</option><option>National ID</option></select>
+      </div>
+      <div class="kyc-field"><label>ID Number</label><input type="text" id="kyc-idnum" placeholder="ID document number"></div>
+      <div class="kyc-field"><label>Residential Address</label><input type="text" id="kyc-addr" placeholder="Street, City, Postcode"></div>
+      <button class="btn" onclick="submitKYC()">Submit KYC</button>
+      <button class="btn btn2" onclick="shareKYC()" style="margin-top:8px">Share KYC (encrypted link)</button>
+    </div>
+  </div>
+
+  
+<div id="tab-nft" class="tab card hidden">
+  <div class="section-title">NFTs</div>
+  <input type="text" id="nft-contract" placeholder="NFT contract (1S... or 0x...)">
+  <button class="btn" id="btn-nft-scan" style="margin-top:8px">View My NFTs</button>
+  <div id="nft-list" style="margin-top:12px;font-size:14px"></div>
+</div>
+<div id="tab-dapp" class="tab card hidden">
+  <div class="section-title">Connect DApp (WalletConnect)</div>
+  <input type="text" id="wc-uri" placeholder="wc:xxxxx...">
+  <button class="btn" id="btn-connect-wc" style="margin-top:8px">Connect</button>
+  <div id="wc-status" style="margin-top:12px;color:#888">Not connected</div>
+  <div id="wc-request" style="margin-top:10px;font-size:13px"></div>
+  <button class="btn" id="wc-approve" style="display:none;margin-top:6px">Approve</button>
+  <button class="btn btn2" id="wc-reject" style="display:none;margin-top:6px">Reject</button>
+</div>
+
+<div id="tab-about" class="card hidden">
+    <div class="section-title">About SCDO Wallet</div>
+    <div class="about-row"><span>Version</span><span class="wallet-version">—</span></div>
+    <div class="about-row"><span>Operator</span><span>9Y9 Pty Ltd (APEC Capital)</span></div>
+    <div class="about-row"><span>AUSTRAC registration</span><span>DCE100714503-001</span></div>
+    <div class="about-row"><span>Compliance</span><span><a href="https://scdoscan.io/compliance.html" target="_blank" rel="noopener">Registrations &amp; compliance</a></span></div>
+    <div class="about-row"><span>Support</span><span><a href="mailto:admin@apeccapital.org">admin@apeccapital.org</a></span></div>
+    <div class="about-row"><span>Privacy</span><span><a href="./privacy.html" target="_blank" rel="noopener">Privacy Policy</a></span></div>
+    <div class="about-row" style="border-bottom:none"><span>Network</span><span id="about-net">—</span></div>
+    <p style="font-size:11px;color:#666;margin-top:10px;line-height:1.6">Non-custodial wallet: your private key never leaves this device. We cannot recover lost keys.</p>
+  </div>
+
+<div id="tab-history" class="card hidden">
+    <div class="section-title" style="display:flex;justify-content:space-between;align-items:center">Transaction History <button class="btn2" style="padding:2px 10px;font-size:11px;margin:0" onclick="loadHistory()">⟳ Refresh</button></div>
+    <div id="tx-list"><p style="color:#555;font-size:13px;text-align:center;padding:20px 0">No transactions yet</p></div>
+  </div>
+
+  <div class="nav" style="margin-top:12px">
+    <button class="btn3" id="btn-backup">Backup Key</button>
+    <button class="btn3" onclick="showSign()">Sign Msg</button>
+    <button class="btn3" onclick="disconnectWallet()" style="color:#ff6b6b">Disconnect</button>
+  </div>
+</div>
+
+<div id="tx-detail" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:9999;padding:20px;overflow:auto">
+  <div style="max-width:420px;margin:40px auto;background:#1a1d24;border-radius:16px;padding:24px;border:1px solid #333">
+    <div style="font-size:16px;font-weight:700;color:#fff;margin-bottom:16px">Transaction Detail</div>
+    <div id="txd-body" style="font-size:13px;color:#aaa;line-height:2"></div>
+    <button class="btn" style="margin-top:16px" onclick="document.getElementById('tx-detail').style.display='none'">Close</button>
+  </div>
+</div>
+<div id="s-sign" class="hidden">
+  <div class="logo">S</div>
+  <h1>Sign Message</h1>
+  <div class="card">
+    <p style="font-size:12px;color:#888;margin-bottom:8px">Sign a message with your private key. Others can verify it came from you.</p>
+    <textarea id="sign-msg" placeholder="Type message to sign..." style="width:100%;height:80px;background:#111;color:#eee;border:1px solid #333;border-radius:8px;padding:8px;font-size:13px"></textarea>
+    <button class="btn" onclick="doSign()">Sign</button>
+    <div id="sign-result" style="margin-top:10px;display:none">
+      <div style="font-size:11px;color:#888;margin-bottom:4px">Signature (share with verifier):</div>
+      <textarea id="sign-out" readonly="" style="width:100%;height:60px;background:#1a2a1a;color:#4CAF50;border:1px solid #333;border-radius:8px;padding:8px;font-size:10px"></textarea>
+      <button class="btn btn2" onclick="navigator.clipboard.writeText(document.getElementById('sign-out').textContent)">Copy Signature</button>
+    </div>
+    <button class="btn btn2" onclick="(function(){['s-welcome','s-import','s-home','s-backup','s-sign','s-lock'].forEach(function(s){document.getElementById(s).classList.add('hidden')});document.getElementById('s-home').classList.remove('hidden');if(typeof loadBalance==='function')loadBalance();})()">Back</button>
+  </div>
+</div>
+
+<div id="s-backup" class="hidden">
+  <div class="logo">S</div>
+  <h1>Backup</h1>
+  <div class="card">
+    <p style="color:#ff6b6b;font-size:13px;margin-bottom:12px">⚠ Write down your private key. Anyone with it controls your funds.</p>
+    <div class="addr" id="pk"></div>
+    <button class="btn" id="btn-done">I've Saved It</button>
+    <button class="btn btn2" onclick="(function(){['s-welcome','s-import','s-home','s-backup','s-sign','s-lock'].forEach(function(s){document.getElementById(s).classList.add('hidden')});document.getElementById('s-home').classList.remove('hidden');if(typeof loadBalance==='function')loadBalance();})()">Back</button>
+  </div>
+</div>
+
+<div id="cam-overlay" class="hidden" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#000;z-index:1000">
+  <video id="cam" style="width:100%;height:100%;object-fit:cover" autoplay=""></video>
+  <div style="position:absolute;bottom:40px;left:0;right:0;text-align:center">
+    <button class="btn btn2" onclick="stopScan()" style="width:auto;padding:12px 32px">Cancel</button>
+  </div>
+</div>
+
+<div id="confirm-overlay" class="confirm-overlay hidden">
+  <div class="confirm-box">
+    <h3>Confirm Transaction</h3>
+    <div class="confirm-row"><span>To</span><span id="cf-to" style="word-break:break-all;text-align:right;max-width:200px"></span></div>
+    <div class="confirm-row"><span>Amount</span><span id="cf-amt"></span></div>
+    <div class="confirm-row"><span>Gas fee</span><span id="cf-fee">~0.000021 SCDO</span></div>
+    <button class="btn" id="cf-ok">Confirm</button>
+    <button class="btn btn2" id="cf-cancel">Cancel</button>
+  </div>
+</div>
+
+<script>
+function toast(msg,color){var t=document.getElementById('toast');t.textContent=msg;t.style.borderColor=color||'#4CAF50';t.style.color=color||'#4CAF50';t.style.display='block';setTimeout(function(){t.style.display='none';},3000);}
+window.alert=function(m){toast(String(m),m.indexOf('Error')>=0||m.indexOf('error')>=0?'#ff6b6b':'#4CAF50');};
+</script>
+
+<script src="./lib/bip39_words.js"></script>
+<script type="module">
+try {
+  function sha256(bytes){
+    const K=new Uint32Array([0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,0xe49b69c1,0xefbe4786,0x0fc19dc6,0x240ca1cc,0x2de92c6f,0x4a7484aa,0x5cb0a9dc,0x76f988da,0x983e5152,0xa831c66d,0xb00327c8,0xbf597fc7,0xc6e00bf3,0xd5a79147,0x06ca6351,0x14292967,0x27b70a85,0x2e1b2138,0x4d2c6dfc,0x53380d13,0x650a7354,0x766a0abb,0x81c2c92e,0x92722c85,0xa2bfe8a1,0xa81a664b,0xc24b8b70,0xc76c51a3,0xd192e819,0xd6990624,0xf40e3585,0x106aa070,0x19a4c116,0x1e376c08,0x2748774c,0x34b0bcb5,0x391c0cb3,0x4ed8aa4a,0x5b9cca4f,0x682e6ff3,0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2]);
+    function rotr(x,n){return(x>>>n)|(x<<(32-n));}
+    let bitLen=bytes.length*8;let padded=new Uint8Array(((bytes.length+9+63)>>6)<<6);padded.set(bytes);padded[bytes.length]=0x80;
+    for(let i=0;i<8;i++)padded[padded.length-1-i]=Math.floor(bitLen/Math.pow(2,i*8))&0xff;
+    let H=new Uint32Array([0x6a09e667,0xbb67ae85,0x3c6ef372,0xa54ff53a,0x510e527f,0x9b05688c,0x1f83d9ab,0x5be0cd19]);
+    for(let chunk=0;chunk<padded.length;chunk+=64){
+      let w=new Uint32Array(64);for(let i=0;i<16;i++)w[i]=(padded[chunk+i*4]<<24)|(padded[chunk+i*4+1]<<16)|(padded[chunk+i*4+2]<<8)|padded[chunk+i*4+3];
+      for(let i=16;i<64;i++){let s0=rotr(w[i-15],7)^rotr(w[i-15],18)^(w[i-15]>>>3),s1=rotr(w[i-2],17)^rotr(w[i-2],19)^(w[i-2]>>>10);w[i]=(w[i-16]+s0+w[i-7]+s1)>>>0;}
+      let a=H[0],b=H[1],c=H[2],d=H[3],e=H[4],f=H[5],g=H[6],h=H[7];
+      for(let i=0;i<64;i++){let S1=rotr(e,6)^rotr(e,11)^rotr(e,25),ch=(e&f)^(~e&g),t1=(h+S1+ch+K[i]+w[i])>>>0,S0=rotr(a,2)^rotr(a,13)^rotr(a,22),maj=(a&b)^(a&c)^(b&c),t2=(S0+maj)>>>0;h=g;g=f;f=e;e=(d+t1)>>>0;d=c;c=b;b=a;a=(t1+t2)>>>0;}
+      H[0]=(H[0]+a)>>>0;H[1]=(H[1]+b)>>>0;H[2]=(H[2]+c)>>>0;H[3]=(H[3]+d)>>>0;H[4]=(H[4]+e)>>>0;H[5]=(H[5]+f)>>>0;H[6]=(H[6]+g)>>>0;H[7]=(H[7]+h)>>>0;
+    }
+    let out=new Uint8Array(32);for(let i=0;i<8;i++){out[i*4]=(H[i]>>>24)&0xff;out[i*4+1]=(H[i]>>>16)&0xff;out[i*4+2]=(H[i]>>>8)&0xff;out[i*4+3]=H[i]&0xff;}
+    return out;
+  }
+  function hmacSha256Sync(key,...datas){let total=datas.reduce((a,d)=>a+d.length,0);let msg=new Uint8Array(total);let off=0;datas.forEach(d=>{msg.set(d,off);off+=d.length;});if(key.length>64)key=sha256(key);let k=new Uint8Array(64);k.set(key);let ipad=new Uint8Array(64),opad=new Uint8Array(64);for(let i=0;i<64;i++){ipad[i]=k[i]^0x36;opad[i]=k[i]^0x5c;}let inner=new Uint8Array(64+msg.length);inner.set(ipad);inner.set(msg,64);let ih=sha256(inner);let outer=new Uint8Array(64+32);outer.set(opad);outer.set(ih,64);return sha256(outer);}
+
+  const secp = await import('./lib/secp.mjs');
+  secp.utils.hmacSha256Sync = hmacSha256Sync;
+  secp.utils.sha256Sync = sha256;
+  const sha3mod = await import('./lib/sha3.mjs');
+  const keccak_256 = sha3mod.default.keccak_256;
+
+  const WALLET_VERSION='3.1.0 (2026-09-28)';
+  document.querySelectorAll('.wallet-version').forEach(e=>e.textContent='v'+WALLET_VERSION);
+  const RPC = {0:'https://scdoscan.io/rpc/0',1:'https://scdoscan.io/rpc/1',2:'https://scdoscan.io/rpc/2',3:'https://scdoscan.io/rpc/3',4:'https://scdoscan.io/rpc/4'};
+  let wallet = null;
+  let tokens = JSON.parse(localStorage.getItem('scdo_tokens')||'[]');
+  tokens=tokens.filter(t=>t.sym!=='AUDT');tokens.push({contract:'1S01f55b6c3c1122ff52931256fdc67af47bb50032',name:'SCDOAUD',sym:'AUDT',decimals:6});localStorage.setItem('scdo_tokens',JSON.stringify(tokens));
+
+  function h2b(hex){hex=hex.replace('0x','');if(hex.length%2)hex='0'+hex;const r=new Uint8Array(hex.length/2);for(let i=0;i<r.length;i++)r[i]=parseInt(hex.substr(i*2,2),16);return r;}
+  function b2h(b){return Array.from(b).map(x=>x.toString(16).padStart(2,'0')).join('');}
+  function n2b(n){if(!n)return new Uint8Array(0);let h=n.toString(16);if(h.length%2)h='0'+h;return h2b(h);}
+  function cat(){let t=0;for(let i=0;i<arguments.length;i++)t+=arguments[i].length;const r=new Uint8Array(t);let o=0;for(let i=0;i<arguments.length;i++){r.set(arguments[i],o);o+=arguments[i].length;}return r;}
+  function encLen(off,len){if(len<56)return new Uint8Array([off+len]);const lb=n2b(len);const r=new Uint8Array(lb.length+1);r[0]=off+55+lb.length;r.set(lb,1);return r;}
+  function rlp(e){if(e==null)return new Uint8Array(0);if(typeof e==='number')return rlp(n2b(e));if(typeof e==='string'){if(e.startsWith('0x'))return rlp(h2b(e));return rlp(new TextEncoder().encode(e));}if(e instanceof Uint8Array){if(e.length===1&&e[0]<0x80)return e;return cat(encLen(0x80,e.length),e);}if(Array.isArray(e)){const p=cat.apply(null,e.map(rlp));return cat(encLen(0xc0,p.length),p);}return new Uint8Array(0);}
+
+  // === SHARD0-TX BEGIN === legacy EIP-155 tx [nonce,gasPrice,gasLimit,to,value,data,v,r,s] for shard0 (core-geth Ethash PoW EVM, chainId 5680; was 568 until 2026-09-28)
+  const SHARD0_CHAIN_ID=5680;
+  const SHARD0_DECIMALS=18;       // since 2026-09-28: 1 SCDO = 1e18 wei (was 8 decimals; node balances were scaled x1e10)
+  const SHARD0_GAS_PRICE=10000000000n; // 1e10 wei/gas (eth_gasPrice); node rejects txs signed below this
+  const SHARD0_GAS_LIMIT=21000n;
+  const SHARD0_FEE_UNITS=SHARD0_GAS_LIMIT*SHARD0_GAS_PRICE; // 2.1e14 wei deducted per tx by the node (0.00021 SCDO)
+  function toUnits(str,dec){str=String(str).trim();if(!/^\d*\.?\d*$/.test(str)||str===''||str==='.')throw new Error('Invalid amount');let p=str.split('.'),i=p[0]||'0',f=p[1]||'';if(f.length>dec){if(/[1-9]/.test(f.slice(dec)))throw new Error('Too many decimals (max '+dec+')');f=f.slice(0,dec);}return BigInt(i)*(10n**BigInt(dec))+BigInt((f+'0'.repeat(dec)).slice(0,dec));}
+  function fromUnits(u,dec){u=BigInt(u);const b=10n**BigInt(dec);return (u/b).toString()+'.'+(u%b).toString().padStart(dec,'0');}
+  // exact display for shard0 amounts (BigInt, no floats): trailing zeros trimmed, at least 8 decimals shown
+  function fmtS0(u){const s=fromUnits(u,SHARD0_DECIMALS);let [i,f]=s.split('.');f=f.replace(/0+$/,'');if(f.length<8)f=f.padEnd(8,'0');return i+'.'+f;}
+  function fmtS0Short(u){const s=fromUnits(u,SHARD0_DECIMALS);let [i,f]=s.split('.');f=f.replace(/0+$/,'');return f?i+'.'+f:i;}
+  function big2b(v){v=BigInt(v);if(v<0n)throw new Error('negative value');if(v===0n)return new Uint8Array(0);let x=v.toString(16);if(x.length%2)x='0'+x;return h2b(x);}
+  function strip0(b){let i=0;while(i<b.length&&b[i]===0)i++;return b.slice(i);}
+  function buildShard0Tx(t,privHex){
+    const to=(t.to&&!/^0x0{40}$/i.test(t.to))?h2b(t.to):new Uint8Array(0); // zero address = contract creation (wallet convention)
+    if(to.length!==0&&to.length!==20)throw new Error('Bad recipient address');
+    const data=(t.data&&t.data!=='0x')?h2b(t.data):new Uint8Array(0);
+    const f=[big2b(t.nonce),big2b(t.gasPrice),big2b(t.gasLimit),to,big2b(t.value),data];
+    const sigHash=keccak_256(rlp(f.concat([big2b(SHARD0_CHAIN_ID),new Uint8Array(0),new Uint8Array(0)])));
+    const sig=secp.signSync(h2b(sigHash),h2b(privHex),{recovered:true,der:false});
+    const v=BigInt(sig[1])+BigInt(SHARD0_CHAIN_ID)*2n+35n;
+    const raw=rlp(f.concat([big2b(v),strip0(sig[0].slice(0,32)),strip0(sig[0].slice(32,64))]));
+    return {raw:'0x'+b2h(raw),txid:'0x'+keccak_256(raw),v:Number(v)};
+  }
+  async function rpc0(method,params){const r=await fetch(RPC[0],{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({jsonrpc:'2.0',id:1,method:method,params:params})}).then(r=>r.json());if(r.error)throw new Error((r.error&&r.error.message)||('RPC error: '+method));return r.result;}
+  async function shard0Nonce(addr){for(const tag of ['pending','latest']){try{const n=await rpc0('eth_getTransactionCount',[addr,tag]);if(typeof n==='string'&&/^0x[0-9a-f]+$/i.test(n))return BigInt(n);}catch(e){}}throw new Error('Could not fetch nonce from shard 0');}
+  async function sendShard0(fromAddr,privHex,to,valueUnits,dataHex,gasLimit){
+    const nonce=await shard0Nonce(fromAddr);
+    const tx=buildShard0Tx({nonce:nonce,gasPrice:SHARD0_GAS_PRICE,gasLimit:BigInt(gasLimit||SHARD0_GAS_LIMIT),to:to,value:BigInt(valueUnits),data:dataHex},privHex);
+    const nodeHash=await rpc0('eth_sendRawTransaction',[tx.raw]);
+    if(typeof nodeHash!=='string'||!nodeHash.startsWith('0x')||nodeHash==='0x6572726f72')throw new Error('Shard 0 node rejected the transaction');
+    return {hash:nodeHash,txid:tx.txid,nonce:Number(nonce),raw:tx.raw};
+  }
+  // === SHARD0-TX END ===
+
+  function derive(privHex,shard=1){
+    const priv=h2b(privHex);const pub=secp.getPublicKey(priv,false);const pubRaw=pub.slice(1);
+    const rlpPub=cat(new Uint8Array([0xb8,0x40]),pubRaw);const hashHex=keccak_256(shard===0?pubRaw:rlpPub); // shard0 (EVM): address = keccak256(pub)[12:] = what the node recovers from signatures (and what MetaMask shows)
+    const addr=h2b(hashHex).slice(-20);
+    if(shard===0){
+      const onChain='0x'+b2h(addr);
+      return{privKey:privHex.startsWith('0x')?privHex:'0x'+privHex,onChain:onChain,human:onChain,shard:0};
+    }
+    addr[0]=shard;addr[19]=(addr[19]&0xF0)|1;
+    const onChain='0x'+b2h(addr);const detShard=parseInt(onChain.substring(3,4));
+    return{privKey:privHex.startsWith('0x')?privHex:'0x'+privHex,onChain:onChain,human:detShard+'S'+b2h(addr),shard:detShard};
+  }
+
+  function show(id){['s-welcome','s-import','s-home','s-backup','s-sign'].forEach(s=>document.getElementById(s).classList.add('hidden'));document.getElementById(id).classList.remove('hidden');}
+
+  window.switchTab=function(tab,btn){
+    ['send','receive','tokens','kyc','nft','dapp','history','about'].forEach(t=>{const el=document.getElementById('tab-'+t);if(el)el.classList.add('hidden');});
+    document.getElementById('tab-'+tab).classList.remove('hidden');
+    document.querySelectorAll('.nav button').forEach(b=>b.classList.remove('active'));
+    if(btn)btn.classList.add('active');
+    if(tab==='history')loadHistory();
+    if(tab==='tokens')loadTokens();
+    if(tab==='kyc')loadKYC();
+  };
+
+  window.copyAddr=function(){
+    const addr=wallet.human;
+    if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(addr).then(()=>toast('Copied!')).catch(()=>fallbackCopy(addr));}
+    else fallbackCopy(addr);
+  };
+  function fallbackCopy(text){const ta=document.createElement('textarea');ta.value=text;ta.style.position='fixed';ta.style.opacity='0';document.body.appendChild(ta);ta.select();try{document.execCommand('copy');toast('Copied!');}catch(e){toast('Copy failed');}document.body.removeChild(ta);}
+
+  function setShard0Bal(hex){const u=BigInt((typeof hex==='string'&&/^0x[0-9a-f]+$/i.test(hex))?hex:'0x0');window._shard0Bal=u;document.getElementById('bal').textContent=fmtS0(u);}
+  function loadBalance(){
+    var db=document.getElementById('dbg');
+    if(db)db.textContent='fetch '+RPC[wallet.shard]+' for '+wallet.onChain;
+    var ctrl=new AbortController();setTimeout(function(){ctrl.abort();},5000);
+    fetch(RPC[wallet.shard],{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(wallet.shard===0?{jsonrpc:'2.0',id:1,method:'eth_getBalance',params:[wallet.onChain,'latest']}:{jsonrpc:'2.0',id:1,method:'scdo_getBalance',params:[wallet.onChain,'',-1]}),signal:ctrl.signal})
+    .then(r=>r.json()).then(r=>{
+      if(db)db.textContent='OK: '+JSON.stringify(r).substring(0,100);
+      if(wallet.shard===0){setShard0Bal(r.result);}else if(r.result&&r.result.Balance!==undefined){document.getElementById('bal').textContent=(parseInt(r.result.Balance)/1e8).toFixed(8);}
+    }).catch(e=>{if(db)db.textContent='ERR: '+e.name+' '+e.message;});
+  }
+
+  function drawQR(text){
+    const qrUrl='https://api.qrserver.com/v1/create-qr-code/?size=220x220&data='+encodeURIComponent(text);
+    const img=document.createElement('img');img.src=qrUrl;img.width=220;img.height=220;
+    img.onload=()=>{document.getElementById('qr-canvas').innerHTML='';document.getElementById('qr-canvas').appendChild(img);};
+  }
+
+  async function callContract(contractAddr,data){
+    const cOnChain=contractAddr.startsWith('0x')?contractAddr:'0x'+contractAddr.substring(contractAddr.indexOf('S')+1);
+    const res=await fetch(RPC[wallet.shard],{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({jsonrpc:'2.0',id:1,method:'scdo_call',params:[cOnChain,data,-1]})}).then(r=>r.json());
+    if(res.error)throw new Error(res.error.message);
+    return res.result?res.result.result:null;
+  }
+
+  async function loadTokens(){
+    const el=document.getElementById('token-list');
+    if(!tokens.length){el.innerHTML='<p style="color:#555;font-size:13px;text-align:center;padding:16px 0">No tokens added yet</p>';return;}
+    el.innerHTML='';
+    for(const t of tokens){
+      try{
+        const addrHex=wallet.onChain.replace('0x','').padStart(64,'0');
+        const result=await callContract(t.contract,'0x70a08231'+addrHex);
+        let bal='0.00';
+        if(result&&result.startsWith('0x'))bal=(parseInt(result,16)/Math.pow(10,t.decimals||6)).toFixed(8);
+        el.innerHTML+=`<div class="token-row"><div style="display:flex;align-items:center"><div class="token-icon">${t.sym.substring(0,3)}</div><div class="token-info"><div class="token-name">${t.name}</div><div class="token-sym">${t.sym}</div></div></div><div class="token-bal">${bal} ${t.sym}</div></div>`;
+      }catch(e){}
+    }
+  }
+
+  window.addToken=function(){
+    const c=document.getElementById('token-contract').value.trim();
+    if(!c)return toast('Enter contract address');
+    tokens.push({contract:c,name:'AUDT',sym:'AUDT',decimals:6});
+    localStorage.setItem('scdo_tokens',JSON.stringify(tokens));
+    document.getElementById('send-token').innerHTML+='<option value="'+c+'">AUDT</option>';
+    document.getElementById('token-contract').value='';
+    toast('Token added');loadTokens();
+  };
+
+  window.deployKYC=async function(){
+  const status=document.getElementById('kyc-deploy-status');
+  status.textContent='Deploying contract...';
+  try{
+    const bytecode='6080604052348015600e575f5ffd5b506106c58061001c5f395ff3fe608060405234801561000f575f5ffd5b5060043610610085575f3560e01c80639df89256116100585780639df892561461010f578063bd1486bf14610122578063c2bc2efc1461015a578063ef7fa71b1461017a575f5ffd5b80631709ef071461008957806321887c3d146100b15780637c67a3e2146100c457806385e68531146100fa575b5f5ffd5b61009c6100973660046103d7565b61018d565b60405190151581526020015b60405180910390f35b61009c6100bf366004610408565b6101bb565b6100ec6100d2366004610408565b6001600160a01b03165f9081526001602052604090205490565b6040519081526020016100a8565b61010d610108366004610408565b6101ea565b005b61010d61011d366004610428565b61023a565b6100ec6101303660046103d7565b6001600160a01b039182165f90815260026020908152604080832093909416825291909152205490565b61016d610168366004610408565b6102ae565b6040516100a89190610450565b61010d610188366004610485565b610357565b6001600160a01b038083165f9081526002602090815260408083209385168352929052205442105b92915050565b6001600160a01b0381165f90815260208190526040812080548291906101e0906104f3565b9050119050919050565b335f8181526002602090815260408083206001600160a01b0386168085529252808320839055519092917f825c8be24eb0df19500f63e86c29e7d0d951e73056b889b891d85e40938d9b6e91a350565b610247816201518061053f565b6102519042610556565b335f8181526002602090815260408083206001600160a01b038816808552908352928190208590555193845290927f65d0cc1e52d49938ca4ad9f423c79c1b84d914b9a683fbc5d3f93ac3cc5635f5910160405180910390a35050565b6001600160a01b0381165f9081526020819052604090208054606091906102d4906104f3565b80601f0160208091040260200160405190810160405280929190818152602001828054610300906104f3565b801561034b5780601f106103225761010080835404028352916020019161034b565b820191905f5260205f20905b81548152906001019060200180831161032e57829003601f168201915b50505050509050919050565b335f9081526020819052604090206103708284836105d4565b50335f81815260016020908152604091829020429081905591519182527f2c3dea8db96f9d4588bb336e6b5c792bfaa97ca6516c306e7944756187942522910160405180910390a25050565b80356001600160a01b03811681146103d2575f5ffd5b919050565b5f5f604083850312156103e8575f5ffd5b6103f1836103bc565b91506103ff602084016103bc565b90509250929050565b5f60208284031215610418575f5ffd5b610421826103bc565b9392505050565b5f5f60408385031215610439575f5ffd5b610442836103bc565b946020939093013593505050565b602081525f82518060208401528060208501604085015e5f604082850101526040601f19601f83011684010191505092915050565b5f5f60208385031215610496575f5ffd5b823567ffffffffffffffff8111156104ac575f5ffd5b8301601f810185136104bc575f5ffd5b803567ffffffffffffffff8111156104d2575f5ffd5b8560208284010111156104e3575f5ffd5b6020919091019590945092505050565b600181811c9082168061050757607f821691505b60208210810361052557634e487b7160e01b5f52602260045260245ffd5b50919050565b634e487b7160e01b5f52601160045260245ffd5b80820281158282048414176101b5576101b561052b565b808201808211156101b5576101b561052b565b634e487b7160e01b5f52604160045260245ffd5b601f8211156105cf57828211156105cf57805f5260205f20601f840160051c60208510156105a857505f5b90810190601f840160051c035f5b818110156105cb575f838201556001016105b6565b5050505b505050565b67ffffffffffffffff8311156105ec576105ec610569565b610600836105fa83546104f3565b8361057d565b5f601f841160018114610631575f851561061a5750838201355b5f19600387901b1c1916600186901b178355610688565b5f83815260208120601f198716915b828110156106605786850135825560209485019460019092019101610640565b508682101561067c575f1960f88860031b161c19848701351681555b505060018560011b0183555b505050505056fea264697066735822122089614a910653502b0e8f2c9fffa0ce1acee238c8e321b6694bf7f12e6715b3d164736f6c63430008250033';
+    const hash=await signAndSend('0x0000000000000000000000000000000000000000',0,bytecode,2000000);
+    status.textContent='Deployed! Tx: '+hash;
+    status.style.color='#4CAF50';
+    localStorage.setItem('scdo_kyc_contract_addr',hash);
+  }catch(e){
+    status.textContent='Error: '+e.message;
+    status.style.color='#ff6b6b';
+  }
+};
+async function aesEncrypt(keyBytes, plaintext){
+    const iv=crypto.getRandomValues(new Uint8Array(12));
+    const key=await crypto.subtle.importKey('raw',keyBytes,{name:'AES-GCM'},false,['encrypt']);
+    const enc=new TextEncoder();
+    const ct=await crypto.subtle.encrypt({name:'AES-GCM',iv:iv},key,enc.encode(plaintext));
+    const result=new Uint8Array(12+ct.byteLength);
+    result.set(iv,0);result.set(new Uint8Array(ct),12);
+    return result;
+  }
+  window.submitKYC=async function(){
+    const data={name:document.getElementById('kyc-name').value,dob:document.getElementById('kyc-dob').value,
+      country:document.getElementById('kyc-country').value,idtype:document.getElementById('kyc-idtype').value,
+      idnum:document.getElementById('kyc-idnum').value,address:document.getElementById('kyc-addr').value,
+      time:Date.now(),v:1};
+    if(!data.name||!data.idnum){toast('Fill required fields','#ff6b6b');return;}
+    // Save locally first
+    localStorage.setItem('scdo_kyc_'+wallet.human,JSON.stringify(data));
+    // Encrypt and submit on-chain
+    const contract=KYC_CONTRACT;
+    try{
+      toast('Encrypting & submitting on-chain...');
+      const privBytes=h2b(wallet.privKey);
+      const keyBytes=await crypto.subtle.digest('SHA-256',privBytes);
+      const encData=await aesEncrypt(new Uint8Array(keyBytes),JSON.stringify(data));
+      // ABI encode submit(bytes): selector + offset(0x40) + len + data
+      const sel='0x635fd1ec'; // submit(bytes)
+      const encHex=b2h(encData);
+      const paddedLen=(encData.length*2).toString(16).padStart(64,'0');
+      const paddedData=encHex.padEnd(Math.ceil(encHex.length/64)*64,'0');
+      const dataHex=sel.replace('0x','')+'0000000000000000000000000000000000000000000000000000000000000040'+paddedLen+paddedData;
+      const contractOnChain=contract.startsWith('0x')?contract:'0x'+contract.substring(contract.indexOf('S')+1);
+      await signAndSend(contractOnChain,0,'0x'+dataHex,200000);
+      toast('KYC encrypted & on-chain!');
+    }catch(e){toast('On-chain error: '+e.message,'#ff6b6b');}
+    loadKYC();
+  };
+  const KYC_CONTRACT='0x01cacec84d8d614eeef6ed7d6a960e85e8140012';
+  async function loadKYC(){
+    const statusEl=document.getElementById('kyc-status');
+    const formEl=document.getElementById('kyc-form');
+    const deployEl=document.getElementById('kyc-deploy');
+    if(deployEl)deployEl.style.display='none';
+    // Check local first
+    const localKyc=localStorage.getItem('scdo_kyc_'+wallet.human);
+    if(localKyc){
+      const d=JSON.parse(localKyc);
+      statusEl.innerHTML='<div class="kyc-status kyc-pending">✓ Submitted locally (pending on-chain)</div>';
+      formEl.style.display='none';
+      return;
+    }
+    try{
+      const myOnChain='0x'+wallet.human.substring(wallet.human.indexOf('S')+1);
+      const data='0x46cc599e'+'0'.repeat(24)+myOnChain.substring(2);
+      const r=await fetch(RPC[1],{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({jsonrpc:'2.0',id:1,method:'scdo_call',params:[KYC_CONTRACT,data,-1]})}).then(r=>r.json());
+      let st=0;
+      if(r.result&&r.result.result&&!r.result.failed&&r.result.result.length>=66){st=parseInt(r.result.result.slice(0,66),'16');}
+      const labels=['Not submitted','Pending review','✓ Verified','Rejected'];
+      const cls=['kyc-pending','kyc-pending','kyc-done','kyc-done'];
+      statusEl.innerHTML='<div class="kyc-status '+cls[st]+'">'+labels[st]+'</div>';
+      formEl.style.display = st===0 ? 'block' : 'none';
+    }catch(e){statusEl.innerHTML='<div class="kyc-status kyc-pending">Loading...</div>';}
+  }
+
+  function updateTxStatus(hash,status,block){try{let h=JSON.parse(localStorage.getItem('scdo_tx_hist')||'[]');h.forEach(t=>{if(t.hash===hash){t.status=status;if(block!=null)t.block=block;}});localStorage.setItem('scdo_tx_hist',JSON.stringify(h));}catch(e){}}
+  function showSendResult(html,shard){const el=document.getElementById('send-result');el.innerHTML=html;el.dataset.shard=String(shard);el.classList.remove('hidden');}
+  async function pollShard0Receipt(hash){
+    for(let i=0;i<20;i++){
+      await new Promise(r=>setTimeout(r,2000));
+      try{const rc=await rpc0('eth_getTransactionReceipt',[hash]);
+        if(rc){const ok=rc.status==='0x1',blk=parseInt(rc.blockNumber,16);updateTxStatus(hash,ok?'confirmed':'failed',blk);
+          const st=document.getElementById('s0-status');if(st){st.textContent=ok?('Confirmed in block #'+blk):('Failed (block #'+blk+')');st.style.color=ok?'#4CAF50':'#ff6b6b';}
+          loadBalance();return rc;}
+      }catch(e){}
+    }
+    updateTxStatus(hash,'unconfirmed');
+    const st=document.getElementById('s0-status');if(st){st.textContent='Not confirmed after 40s (no receipt). Check balance / history later.';st.style.color='#FFC107';}
+    return null;
+  }
+  function saveTx(tx){let h=JSON.parse(localStorage.getItem('scdo_tx_hist')||'[]');h.unshift(tx);localStorage.setItem('scdo_tx_hist',JSON.stringify(h.slice(0,50)));}
+  function toHuman(addr){if(!addr)return '';if(addr.startsWith('0x')){var sh=parseInt(addr.substring(2,4),16);return sh+'S'+addr.substring(2);}return addr;}
+async function scanChainTxs(){
+    if(!wallet) return [];
+    const myHuman = wallet.human;
+    try{
+      const blkRes = await fetch(RPC[wallet.shard],{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({jsonrpc:'2.0',id:1,method:(wallet.shard===0?'eth_blockNumber':'scdo_getBlock'),params:(wallet.shard===0?[]:['',-1,true])})}).then(r=>r.json());
+      if(blkRes.error || !blkRes.result) return [];
+      const latest = blkRes.result.header.Height;
+      const start = Math.max(0, latest - 500);
+      const txs = [];
+      for(let h = latest; h >= start; h--){
+        const res = await fetch(RPC[wallet.shard],{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({jsonrpc:'2.0',id:1,method:'scdo_getBlock',params:['',h,true]})}).then(r=>r.json());
+        if(!res.result || !res.result.transactions) continue;
+        for(const tx of res.result.transactions){
+          const from = tx.from || '';
+          const to = tx.to || '';
+          const amt = tx.amount || 0;
+          if(from === myHuman || to === myHuman){
+            txs.push({dir: from===myHuman?'OUT':'IN', other: from===myHuman?to:from, amount:(amt/1e8).toFixed(4), time:h, hash:tx.hash, token:'SCDO'});
+          }
+        }
+      }
+      return txs;
+    }catch(e){ console.log('scan err', e); return []; }
+  }
+
+  async function loadHistory(){
+    const el=document.getElementById('tx-list');
+    el.innerHTML='<p style="color:#555;font-size:13px;text-align:center;padding:20px 0"><span class="spinner"></span> Scanning last 200 blocks...</p>';
+    const myAddr=wallet.human;
+    const myOnChain='0x'+myAddr.substring(myAddr.indexOf('S')+1);
+    const found=[];
+    const seen={};
+    if(wallet.shard!==0)try{
+      const hRes=await fetch(RPC[wallet.shard],{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({jsonrpc:'2.0',id:1,method:'scdo_getBlockHeight',params:[]})}).then(r=>r.json());
+      const curHeight=hRes.result||9237739;
+      const heights=[];for(let h=curHeight;h>curHeight-200;h--)heights.push(h);
+      const blocks=[];
+      for(let i=0;i<heights.length;i+=20){
+        const batch=heights.slice(i,i+20);
+        const res=await Promise.all(batch.map(async h=>{
+          try{
+            const ctrl=new AbortController();setTimeout(()=>ctrl.abort(),6000);
+            const bRes=await fetch(RPC[wallet.shard],{signal:ctrl.signal,method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({jsonrpc:'2.0',id:1,method:'scdo_getBlock',params:["",h,true]})}).then(r=>r.json());
+            return bRes.result;
+          }catch(e){return null;}
+        }));
+        blocks.push(...res);
+      }
+      const AUDT_HUMAN='1S01f55b6c3c1122ff52931256fdc67af47bb50032';
+      for(const b of blocks){
+        if(!b||!b.transactions)continue;
+        const ts=b.header.CreateTimestamp*1000;
+        for(const tx of b.transactions){
+          const fromH=toHuman(tx.from),toH=toHuman(tx.to);
+          const hash=tx.hash||('b'+b.header.Height+':'+tx.from+tx.to+tx.amount);
+          if(seen[hash])continue;
+          // Native SCDO transfer
+          if((fromH===myAddr||toH===myAddr)&&toH!==AUDT_HUMAN){
+            seen[hash]=1;
+            const dir=toH===myAddr?'IN':'OUT';
+            found.push({dir,other:dir==='IN'?fromH:toH,amount:(tx.amount/1e8).toFixed(8),time:ts,hash:hash,token:'SCDO'});
+          }
+          // AUDT ERC20 transfer: tx.to === AUDT contract, payload = transfer(to,amount)
+          if(toHuman(tx.to)===AUDT_HUMAN&&tx.payload){
+            try{
+              let p=tx.payload;if(p.startsWith('0x'))p=p.slice(2);
+              if(p.startsWith('a9059cbb')&&p.length>=136){
+                const tokTo='0x'+p.slice(32,72);
+                const tokAmt=parseInt(p.slice(72,136),16);
+                const tokToH=toHuman(tokTo);
+                if(tokToH===myAddr||fromH===myAddr){
+                  seen[hash]=1;
+                  const dir=tokToH===myAddr?'IN':'OUT';
+                  found.push({dir,other:dir==='IN'?fromH:tokToH,amount:(tokAmt/1e6).toFixed(6),time:ts,hash:hash,token:'AUDT'});
+                }
+              }
+            }catch(e){}
+          }
+        }
+      }
+    }catch(e){}
+    const localHist=JSON.parse(localStorage.getItem('scdo_tx_hist')||'[]');
+    localHist.forEach(t=>{
+      const dir=t.to===myAddr?'IN':'OUT';
+      const amt=typeof t.amount==='number'?t.amount.toFixed(8):t.amount;
+      found.push({dir,other:dir==='IN'?t.from:t.to,amount:amt,time:t.time,hash:t.hash||'local',status:t.status,shard:t.shard,txid:t.txid});
+    });
+    if(!found.length){el.innerHTML='<p style="color:#555;font-size:13px;text-align:center;padding:20px 0">No transactions found</p>';return;}
+    found.sort((a,b)=>b.time-a.time);
+    el.innerHTML=found.map((t,i)=>{
+      const color=t.dir==='IN'?'#4CAF50':'#ff6b6b';
+      return `<div class="tx-item" style="cursor:pointer" onclick='showTxDetail(${JSON.stringify(t).replace(/'/g,"&#39;")})'><div><span class="tx-dir ${t.dir==='IN'?'tx-in':'tx-out'}">${t.dir}</span><div class="tx-addr" style="margin-top:4px">${t.other.substring(0,24)}...</div><div class="tx-time">${new Date(t.time).toLocaleString()+' '+new Date(t.time).toLocaleTimeString('en',{timeZoneName:'short'}).split(' ').pop()}</div></div><div class="tx-amt" style="color:${color}">${t.dir==='IN'?'+':'-'}${t.amount} ${t.token||'SCDO'}</div></div>`;
+    }).join('');
+    // Store found for refresh
+    window._lastFound = found;
+  }
+
+  let stream=null;
+  window.startScan=async function(){
+    try{
+      stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}});
+      document.getElementById('cam-overlay').classList.remove('hidden');
+      document.getElementById('cam').srcObject=stream;
+      if('BarcodeDetector' in window){
+        const bd=new BarcodeDetector({formats:['qr_code']});
+        async function detect(){if(!stream)return;try{const codes=await bd.detect(document.getElementById('cam'));if(codes.length){document.getElementById('to').value=codes[0].rawValue;stopScan();toast('Address scanned!');}}catch(e){}requestAnimationFrame(detect);}
+        detect();
+      }else{toast('Camera not supported');stopScan();}
+    }catch(e){toast('Camera error: '+e.message);}
+  };
+  window.stopScan=function(){if(stream){stream.getTracks().forEach(t=>t.stop());stream=null;}document.getElementById('cam-overlay').classList.add('hidden');};
+
+  async function signAndSend(toOnChain,amount,payloadHex,gasLimit){gasLimit=gasLimit||21000;
+    if(wallet.shard===0){const r=await sendShard0(wallet.onChain,wallet.privKey,toOnChain,BigInt(amount||0),payloadHex,gasLimit);window._lastShard0Tx=r;return r.hash;}
+    const nonceRes=await fetch(RPC[wallet.shard],{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({jsonrpc:'2.0',id:1,method:'scdo_getAccountNonce',params:[wallet.onChain,'',-1]})}).then(r=>r.json());
+    if(nonceRes.error)throw new Error(nonceRes.error.message);
+    const nonce=(nonceRes.result||0)+1;
+    const list=[0,wallet.onChain,toOnChain,amount,nonce,1,gasLimit,0,payloadHex||'0x'];
+    const enc=rlp(list);const hh=keccak_256(new Uint8Array(enc));
+    const sig=secp.signSync(h2b(hh),h2b(wallet.privKey),{recovered:true,der:false});
+    const sb=new Uint8Array(sig[0].length+1);sb.set(sig[0]);sb[sb.length-1]=sig[1];
+    let bin='';for(let i=0;i<sb.length;i++)bin+=String.fromCharCode(sb[i]);
+    const res=await fetch(RPC[wallet.shard],{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({jsonrpc:'2.0',id:1,method:'scdo_addTx',params:[{Data:{Type:0,From:wallet.onChain,To:toOnChain,Amount:amount,AccountNonce:nonce,GasPrice:1,GasLimit:gasLimit,Timestamp:0,Payload:payloadHex||'0x'},Hash:'0x'+hh,Signature:{Sig:btoa(bin),Pubkey:''}}]})}).then(r=>r.json());
+    if(res.error)throw new Error(res.error.message);
+    return res.result;
+  }
+
+  window.goHome=goHome;
+  function goHome(){
+    renderContacts();
+    document.getElementById('addr').textContent=wallet.human;
+    document.getElementById('addr2').textContent=wallet.human;
+
+    // Shard/network selector
+    (function(){
+      let sh=document.getElementById('shard-sw');
+      if(!sh){
+        sh=document.createElement('select');sh.id='shard-sw';
+        sh.style.cssText='width:100%;margin:4px 0;padding:6px;border-radius:8px;background:#222;color:#fff;border:1px solid #444';
+        sh.innerHTML='<option value="0">Shard 0 (New EVM)</option>'+[1,2,3,4].map(i=>'<option value="'+i+'">Shard '+i+'</option>').join('');
+        document.getElementById('addr').after(sh);
+        sh.onchange=function(){const ns=parseInt(sh.value);const nd=derive(wallet.privKey,ns);wallet.shard=ns;wallet.onChain=nd.onChain;wallet.human=nd.human;localStorage.setItem('scdo_shard',ns);goHome();};
+      }
+      sh.value=String(wallet.shard==null?1:wallet.shard);
+    })();
+    // Account switcher
+    (function(){
+      let accs=[];
+      try{accs=JSON.parse(localStorage.getItem('scdo_accounts')||'[]');}catch(e){}
+      if(!accs.find(a=>a.priv===wallet.privKey)){accs.unshift({priv:wallet.privKey,human:wallet.human});localStorage.setItem('scdo_accounts',JSON.stringify(accs));}
+      let sw=document.getElementById('acc-sw');
+      if(!sw){sw=document.createElement('select');sw.id='acc-sw';sw.style.cssText='width:100%;margin:6px 0;padding:6px;border-radius:8px;background:#222;color:#fff;border:1px solid #444';document.getElementById('addr').after(sw);
+        sw.onchange=function(){ if(sw.value){const ns=parseInt(localStorage.getItem('scdo_shard')||'1');wallet=derive(sw.value,ns);goHome();} };
+        let delBtn=document.getElementById('del-acc');if(!delBtn){delBtn=document.createElement('button');delBtn.id='del-acc';delBtn.textContent='Delete';delBtn.style.cssText='background:#ff4444;color:#fff;border:none;border-radius:6px;padding:4px 10px;font-size:11px;margin-left:4px;cursor:pointer';sw.after(delBtn);delBtn.onclick=function(){if(confirm('Delete this wallet? This cannot be undone.')){localStorage.removeItem('scdo_priv_v3');localStorage.removeItem('scdo_enc_v3');localStorage.removeItem('scdo_shard');location.reload();}};}
+      }
+      sw.innerHTML=accs.map(a=>'<option value="'+a.priv+'"'+(a.priv===wallet.privKey?' selected':'')+'>'+a.human.slice(0,10)+'...'+a.human.slice(-6)+'</option>').join('');
+    })();
+
+    document.getElementById('pk').textContent=wallet.privKey;
+    (function(){
+      const s0=wallet.shard===0;
+      document.getElementById('fee-note').textContent=s0?'Network fee: '+fmtS0Short(SHARD0_FEE_UNITS)+' SCDO (21000 gas × 10 gwei, shard 0)':'Gas fee: ~0.000021 SCDO';
+      document.getElementById('cf-fee').textContent=s0?fmtS0Short(SHARD0_FEE_UNITS)+' SCDO':'~0.000021 SCDO';
+      document.getElementById('to').placeholder=s0?'To address (0x... 40 hex)':'To address (1S...)';
+      const an=document.getElementById('about-net');if(an)an.textContent=s0?'Shard 0 · chainId '+SHARD0_CHAIN_ID+' · '+SHARD0_DECIMALS+' decimals':'Shard '+wallet.shard+' (SCDO legacy)';
+      if(s0)document.getElementById('audt-line').textContent='AUDT: n/a on shard 0';
+      const sr=document.getElementById('send-result');if(sr&&sr.dataset.shard!==String(wallet.shard))sr.classList.add('hidden');
+    })();
+    drawQR(wallet.human);
+    show('s-home');loadBalance();
+
+    // Fetch AUDT balance
+    (async function(){
+      try{
+        const AUDT='0x01f55b6c3c1122ff52931256fdc67af47bb50032';
+        const data='0x70a08231'+'000000000000000000000000'+wallet.onChain.slice(2);
+        const r=await fetch(RPC[wallet.shard],{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({jsonrpc:'2.0',id:1,method:'scdo_call',params:[AUDT,data,-1]})}).then(r=>r.json());
+        const hex=r.result?(r.result.result||r.result):'';
+        if(hex&&hex.startsWith('0x')){
+          const v=parseInt(hex,16)/1e6;
+          document.getElementById('audt-line').textContent='AUDT: '+v.toFixed(6);
+        }
+      }catch(e){}
+    })();
+
+    // Auto-refresh balances every 15s
+    if(window._balTimer)clearInterval(window._balTimer);
+    window._balTimer=setInterval(()=>{
+      if(!wallet)return;
+      if(wallet.shard===0){rpc0('eth_getBalance',[wallet.onChain,'latest']).then(setShard0Bal).catch(()=>{});return;}
+      fetch(RPC[wallet.shard],{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(wallet.shard===0?{jsonrpc:'2.0',id:1,method:'eth_getBalance',params:[wallet.onChain,'latest']}:{jsonrpc:'2.0',id:1,method:'scdo_getBalance',params:[wallet.onChain,'',-1]})}).then(r=>r.json()).then(r=>{if(wallet.shard===0){setShard0Bal(r.result);}else if(r.result&&r.result.Balance!==undefined){document.getElementById('bal').textContent=(parseInt(r.result.Balance)/1e8).toFixed(8);}else{document.getElementById('net-status').textContent='RPC ERR: '+JSON.stringify(r).substring(0,80);document.getElementById('net-status').style.color='red';}}).catch(e=>{document.getElementById('net-status').textContent='FETCH FAIL: '+e.message;document.getElementById('net-status').style.color='red';});
+      const AUDT='0x01f55b6c3c1122ff52931256fdc67af47bb50032';
+      const data='0x70a08231'+'000000000000000000000000'+wallet.onChain.slice(2);
+      fetch(RPC[wallet.shard],{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({jsonrpc:'2.0',id:1,method:'scdo_call',params:[AUDT,data,-1]})}).then(r=>r.json()).then(r=>{const hex=r.result?(r.result.result||r.result):'';if(hex&&hex.startsWith('0x'))document.getElementById('audt-line').textContent='AUDT: '+(parseInt(hex,16)/1e6).toFixed(6);}).catch(()=>{});
+    },15000);
+    (async function(){
+      try{
+        const r=await fetch(RPC[wallet.shard],{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({jsonrpc:'2.0',id:1,method:(wallet.shard===0?'eth_blockNumber':'scdo_getBlock'),params:(wallet.shard===0?[]:['',-1,true])})}).then(r=>r.json());
+        if(r.result){const el=document.getElementById('net-status');if(el){const h=wallet.shard===0?parseInt(r.result,16):r.result.header.Height;el.textContent='Block #'+h+' · Shard '+wallet.shard;el.style.color='#4CAF50';}}
+      }catch(e){}
+    })();
+    if(window._lbTimer)clearInterval(window._lbTimer);window._lbTimer=setInterval(loadBalance,30000);
+    // Update network status
+    async function updateNet(){
+      try{
+        const r=await fetch(RPC[wallet.shard],{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({jsonrpc:'2.0',id:1,method:(wallet.shard===0?'eth_blockNumber':'scdo_getBlock'),params:(wallet.shard===0?[]:['',-1,true])})}).then(r=>r.json());
+        if(r.result){const h=wallet.shard===0?parseInt(r.result,16):r.result.header.Height;document.getElementById('net-status').textContent='⛓ Block #'+h+' · Shard '+wallet.shard+(wallet.shard===0?' (New EVM)':'')+' · Connected';document.getElementById('net-status').style.color='#4CAF50';}
+      }catch(e){document.getElementById('net-status').textContent='⚠ Offline';document.getElementById('net-status').style.color='#ff6b6b';}
+    }
+    updateNet();if(window._netTimer)clearInterval(window._netTimer);window._netTimer=setInterval(updateNet,15000);
+  }
+
+
+
+
+  
+
+
+  document.getElementById('btn-nft-scan').onclick=async function(){
+    const out=document.getElementById('nft-list');
+    let c=document.getElementById('nft-contract').value.trim();
+    if(!c){out.textContent='Enter an NFT contract address.';return;}
+    const cOn=c.startsWith('0x')?c:'0x'+c.substring(c.indexOf('S')+1);
+    out.textContent='Loading...';
+    try{
+      // balanceOf(owner) = 0x70a08231 + padded owner
+      const data='0x70a08231'+'000000000000000000000000'+wallet.onChain.slice(2);
+      const r=await fetch(RPC[wallet.shard],{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({jsonrpc:'2.0',id:1,method:'scdo_call',params:[cOn,data,-1]})}).then(r=>r.json());
+      const bal=parseInt((r.result.result||r.result||'0x0').slice(-64),16);
+      out.innerHTML='You own <b>'+bal+'</b> NFT(s) from this contract.';
+    }catch(e){out.textContent='Error: '+e.message;}
+  };
+
+
+  window.WC_PROJECT_ID='2178cbdbe1306ed01b15320ce558e51a';
+  document.getElementById('btn-connect-wc').onclick=async function(){
+    const status=document.getElementById('wc-status');
+    status.textContent='Connecting...';
+    try{
+      const {SignClient}=await import('https://esm.sh/@walletconnect/sign-client@2');
+      const client=await SignClient.init({projectId:window.WC_PROJECT_ID,metadata:{name:'SCDO Wallet',description:'SCDO Web Wallet',url:'https://scdoscan.io',icons:['https://scdoscan.io/icons/icon-192.png']}});
+      window._wc=client;
+      const uri=document.getElementById('wc-uri').value.trim();
+      const {approval}=await client.connect({uri});
+      const session=await approval;
+      status.textContent='Connected: '+session.peer.metadata.name;
+      client.on('session_request',(event)=>{
+        document.getElementById('wc-request').textContent='Request: '+event.params.request.method+' '+JSON.stringify(event.params.request.params);
+        document.getElementById('wc-approve').style.display='block';
+        document.getElementById('wc-reject').style.display='block';
+        window._wcEvent=event;
+      });
+    }catch(e){status.textContent='Error: '+e.message;}
+  };
+
+  document.getElementById('wc-approve').onclick=async function(){
+    const ev=window._wcEvent; if(!ev) return;
+    const method=ev.params.request.method;
+    try{
+      let result;
+      if(method==='personal_sign'||method==='eth_sign'){
+        const msg=ev.params.request.params[0];
+        // sign with our wallet
+        const sig=secp.signSync(keccak_256(h2b(msg)), h2b(wallet.privKey.slice(2)), true);
+        result='0x'+b2h(sig);
+      } else if(method==='eth_sendTransaction'){
+        // relay: show toast, manual send
+        toast('WC tx request: use Send tab', '#8ab4f8');
+        result=null;
+      } else { result=null; }
+      await window._wc.approveRequest({topic:ev.topic,id:ev.id,result:{jsonrpc:'2.0',id:ev.id,result:result||'0x'}});
+      document.getElementById('wc-status').textContent='Approved';
+    }catch(e){ toast('WC error: '+e.message,'#ff6b6b'); }
+  };
+  document.getElementById('wc-reject').onclick=async function(){
+    const ev=window._wcEvent;
+    if(ev){ try{ await window._wc.rejectRequest({topic:ev.topic,id:ev.id,reason:{code:5000,message:'User rejected'}}); }catch(e){} }
+    document.getElementById('wc-status').textContent='Rejected';
+  };
+  // App password lock
+  async function hashPw(pw){
+    const buf=await crypto.subtle.digest('SHA-256', new TextEncoder().encode(pw+'scdo-salt'));
+    return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+  }
+  async function checkLock(){
+    const hash=localStorage.getItem('scdo_lock_hash');
+    if(!hash) return true; // no lock set
+    return await new Promise(res=>{
+      show('s-lock');
+      document.getElementById('btn-unlock').onclick=async function(){
+        const pw=document.getElementById('lock-pw').value;
+        if(await hashPw(pw)===hash){res(true);}else{toast('Wrong password','#ff6b6b');res(false);}
+      };
+    });
+  }
+  document.getElementById('btn-setpw').onclick=async function(){
+    const pw=prompt('Set app password (min 4 chars):');
+    if(!pw||pw.length<4){toast('Too short','#ff6b6b');return;}
+    localStorage.setItem('scdo_lock_hash', await hashPw(pw));
+    toast('Password set');
+  };
+
+  async function encryptPriv(priv, pw){
+    const k=await crypto.subtle.deriveKey({name:'PBKDF2',salt:new TextEncoder().encode('scdo-salt'),iterations:100000,hash:'SHA-256'},await crypto.subtle.importKey('raw',new TextEncoder().encode(pw),{name:'PBKDF2'},false,['deriveKey']),{name:'AES-GCM',length:256},false,['encrypt','decrypt']);
+    const iv=crypto.getRandomValues(new Uint8Array(12));
+    const ct=await crypto.subtle.encrypt({name:'AES-GCM',iv:iv},k,new TextEncoder().encode(priv));
+    return btoa(String.fromCharCode(...iv)+String.fromCharCode(...new Uint8Array(ct)));
+  }
+  async function saveEnc(priv,pw){const e=await encryptPriv(priv,pw);localStorage.setItem('scdo_priv_enc',e);localStorage.removeItem('scdo_priv_v3');}
+  async function decryptPriv(b64, pw){
+    const k=await crypto.subtle.deriveKey({name:'PBKDF2',salt:new TextEncoder().encode('scdo-salt'),iterations:100000,hash:'SHA-256'},await crypto.subtle.importKey('raw',new TextEncoder().encode(pw),{name:'PBKDF2'},false,['deriveKey']),{name:'AES-GCM',length:256},false,['encrypt','decrypt']);
+    const raw=Uint8Array.from(atob(b64),c=>c.charCodeAt(0));
+    const iv=raw.slice(0,12), ct=raw.slice(12);
+    return new TextDecoder().decode(await crypto.subtle.decrypt({name:'AES-GCM',iv:iv},k,ct));
+  }
+
+  // BIP39 mnemonic helpers
+  async function mnemonicToPriv(phrase){
+    const words=phrase.trim().split(/\s+/);
+    if(words.length!==12 && words.length!==24) throw new Error('Need 12 or 24 words, got '+words.length);
+    words.forEach(w=>{ if(!BIP39_WORDS.includes(w.toLowerCase())) throw new Error('Unknown word: '+w); });
+    // BIP39 seed via PBKDF2-SHA512
+    const mn=new TextEncoder().encode(words.join(' '));
+    const salt=new TextEncoder().encode('mnemonic');
+    const mk=await crypto.subtle.importKey('raw',mn,'PBKDF2',false,['deriveBits']);
+    const bits=await crypto.subtle.deriveBits({name:'PBKDF2',salt:salt,iterations:2048,hash:'SHA-512'},mk,512);
+    const seed=new Uint8Array(bits);
+    // BIP32 master
+    async function hmac512(key,data){
+      const k=await crypto.subtle.importKey('raw',key,{name:'HMAC',hash:'SHA-512'},false,['sign']);
+      return new Uint8Array(await crypto.subtle.sign('HMAC',k,data));
+    }
+    let I=await hmac512(new TextEncoder().encode('Bitcoin seed'),seed);
+    let priv=I.slice(0,32), chain=I.slice(32,64);
+    // CKDpriv
+    async function ckd(p,c,index){
+      const data=new Uint8Array(37);
+      if(index>=0x80000000){ data.set(p,1); } else { data.set(secp.getPublicKey(p,true),1); }
+      data[0]=0; data.set([(index>>>24)&255,(index>>>16)&255,(index>>>8)&255,index&255],33);
+      const o=await hmac512(c,data);
+      const il=o.slice(0,32);
+      // add il to priv mod n
+      const n=BigInt('0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141');
+      let ki=(BigInt('0x'+b2h(il))+BigInt('0x'+b2h(p)))%n;
+      let out=new Uint8Array(32);
+      for(let i=31;i>=0;i--){out[i]=Number(ki&0xffn);ki>>=8n;}
+      return {k:out,c:o.slice(32,64)};
+    }
+    // m/44'/60'/0'/0/0
+    const path=[44|0x80000000,60|0x80000000,0|0x80000000,0,0];
+    for(const idx of path){ const r=await ckd(priv,chain,idx); priv=r.k; chain=r.c; }
+    return '0x'+b2h(priv);
+  }
+  function generateMnemonic(){
+    const entropy=crypto.getRandomValues(new Uint8Array(16));
+    const bits=Array.from(entropy).map(b=>b.toString(2).padStart(8,'0')).join('');
+    const cs=bits.slice(0,128);
+    const words=[];
+    for(let i=0;i<12;i++){ const idx=parseInt(bits.slice(i*11,i*11+11),2); words.push(BIP39_WORDS[idx]); }
+    return words.join(' ');
+  }
+  document.getElementById('btn-create-mnemonic').onclick=async function(){
+    const phrase=generateMnemonic();
+    const priv=await mnemonicToPriv(phrase);
+    wallet=derive(priv,1);
+    (async()=>{const pw=prompt('Set wallet password to encrypt your private key:');if(pw){await saveEnc(wallet.privKey,pw);}else{localStorage.setItem('scdo_priv_v3',wallet.privKey);}})();
+    localStorage.setItem('scdo_mnemonic_'+wallet.human, phrase);
+    prompt('Your 12-word recovery phrase (WRITE IT DOWN, never stored online):', phrase);
+    goHome();
+  };
+  document.getElementById('btn-import-mnemonic').onclick=async function(){
+    try{
+      const phrase=document.getElementById('mnemonic-in').value;
+      const priv=await mnemonicToPriv(phrase);
+      wallet=derive(priv,1);
+      (async()=>{const pw=prompt('Set wallet password to encrypt your private key:');if(pw){await saveEnc(wallet.privKey,pw);}else{localStorage.setItem('scdo_priv_v3',wallet.privKey);}})();
+      goHome();
+    }catch(e){ toast('Error: '+e.message,'#ff6b6b'); }
+  };
+  document.getElementById('btn-create').onclick=function(){
+    try{
+      const email=document.getElementById('signup-email').value.trim();
+      const priv=secp.utils.randomPrivateKey();wallet=derive(b2h(priv),1);(async()=>{const pw=prompt('Set wallet password to encrypt your private key:');if(pw){await saveEnc(wallet.privKey,pw);}else{localStorage.setItem('scdo_priv_v3',wallet.privKey);}})();
+      if(email) localStorage.setItem('scdo_email_'+wallet.human, email);
+      goHome();
+    }
+    catch(e){toast('Error: '+e.message,'#ff6b6b');}
+  };
+  document.getElementById('btn-import-show').onclick=()=>show('s-import');
+  document.getElementById('btn-import').onclick=function(){wallet=derive(document.getElementById('priv-in').value.trim(),1);(async()=>{const pw=prompt('Set wallet password to encrypt your private key:');if(pw){await saveEnc(wallet.privKey,pw);}else{localStorage.setItem('scdo_priv_v3',wallet.privKey);}})();goHome();};
+  document.getElementById('btn-backup').onclick=()=>show('s-backup');
+  document.getElementById('btn-done').onclick=goHome;
+
+
+  // Travel Rule: show beneficiary fields when amount >= 1000 AUD equivalent
+  const AUDT_PRICE = 1; // 1 AUDT = AUD 1
+  const SCDO_PRICE = 0.05; // approximate SCDO price in AUD
+  document.getElementById('amt').addEventListener('input', function(){
+    const amt = parseFloat(this.value)||0;
+    const tokenSel = document.getElementById('send-token').value;
+    const audEquiv = tokenSel === 'SCDO' ? amt * SCDO_PRICE : amt * AUDT_PRICE;
+    const tr = document.getElementById('travel-rule');
+    if(audEquiv >= 1000) tr.classList.remove('hidden');
+    else tr.classList.add('hidden');
+  });
+
+  document.getElementById('btn-send').onclick=async function(){
+    const to=document.getElementById('to').value.trim();
+    const amt=parseFloat(document.getElementById('amt').value);
+    if(!to||!amt){alert('Fill all fields');return;}
+    const s0=wallet.shard===0;
+    let to0=null,units0=0n;
+    if(s0){
+      // shard0: plain 20-byte address (0x + 40 hex); a pasted NS... address is accepted as its 20 raw bytes
+      if(/^0x[0-9a-fA-F]{40}$/.test(to))to0=to.toLowerCase();
+      else if(/^[0-9]S[0-9a-fA-F]{40}$/.test(to))to0='0x'+to.slice(2).toLowerCase();
+      else{alert('Invalid shard 0 address. Expected 0x followed by 40 hex characters.');return;}
+      if(document.getElementById('send-token').value!=='SCDO'){alert('Error: tokens are not supported on shard 0 yet. Switch to shard 1 to send AUDT.');return;}
+      try{units0=toUnits(document.getElementById('amt').value,SHARD0_DECIMALS);}catch(e){alert('Error: '+e.message);return;}
+      if(units0<=0n){alert('Amount must be greater than 0');return;}
+      const bal0=window._shard0Bal==null?0n:window._shard0Bal;
+      if(units0+SHARD0_FEE_UNITS>bal0){alert('Insufficient SCDO balance on shard 0. Available: '+fmtS0Short(bal0)+' (fee '+fmtS0Short(SHARD0_FEE_UNITS)+')');return;}
+    }
+    // Validate SCDO address format: <shard digit>S<40 hex>
+    else if(!/^[0-9]S[0-9a-fA-F]{40}$/.test(to)){alert('Invalid SCDO address. Expected format: 1S followed by 40 hex characters.');return;}
+    if(amt<=0){alert('Amount must be greater than 0');return;}
+    const trBox = document.getElementById('travel-rule');
+    if(!trBox.classList.contains('hidden')){
+      const trName = document.getElementById('tr-name').value.trim();
+      const trAddr = document.getElementById('tr-address').value.trim();
+      if(!trName || !trAddr){alert('Travel Rule: enter beneficiary name and address for amounts >= AUD 1,000');return;}
+    }
+    const tokenSel=document.getElementById('send-token');
+    const selectedToken=tokenSel.value;
+    const isToken=selectedToken!=='SCDO';
+    // Balance sufficiency check
+    if(s0){/* checked above with exact integer units */}
+    else if(!isToken){
+      const bal=parseFloat(document.getElementById('bal').textContent)||0;
+      if(amt > bal){alert('Insufficient SCDO balance. Available: '+bal);return;}
+    } else {
+      // Sending a token: need SCDO for gas
+      const scdoBal=parseFloat(document.getElementById('bal').textContent)||0;
+      if(scdoBal < 0.0001){alert('Insufficient SCDO for network fee. You need at least ~0.0001 SCDO to pay gas.');return;}
+      // Check token balance
+      const t=tokens.find(x=>x.contract===selectedToken);
+      if(t && t.bal!==undefined && amt > parseFloat(t.bal)){alert('Insufficient '+t.sym+' balance. Available: '+t.bal);return;}
+    }
+    let sym='SCDO';
+    if(isToken){
+      const t=tokens.find(x=>x.contract===selectedToken);
+      if(t)sym=t.sym;
+    }
+    document.getElementById('cf-to').textContent=to;
+    document.getElementById('cf-amt').textContent=(s0?fmtS0Short(units0):amt)+' '+sym; // shard0: exact BigInt amount
+    const trBox2 = document.getElementById('travel-rule');
+    if(!trBox2.classList.contains('hidden')){
+      document.getElementById('cf-amt').textContent += '\nBeneficiary: '+document.getElementById('tr-name').value.trim()+' ('+document.getElementById('tr-address').value.trim()+')';
+    }
+    document.getElementById('confirm-overlay').classList.add('show');
+    document.getElementById('cf-ok').onclick=async function(){
+      document.getElementById('confirm-overlay').classList.remove('show');
+      const btn=document.getElementById('btn-send');
+      btn.disabled=true;btn.textContent='Sending...';
+      try{
+        let hash;
+        if(isToken){
+          const t=tokens.find(x=>x.contract===selectedToken);
+          const toOnChain='0x'+to.substring(to.indexOf('S')+1);
+          const paddedTo=toOnChain.replace('0x','').padStart(64,'0');
+          const rawAmt=Math.floor(amt*Math.pow(10,t.decimals||6));
+          const paddedAmt=rawAmt.toString(16).padStart(64,'0');
+          const data='0xa9059cbb'+paddedTo+paddedAmt;
+          const contractOnChain=selectedToken.startsWith('0x')?selectedToken:'0x'+selectedToken.substring(selectedToken.indexOf('S')+1);
+          hash=await signAndSend(contractOnChain,0,data,200000);
+          saveTx({to:to,from:wallet.human,amount:amt+' '+t.sym,time:Date.now(),hash:hash||''});
+          alert('Sent '+amt+' '+t.sym+'!');
+          loadTokens();loadBalance();
+        }else if(s0){
+          hash=await signAndSend(to0,units0,'0x',21000);
+          const info=window._lastShard0Tx||{};
+          const amtStr=fmtS0Short(units0);
+          saveTx({to:to0,from:wallet.human,amount:amtStr,time:Date.now(),hash:hash||'',txid:info.txid||'',shard:0,nonce:info.nonce,status:'pending'});
+          showSendResult('<div style="color:#4CAF50;font-weight:600;margin-bottom:4px">Submitted to shard 0</div>'+
+            '<div>'+amtStr+' SCDO → <span class="h">'+to0+'</span></div>'+
+            '<div style="margin-top:4px">Tx hash: <span class="h">'+hash+'</span> <a href="#" style="color:#4CAF50" onclick="navigator.clipboard.writeText(\''+hash+'\');toast(\'Hash copied\');return false">copy</a></div>'+
+            '<div id="s0-status" style="margin-top:4px;color:#FFC107">Waiting for receipt…</div>',0);
+          toast('Sent! Tx '+hash.slice(0,18)+'…');loadBalance();
+          pollShard0Receipt(hash);
+          const c=getContacts();
+          if(!c.find(x=>x.addr===to0)){const nm=prompt('Save this address to contacts? (name)','');if(nm)saveContact(nm,to0);}
+        }else{
+          const toOnChain='0x'+to.substring(to.indexOf('S')+1);
+          hash=await signAndSend(toOnChain,Math.floor(amt*1e8),'0x',21000);
+          saveTx({to:to,from:wallet.human,amount:amt,time:Date.now(),hash:hash||''});
+          alert('Sent!');loadBalance();
+          // Save to address book
+          const c=getContacts();
+          if(!c.find(x=>x.addr===to)){const nm=prompt('Save this address to contacts? (name)','');if(nm)saveContact(nm,to);}
+        }
+      }catch(e){alert('Error: '+e.message);}
+      finally{btn.disabled=false;btn.textContent='Send';}
+    };
+    document.getElementById('cf-cancel').onclick=function(){document.getElementById('confirm-overlay').classList.remove('show');};
+  };
+
+  
+  // Android hardware back button
+  document.addEventListener('deviceready', function(){
+    document.addEventListener('backbutton', function(e){
+      e.preventDefault();
+      // If on a sub-screen, go home; else confirm exit
+      var visible = ['s-welcome','s-import','s-home','s-backup','s-sign','s-lock'].filter(function(id){
+        return !document.getElementById(id).classList.contains('hidden');
+      });
+      if(visible.indexOf('s-home') >= 0 || visible.indexOf('s-lock') >= 0){
+        if(confirm('Exit SCDO Wallet?')) navigator.app.exitApp();
+      } else {
+        goHome();
+      }
+    });
+  });
+
+  navigator.serviceWorker.getRegistrations().then(rs=>rs.forEach(r=>r.unregister()));
+
+  const enc=localStorage.getItem('scdo_priv_enc');
+  if(enc){
+    document.getElementById('s-lock').classList.remove('hidden');
+    document.getElementById('btn-unlock').onclick=async function(){
+      const pw=document.getElementById('lock-pw').value;
+      try{
+        const priv=await decryptPriv(enc,pw);
+        wallet=derive(priv,parseInt(localStorage.getItem('scdo_shard')||'1'));
+        document.getElementById('s-lock').classList.add('hidden');
+        goHome();
+      }catch(e){ document.getElementById('lock-err').textContent='Wrong password'; }
+    };
+  } else {
+    const saved=localStorage.getItem('scdo_priv_v3');
+    if(saved){const ss=parseInt(localStorage.getItem('scdo_shard')||'1');wallet=derive(saved,ss);goHome();}
+    else if(!location.hash.startsWith('#/verify'))show('s-welcome');
+  }
+
+
+  // === Address Book ===
+  function getContacts(){ try{return JSON.parse(localStorage.getItem('scdo_contacts')||'[]');}catch(e){return [];} }
+  function saveContact(name, addr){
+    const c=getContacts();
+    if(!c.find(x=>x.addr===addr)){c.push({name,addr});localStorage.setItem('scdo_contacts',JSON.stringify(c));}
+    renderContacts();
+  }
+  function renderContacts(){
+    const el=document.getElementById('addr-list');
+    if(!el) return;
+    const c=getContacts();
+    el.innerHTML=c.map((x,i)=>'<button onclick="document.getElementById(\'to\').value=\''+x.addr+'\'" style="background:#1e2128;border:1px solid #333;color:#8ab4f8;border-radius:12px;padding:3px 10px;font-size:11px;cursor:pointer">'+x.name+'</button>').join('');
+  }
+  // Save to address book after successful send
+  const oldSaveTx = "saveTx({to:to,from:wallet.human";
+  // === Sign Message ===
+  window.showSign=function(){show('s-sign');};
+  window.doSign=async function(){
+    const msg=document.getElementById('sign-msg').value;
+    if(!msg){toast('Type a message','#ff6b6b');return;}
+    try{
+      const msgHash=await crypto.subtle.digest('SHA-256',new TextEncoder().encode('\x19SCDO Signed Message:\n'+msg.length+':'+msg));
+      const sig=secp.signSync(new Uint8Array(msgHash),h2b(wallet.privKey),{recovered:true,der:false});
+      // sig = [Uint8Array(64), recid]
+      const sb=new Uint8Array(sig[0].length+1);sb.set(sig[0]);sb[sb.length-1]=sig[1];
+      let bin='';for(let i=0;i<sb.length;i++)bin+=String.fromCharCode(sb[i]);
+      const sigB64=btoa(bin);
+      document.getElementById('sign-result').style.display='block';
+      document.getElementById('sign-out').textContent=sigB64;
+    }catch(e){toast('Sign error: '+e.message,'#ff6b6b');}
+  };
+
+  window.showTxDetail=function(t){
+    const d=document.getElementById('txd-body');
+    const color=t.dir==='IN'?'#4CAF50':'#ff6b6b';
+    d.innerHTML=
+      '<div style="margin-bottom:8px"><span style="color:#888">Direction:</span> <b style="color:'+color+'">'+t.dir+'</b></div>'+
+      '<div style="margin-bottom:8px"><span style="color:#888">Token:</span> '+ (t.token||'SCDO') +'</div>'+
+      '<div style="margin-bottom:8px"><span style="color:#888">Amount:</span> <b>'+t.amount+' '+(t.token||'SCDO')+'</b></div>'+
+      '<div style="margin-bottom:8px;word-break:break-all"><span style="color:#888">Counterparty:</span><br>'+t.other+'</div>'+
+      '<div style="margin-bottom:8px;word-break:break-all"><span style="color:#888">Tx Hash:</span><br><span style="font-size:11px;color:#8ab4f8">'+(t.hash||'N/A')+'</span></div>'+
+      '<div style="margin-bottom:8px"><span style="color:#888">Time:</span> '+new Date(t.time).toLocaleString()+'</div>'+
+      (t.shard!=null?'<div style="margin-bottom:8px"><span style="color:#888">Shard:</span> '+t.shard+'</div>':'')+
+      (t.status?'<div style="margin-bottom:8px"><span style="color:#888">Status:</span> '+t.status+'</div>':'')+
+      (t.txid?'<div style="margin-bottom:8px;word-break:break-all"><span style="color:#888">Signed tx keccak:</span><br><span style="font-size:11px;color:#8ab4f8">'+t.txid+'</span></div>':'')+
+      (t.hash&&t.hash.startsWith('0x')?'<button class="btn btn2" style="margin-top:8px" onclick="navigator.clipboard.writeText(\''+t.hash+'\');toast(\'Hash copied\',\'#4CAF50\')">Copy Hash</button>':'');
+    document.getElementById('tx-detail').style.display='block';
+  };
+
+  window.disconnectWallet=function(){
+    if(confirm('Disconnect this wallet? You will need your private key to log back in.')){
+      localStorage.removeItem('scdo_priv_v3');
+      wallet=null;
+      location.reload();
+    }
+  };
+
+  window.fillMax=function(){
+    const tokenSel=document.getElementById('send-token');
+    const isToken=tokenSel.value!=='SCDO';
+    if(isToken){
+      // For tokens, just set full balance from tokens list
+      const t=tokens.find(x=>x.contract===tokenSel.value);
+      if(t){document.getElementById('amt').value=t.bal||0;}
+    }else{
+      if(wallet&&wallet.shard===0){const b=window._shard0Bal||0n;document.getElementById('amt').value=b>SHARD0_FEE_UNITS?fmtS0Short(b-SHARD0_FEE_UNITS):'0';return;}
+      const bal=parseFloat(document.getElementById('bal').textContent)||0;
+      const gas=0.000021;
+      document.getElementById('amt').value=Math.max(0,(bal-gas)).toFixed(8);
+    }
+  };
+
+  window.shareKYC=async function(){
+    const kyc=localStorage.getItem('scdo_kyc_'+wallet.human);
+    if(!kyc){toast('No KYC data to share','#ff6b6b');return;}
+    try{
+      // Generate random AES-GCM key
+      const key=crypto.getRandomValues(new Uint8Array(16));
+      const iv=crypto.getRandomValues(new Uint8Array(12));
+      const keyHex=b2h(key);
+      const ivHex=b2h(iv);
+      // AES-GCM encrypt
+      const cryptoKey=await crypto.subtle.importKey('raw',key,'AES-GCM',false,['encrypt']);
+      const encBuf=await crypto.subtle.encrypt({name:'AES-GCM',iv:iv},cryptoKey,new TextEncoder().encode(kyc));
+      const encBytes=new Uint8Array(encBuf);
+      const encB64=btoa(String.fromCharCode(...encBytes));
+      const link=location.origin+'/wallet/#/verify?d='+encodeURIComponent(encB64)+'&k='+keyHex+'&iv='+ivHex+'&a='+wallet.human;
+      // Show non-blocking modal instead of prompt()
+      const old=document.getElementById('share-modal');
+      if(old)old.remove();
+      const modal=document.createElement('div');
+      modal.id='share-modal';
+      modal.style.cssText='position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.8);z-index:2000;display:flex;align-items:center;justify-content:center';
+      modal.innerHTML='<div style="background:#1a1a2e;padding:24px;border-radius:12px;max-width:500px;color:#eee;font-family:sans-serif"><h3 style="margin-top:0;color:#4CAF50">KYC Share Link</h3><p style="font-size:13px;color:#aaa">Encrypted with AES-GCM. Share this link securely:</p><textarea id="share-link" style="width:100%;height:80px;background:#111;color:#4CAF50;border:1px solid #333;border-radius:8px;padding:8px;font-size:11px;word-break:break-all" readonly>'+link+'</textarea><button class="btn" onclick="navigator.clipboard.writeText(document.getElementById(\'share-link\').value).then(()=>this.textContent=\'Copied!\')" style="width:100%;margin-top:8px">Copy Link</button><button class="btn btn2" onclick="this.closest(\'#share-modal\').remove()" style="width:100%;margin-top:6px">Close</button></div>';
+      document.body.appendChild(modal);
+    }catch(e){toast('Share error: '+e.message,'#ff6b6b');}
+  };
+  // Verify shared KYC link
+  if(location.hash.startsWith('#/verify')){
+    const params=new URLSearchParams(location.hash.split('?')[1]);
+    const d=params.get('d'),k=params.get('k'),iv=params.get('iv'),a=params.get('a');
+    if(d&&k){
+      (async()=>{
+      try{
+        const keyBytes=h2b(k);
+        const ivBytes=iv?h2b(iv):null;
+        const encBytes=Uint8Array.from(atob(d),c=>c.charCodeAt(0));
+        let kyc;
+        if(ivBytes){
+          // AES-GCM
+          const cryptoKey=await crypto.subtle.importKey('raw',keyBytes,'AES-GCM',false,['decrypt']);
+          const decBuf=await crypto.subtle.decrypt({name:'AES-GCM',iv:ivBytes},cryptoKey,encBytes);
+          kyc=JSON.parse(new TextDecoder().decode(decBuf));
+        }else{
+          // Legacy XOR fallback
+          const dec=new Uint8Array(encBytes.length);
+          for(let i=0;i<encBytes.length;i++)dec[i]=encBytes[i]^keyBytes[i%keyBytes.length];
+          kyc=JSON.parse(new TextDecoder().decode(dec));
+        }
+        document.body.innerHTML='<div style="max-width:500px;margin:60px auto;background:#1a1a2e;padding:30px;border-radius:16px;color:#eee;font-family:sans-serif"><h2 style="color:#4CAF50;margin-top:0">✓ KYC Verified</h2><p><b>Address:</b> '+a+'</p><p><b>Name:</b> '+kyc.name+'</p><p><b>DOB:</b> '+kyc.dob+'</p><p><b>Country:</b> '+kyc.country+'</p><p><b>ID Type:</b> '+kyc.idtype+'</p><p><b>ID Number:</b> '+kyc.idnum+'</p><p><b>Address:</b> '+kyc.address+'</p><p style="color:#888;font-size:12px;margin-top:20px">Shared via encrypted link (AES-GCM). Recipient verified by decryption key.</p></div>';
+      }catch(e){document.body.innerHTML='<p style="color:#ff6b6b;padding:40px">Invalid share link: '+e.message+'</p>';}
+      })();
+    }
+  }
+window.goHome=goHome;window.show=show;}catch(e){toast('Fatal: '+e.message,'#ff6b6b');}
+</script>
+
+
+
+<div id="float-back" style="display:none;position:fixed;top:50px;left:10px;z-index:99999;background:#4CAF50;color:#fff;padding:10px 16px;border-radius:20px;cursor:pointer;font-size:16px;box-shadow:0 2px 8px rgba(0,0,0,.4)" onclick="['s-welcome','s-import','s-home','s-backup','s-sign','s-lock'].forEach(function(s){var e=document.getElementById(s);if(e)e.classList.add('hidden')});document.getElementById('s-home').classList.remove('hidden')">← Back</div>
+<script>
+function showFloatBack(){
+  var el=document.getElementById('float-back');
+  var onHome=!document.getElementById('s-home').classList.contains('hidden');
+  var onWelcome=!document.getElementById('s-welcome').classList.contains('hidden');
+  var onLock=!document.getElementById('s-lock').classList.contains('hidden');
+  el.style.display=(onHome||onWelcome||onLock)?'none':'block';
+}
+setInterval(showFloatBack,500);
+// Android hardware back
+window.addEventListener('popstate',function(){goHome();});
+</script>
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+  var fb = document.getElementById('float-back');
+  if(fb) fb.addEventListener('click', function(){
+    ['s-welcome','s-import','s-home','s-backup','s-sign','s-lock'].forEach(function(s){
+      var el = document.getElementById(s); if(el) el.classList.add('hidden');
+    });
+    document.getElementById('s-home').classList.remove('hidden');
+    if(typeof loadBalance==='function') loadBalance();
+  });
+});
+</script>
+<script>
+function copyAddr(){
+  var addr = document.getElementById('addr').textContent.trim();
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(addr).then(()=>toast('Address copied','#4CAF50')).catch(()=>fallbackCopy(addr));
+  } else {
+    fallbackCopy(addr);
+  }
+}
+function fallbackCopy(t){
+  var ta=document.createElement('textarea');ta.value=t;ta.style.position='fixed';ta.style.opacity=0;document.body.appendChild(ta);ta.select();
+  try{document.execCommand('copy');toast('Address copied','#4CAF50');}catch(e){toast('Copy failed: '+e.message,'#ff6b6b');}
+  document.body.removeChild(ta);
+}
+window.copyAddr = copyAddr;
+</script>
+</body></html>

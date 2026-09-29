@@ -1,0 +1,20 @@
+# SCDO node via Docker Compose:  docker compose up -d   ·  logs: docker compose logs -f
+# Shard ports: 1 -> P2P 8057 / RPC 8037, 2 -> 8058/8038, 3 -> 8059/8039, 4 -> 8056/8036.
+# If you change SHARD, change the port numbers below to match.
+services:
+  scdo-shard1:
+    build: .            # uses the Dockerfile next to this file
+    image: scdo-node
+    restart: unless-stopped
+    environment:
+      SHARD: "1"
+      MINE_ADDRESS: ""  # e.g. 1S01... to solo-mine (shard = first digit of the address)
+      THREADS: "2"
+    ports:
+      - "8057:8057"
+      - "8057:8057/udp"
+      - "127.0.0.1:8037:8037"   # HTTP RPC, local only
+    volumes:
+      - scdo-data:/root/.scdo
+volumes:
+  scdo-data:

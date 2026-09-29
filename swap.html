@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="zh"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SCDO Swap</title>
+<script src="https://cdn.jsdelivr.net/npm/@noble/secp256k1@2.1.1/index.iife.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@ethereumjs/rlp@5.0.2/dist.rlp.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/keccak@3.0.4/dist/keccak.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#0d1117;color:#e6edf3;font-family:-apple-system,sans-serif;padding:12px;max-width:480px;margin:0 auto}
+h1{color:#58a6ff;font-size:20px;text-align:center;margin:12px 0}
+.card{background:#161b22;border:1px solid #30363d;border-radius:12px;padding:14px;margin:10px 0}
+.label{color:#8b949e;font-size:12px;margin-bottom:4px}
+input{width:100%;background:#0d1117;border:1px solid #30363d;color:#e6edf3;padding:12px;border-radius:8px;font-size:16px;margin-top:4px}
+button{width:100%;background:#238636;color:white;border:none;padding:14px;border-radius:8px;font-size:16px;cursor:pointer;margin-top:8px}
+button:disabled{background:#30363d}
+.row{display:flex;justify-content:space-between;padding:6px 0;font-size:13px}
+#status{font-size:12px;color:#8b949e;text-align:center;margin-top:8px;min-height:18px}
+.result{font-size:11px;color:#58a6ff;word-break:break-all;margin-top:8px;padding:8px;background:#0d1117;border-radius:6px}
+</style></head><body>
+<h1>SCDO Swap</h1>
+<div class="card">
+<div class="row"><span>Pair</span><b>SCDO / SCDOT</b></div>
+<div class="row"><span>Price</span><span id="price">Loading...</span></div>
+<div class="row"><span>Fee</span><span>0.3%</span></div>
+</div>
+<div class="card">
+<div class="label">Private Key (never leaves your browser)</div>
+<input id="pk" type="password" placeholder="0x...">
+<div class="label" style="margin-top:10px">Pay (SCDO)</div>
+<input id="pay" type="number" value="0.1" step="0.1" min="0">
+<div class="label" style="margin-top:10px">Receive (SCDOT est)</div>
+<input id="recv" type="number" readonly value="97087">
+</div>
+<button id="btn" onclick="doSwap()">Swap</button>
+<div id="status"></div>
+<div id="result" class="result" style="display:none"></div>
+<script>
+const NODE="http://74.208.207.184:8037";
+const AMM="1S0146543ef8ea2eaec816d6c20cd330a71e920032";
+
+async function rpc(m,p){
+  const r=await fetch(NODE,{method:"POST",headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({jsonrpc:"2.0",method:m,params:p,id:1})});
+  return (await r.json()).result;
+}
+
+function hexToAddr20(addr){
+  let h=addr.replace(/^[1-4]S0[1-4]/i,"");
+  while(h.length<40)h="0"+h;
+  return Uint8Array.from(h.match(/.{2}/g).map(b=>parseInt(b,16)));
+}
+
+async function doSwap(){
+  const pk=document.getElementById('pk').value.trim();
+  const pay=parseFloat(document.getElementById('pay').value)||0;
+  const status=document.getElementById('status');
+  if(!pk.startsWith('0x')||pk.length!==66){status.textContent='Invalid private key';return}
+  if(pay<=0){status.textContent='Enter amount';return}
+  document.getElementById('btn').disabled=true;
+  try{
+    status.textContent='Loading libs...';
+    const privKey=Uint8Array.from(pk.slice(2).match(/.{2}/g).map(b=>parseInt(b,16)));
+    // Derive address: pubkey hash last 20 bytes, set shard=1
+    const pubKey=secp256k1.getPublicKey(privKey,false);
+    const pubHash=keccak256(pubKey.slice(1));
+    const from=new Uint8Array(20);
+    from.set(pubHash.slice(12,32));
+    from[0]=1; // shard 1
+    from[19]=(from[19]&0xF0)|1; // external type
+
+    status.textContent='Getting nonce...';
+    // Need address string for nonce query - use derived
+    const fromStr="1S01"+Buffer.from(from.slice(1)).toString('hex');
+    const nonceData=await rpc('scdo_getAccountNonce',[fromStr]);
+    const nonce=typeof nonceData==='number'?nonceData:parseInt(nonceData,16)||0;
+
+    const amount=Math.floor(pay*100000000);
+    const toAddr=hexToAddr20(AMM);
+    // swapScdoForToken() selector
+    const sel=keccak256(Uint8Array.from([115,119,97,112,83,99,100,111,70,111,114,84,111,107,101,110,40,41])).slice(0,4);
+
+    status.textContent='Signing...';
+    // RLP encode TxData: [nonce, from, to, amount, payload, gasPrice, gasLimit, timestamp]
+    const txData=[
+      Uint8Array.from(new Uint8Array(8).map((_,i)=>{return (nonce/Math.pow(256,7-i))&255;})),
+      from, toAddr,
+      Uint8Array.from(new Uint8Array(32).map((_,i)=>{return (amount/Math.pow(256,31-i))&255;})),
+      sel,
+      Uint8Array.from([1]), // gasPrice=1
+      Uint8Array.from(new Uint8Array(8).map((_,i)=>{return (500000/Math.pow(256,7-i))&255;})), // gasLimit
+      new Uint8Array(0) // timestamp
+    ];
+    const rlpData=RLP.encode(txData);
+    const hash=keccak256(rlpData);
+    const sig=secp256k1.sign(hash,privKey);
+    const sigBytes=sig.toCompactRawBytes(); // 64 bytes
+    // Add recovery byte v
+    const sigFull=new Uint8Array(65);
+    sigFull.set(sigBytes,0); sigFull[64]=0;
+
+    // Full tx RLP: txData + signature
+    const fullTx=[...txData, sigFull];
+    const encoded=RLP.encode(fullTx);
+    const hexTx='0x'+Buffer.from(encoded).toString('hex');
+
+    status.textContent='Sending...';
+    const res=await rpc('scdo_addTx',[hexTx]);
+    document.getElementById('result').style.display='block';
+    document.getElementById('result').textContent='Sent: '+JSON.stringify(res);
+    status.textContent='Swap sent!';
+  }catch(e){
+    status.textContent='Error: '+e.message;
+  }
+  document.getElementById('btn').disabled=false;
+}
+fetch('/api/swap/pair').then(r=>r.json()).then(d=>document.getElementById('price').textContent=d.price);
+document.getElementById('pay').oninput=function(){this.recv.value=Math.floor(parseFloat(this.value)*97087)};
+</script></body></html>

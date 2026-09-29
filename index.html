@@ -1,0 +1,889 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="scdo-build" content="shard-v2-1790520395" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>scdo-scan-frontend</title>
+    <script>/* old-chain decimals fix 2026-09-28: shards 1-4 use 8 decimals (1 SCDO = 1e8 wen) */
+  window.__scdoWen=window.__scdoWen||function(v,noGroup){
+    /* exact old-chain amount: wen (1e-8 SCDO) -> SCDO string, trailing zeros trimmed */
+    if(v&&typeof v==='object')v=v.$numberLong||v.$numberInt||v.$numberDouble||0;
+    var s=String(v==null||v===''?0:v).trim();
+    if(!/^-?\d+$/.test(s)){var n=Number(s);if(!isFinite(n))n=0;s=Math.round(n).toLocaleString('en-US',{useGrouping:false});}
+    var neg=s.charAt(0)==='-';if(neg)s=s.slice(1);
+    s=s.replace(/^0+/,'');while(s.length<9)s='0'+s;
+    var ip=s.slice(0,-8),fp=s.slice(-8).replace(/0+$/,'');
+    if(!noGroup)ip=ip.replace(/\B(?=(\d{3})+(?!\d))/g,',');
+    return (neg&&(ip!=='0'||fp)?'-':'')+ip+(fp?'.'+fp:'');
+  };
+    </script>
+    <script type="module" crossorigin src="/assets/index-6fvsMIq5-w8.js">
+  function loadTracePanel(){
+    var m=location.hash.match(/txhash=(0x[a-fA-F0-9]+)/);if(!m)return;
+    var txhash=m[1];
+    var card=document.createElement('div');
+    card.className='card';
+    card.innerHTML='<h3>Internal Transactions (Trace)</h3><div id="scdo-trace-body" style="color:#8b949e;font-size:13px">Loading...</div>';
+    var c=document.querySelector('.container');
+    if(c)c.appendChild(card);
+    fetch('https://api.scdoscan.io/api/v1/tx?txhash='+txhash).then(function(r){return r.json()}).then(function(d){
+      if(!d.data)return;
+      var blockHeight=d.data.block||0;
+      fetch('https://api.scdoscan.io/api/v1/debug_trace?height='+blockHeight+'&hash='+txhash).then(function(r){return r.json()}).then(function(td){
+        var el=document.getElementById('scdo-trace-body');
+        if(td.code===0&&td.data&&td.data.result&&td.data.result.structLogs){
+          var calls=td.data.result.structLogs.filter(function(l){return l.op==='CALL'||l.op==='CREATE'||l.op==='CALLCODE'||l.op==='DELEGATECALL'});
+          if(calls.length){
+            el.innerHTML=calls.map(function(c,i){
+              return '<div style="padding:3px 0;border-bottom:1px solid #21262d;font-size:12px">#'+(i+1)+' <strong style="color:#58a6ff">'+c.op+'</strong> depth:'+c.depth+' gas:'+c.gas+'</div>';
+            }).join('');
+          }else{
+            el.textContent='No internal calls (plain transfer)';
+          }
+        }else{
+          el.textContent='Trace available (no internal calls)';
+        }
+      }).catch(function(){
+        var el=document.getElementById('scdo-trace-body');if(el)el.textContent='Trace not available';
+      });
+    }).catch(function(){});
+  }
+
+
+  setInterval(function(){
+    try{
+      if(location.hash.indexOf('txhash=')>=0 && !document.getElementById('scdo-trace-body')){
+        loadTracePanel();
+      }
+    }catch(e){}
+  }, 1500);
+
+  function loadCrossShardPanel(){
+    var m=location.hash.match(/txhash=(0x[a-fA-F0-9]+)/);if(!m)return;
+    var txhash=m[1];
+    if(document.getElementById('scdo-crossshard-body'))return;
+    var card=document.createElement('div');
+    card.className='card';
+    card.id='scdo-crossshard-card';
+    card.innerHTML='<h3 style="color:#3fb950">&#x2194; Cross-Shard Transaction Path</h3><div id="scdo-crossshard-body" style="color:#8b949e;font-size:13px">Checking...</div>';
+    var c=document.querySelector('.container');
+    if(c)c.appendChild(card);
+    fetch('/api/v1/crossshard/tx?txHash='+txhash).then(function(r){return r.json()}).then(function(d){
+      var el=document.getElementById('scdo-crossshard-body');
+      if(!el)return;
+      if(d.code!==0||!d.data){el.textContent='Not a cross-shard transaction';return;}
+      var t=d.data;
+      if(!t.isCrossShard){
+        el.innerHTML='<div style="padding:8px 0;color:#8b949e">This is a single-shard transaction (shard '+t.shard+').</div>';
+        return;
+      }
+      // Cross-shard! Build path visualization
+      var pathHtml='';
+      if(t.path&&t.path.length>=2){
+        pathHtml='<div style="display:flex;align-items:center;gap:12px;padding:12px 0;flex-wrap:wrap">';
+        t.path.forEach(function(hop,i){
+          var shardColor=hop.shard===0?'#3fb950':'#d29922';
+          pathHtml+='<div style="background:#0d1117;border:1px solid '+shardColor+';border-radius:8px;padding:10px 14px;min-width:180px">';
+          pathHtml+='<div style="font-size:11px;color:#8b949e;margin-bottom:4px">SHARD '+hop.shard+' ('+(hop.type==='source'?'SOURCE':'DESTINATION')+')</div>';
+          pathHtml+='<div style="font-size:13px;color:#e6edf3;margin-bottom:4px"><strong>'+hop.amountScdo+' SCDO</strong></div>';
+          pathHtml+='<div style="font-size:11px;color:#58a6ff;word-break:break-all">Block #'+hop.block+'</div>';
+          pathHtml+='<div style="font-size:10px;color:#8b949e;word-break:break-all;margin-top:2px">'+hop.txHash.substring(0,18)+'...</div>';
+          pathHtml+='</div>';
+          if(i<t.path.length-1){
+            pathHtml+='<div style="font-size:24px;color:#3fb950;font-weight:bold">&rarr;</div>';
+          }
+        });
+        pathHtml+='</div>';
+      }
+      var statusBadge=t.debtStatus==='included'
+        ?'<span style="color:#3fb950;font-weight:700">&#10003; Included on target shard</span>'
+        :'<span style="color:#d29922;font-weight:700">&#8987; Pending / not yet indexed on target shard</span>';
+      el.innerHTML='<div style="margin-bottom:8px">'+statusBadge+'</div>'+pathHtml;
+    }).catch(function(){
+      var el=document.getElementById('scdo-crossshard-body');
+      if(el)el.textContent='Cross-shard info unavailable';
+    });
+  }
+  setInterval(function(){
+    try{
+      if(location.hash.indexOf('txhash=')>=0 && !document.getElementById('scdo-crossshard-body')){
+        loadCrossShardPanel();
+      }
+    }catch(e){}
+  }, 1500);
+
+</script>
+    <link rel="stylesheet" crossorigin href="/assets/index-DkEjfZTy.css">
+  <style>#scdo-bal-fix ~ #scdo-bal-fix,#scdo-src20-fix ~ #scdo-src20-fix,#scdo-toktx-fix ~ #scdo-toktx-fix{display:none!important}</style>
+<style>
+#scdo-hero{display:none;background:linear-gradient(135deg,#0d1117 0%,#161b22 50%,#1a1f35 100%);border-bottom:2px solid #1f6feb;padding:24px 20px 20px;text-align:center;}
+#scdo-hero.show{display:block;}
+#scdo-hero .hero-title{font-size:20px;font-weight:800;color:#e6edf3;letter-spacing:-0.3px;margin:0 0 6px;line-height:1.3;}
+#scdo-hero .hero-title .hl{color:#58a6ff;}
+#scdo-hero .hero-sub{font-size:12px;color:#8b949e;margin:0;}
+#scdo-hero .hero-sub .s0{color:#3fb950;font-weight:600;}
+#scdo-hero .hero-sub .s1{color:#d29922;}
+#scdo-shard-bar{display:none;flex-wrap:wrap;gap:10px;padding:14px 16px;background:#0d1117;border-bottom:1px solid #21262d;}
+#scdo-shard-bar.show{display:flex;}
+.shard-card{flex:1;min-width:120px;max-width:220px;padding:12px 14px;background:#161b22;border:1px solid #30363d;border-radius:8px;cursor:pointer;transition:transform .2s,border-color .2s,box-shadow .2s;position:relative;}
+.shard-card:hover{border-color:#58a6ff;transform:translateY(-3px);box-shadow:0 4px 12px rgba(88,166,255,.15);}
+.shard-card.active{border-color:#3fb950;background:#0d2818;box-shadow:0 0 0 1px #3fb950;}
+.shard-card .shard-badge{position:absolute;top:-8px;right:8px;font-size:10px;padding:2px 8px;border-radius:10px;font-weight:700;}
+.shard-card .badge-live{background:#238636;color:#fff;}
+.shard-card .badge-arch{background:#6e7681;color:#e6edf3;}
+.shard-card .shard-name{font-size:13px;font-weight:700;color:#e6edf3;margin-bottom:4px;}
+.shard-card .shard-h{font-size:18px;font-weight:800;color:#58a6ff;}
+.shard-card .shard-type{font-size:11px;color:#8b949e;margin-top:2px;}
+.shard-card .shard-tps{font-size:11px;color:#3fb950;margin-top:2px;}
+.shard-card .tooltip{display:none;position:absolute;bottom:calc(100% + 10px);left:50%;transform:translateX(-50%);background:#1c2129;border:1px solid #30363d;border-radius:6px;padding:10px 14px;font-size:11px;color:#c9d1d9;width:220px;z-index:100;white-space:normal;box-shadow:0 4px 16px rgba(0,0,0,.5);line-height:1.4;}
+.shard-card .tooltip::after{content:'';position:absolute;top:100%;left:50%;margin-left:-5px;border:5px solid transparent;border-top-color:#1c2129;}
+.shard-card:hover .tooltip{display:block;}
+#scdo-shard-blocks{margin:0 16px;}
+#scdo-shard-blocks table{width:100%;border-collapse:collapse;font-size:13px;}
+#scdo-shard-blocks th{color:#8b949e;text-align:left;padding:6px 8px;border-bottom:1px solid #21262d;font-weight:600;}
+#scdo-shard-blocks td{padding:6px 8px;border-bottom:1px solid #21262d;}
+@media(max-width:768px){
+  .shard-card{min-width:100px;padding:8px 10px;}
+  .shard-card .shard-h{font-size:14px;}
+  #scdo-hero .hero-title{font-size:16px;}
+}
+</style>
+<div id="scdo-hero"><div class="hero-title">The first EVM explorer natively supporting <span class="hl">multi-shard cross-shard transaction tracing</span> and a panoramic view of all-shard address assets</div><p class="hero-sub"><span class="s0">shard0 live mainnet</span> | <span class="s1">shard1~shard4 archived shards</span> - one-click cross-shard asset and transaction tracing</p></div>
+<style id="scdo-compliance-css">
+#scdo-compliance-strip{display:none;background:#0b1a12;border-bottom:1px solid #1f3d2a;text-align:center;padding:7px 12px;font-size:12px;line-height:1.5}
+#scdo-hero.show ~ #scdo-compliance-strip{display:block}
+#scdo-compliance-strip a{color:#7ee2a0;text-decoration:none;font-weight:600;letter-spacing:.1px}
+#scdo-compliance-strip a:hover{color:#3fb950;text-decoration:underline}
+#scdo-compliance-strip .ic{display:inline-block;margin-right:6px;color:#3fb950}
+#scdo-compliance-strip .more{color:#8b949e;font-weight:400;margin-left:6px;white-space:nowrap}
+#scdo-compliance-foot{text-align:center;padding:14px 16px 22px;border-top:1px solid #21262d;font-size:12px;color:#6e7681;line-height:1.7}
+#scdo-compliance-foot a{color:#8b949e;text-decoration:none}
+#scdo-compliance-foot a:hover{color:#58a6ff;text-decoration:underline}
+@media(max-width:640px){#scdo-compliance-strip{font-size:11px;padding:6px 10px}#scdo-compliance-strip .more{display:none}#scdo-compliance-foot{font-size:11px;padding:12px 10px 18px}}
+</style>
+<div id="scdo-compliance-strip"><a href="/compliance.html" title="View compliance and regulatory status"><svg class="ic" width="12" height="13" viewBox="0 0 24 26" aria-hidden="true" style="vertical-align:-2px"><path fill="currentColor" d="M12 0 1 4.5v7C1 18.6 5.7 24.3 12 26c6.3-1.7 11-7.4 11-14.5v-7L12 0zm-1.6 18.2-5-5 2.1-2.1 2.9 2.9 6.9-6.9 2.1 2.1-9 9z"/></svg>AUSTRAC Registered DCE &middot; DCE100714503-001 &middot; AFCA Member 124589 &middot; 9Y9 PTY LTD ABN 19 600 445 118<span class="more">Compliance &rarr;</span></a></div>
+<div id="scdo-shard-bar"></div>
+<div id="scdo-shard-blocks"></div>
+<style id="scdo-shard-v2-css">
+/* v2: selection, hover lift, metrics, block cards, mobile */
+.shard-card{transition:transform .22s ease,border-color .2s,box-shadow .22s,background .2s;outline:none;}
+.shard-card:hover{transform:translateY(-4px);box-shadow:0 8px 20px rgba(88,166,255,.18);}
+.shard-card.mainnet{border-left:3px solid #238636;}
+.shard-card.active{border-color:#3fb950!important;background:#0d2818;box-shadow:0 0 0 2px #3fb950,0 6px 18px rgba(63,185,80,.25);}
+.shard-card.active:hover{box-shadow:0 0 0 2px #3fb950,0 10px 24px rgba(63,185,80,.3);}
+.shard-card:focus-visible{box-shadow:0 0 0 2px #58a6ff;}
+.shard-card.show-tip .tooltip{display:block;}
+.shard-card .shard-dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:#6e7681;margin-right:6px;vertical-align:middle;}
+.shard-card .shard-dot.dot-live{background:#3fb950;box-shadow:0 0 0 0 rgba(63,185,80,.6);animation:scdoPulse 1.8s infinite;}
+.shard-card .shard-dot.dot-ok{background:#58a6ff;}
+.shard-card .shard-dot.dot-sync{background:#d29922;}
+@keyframes scdoPulse{0%{box-shadow:0 0 0 0 rgba(63,185,80,.6);}70%{box-shadow:0 0 0 6px rgba(63,185,80,0);}100%{box-shadow:0 0 0 0 rgba(63,185,80,0);}}
+.shard-card .shard-metrics{display:flex;justify-content:space-between;gap:6px;font-size:11px;color:#8b949e;margin-top:6px;border-top:1px solid #21262d;padding-top:6px;}
+.shard-card .shard-metrics b{color:#c9d1d9;font-weight:600;font-family:monospace;}
+.shard-card .shard-h.bump{animation:scdoBump .6s ease;}
+@keyframes scdoBump{0%{color:#3fb950;}100%{color:#58a6ff;}}
+#scdo-shard-bar .shard-updated{flex-basis:100%;text-align:right;font-size:10px;color:#6e7681;margin-top:-2px;}
+#scdo-shard-blocks{max-width:1200px;margin:0 auto;padding:4px 16px 8px;box-sizing:border-box;}
+#scdo-shard-blocks .sb-head h3{color:#e6edf3;margin:12px 0 2px;font-size:15px;}
+#scdo-shard-blocks .sb-desc{color:#8b949e;font-size:12px;margin-bottom:10px;}
+#scdo-shard-blocks .sb-tag{font-size:10px;padding:2px 8px;border-radius:10px;background:#6e7681;color:#e6edf3;vertical-align:middle;font-weight:700;}
+#scdo-shard-blocks .sb-tag.live{background:#238636;color:#fff;}
+#scdo-shard-blocks .sb-grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px;}
+#scdo-shard-blocks .sb-card{background:#161b22;border:1px solid #30363d;border-radius:8px;padding:10px 12px;font-size:12px;color:#c9d1d9;transition:transform .22s ease,border-color .2s,box-shadow .22s;}
+#scdo-shard-blocks .sb-card:hover{transform:translateY(-4px);border-color:#58a6ff;box-shadow:0 8px 20px rgba(88,166,255,.15);}
+#scdo-shard-blocks .sb-h{font-weight:800;font-size:14px;margin-bottom:6px;color:#58a6ff;}
+#scdo-shard-blocks .sb-h a{color:#58a6ff;text-decoration:none;}
+#scdo-shard-blocks .sb-row{display:flex;justify-content:space-between;gap:6px;color:#8b949e;line-height:1.7;}
+#scdo-shard-blocks .sb-row b{color:#c9d1d9;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+#scdo-shard-blocks .sb-row b.mono{font-family:monospace;font-size:11px;}
+#scdo-shard-blocks .sb-age{color:#6e7681;font-size:11px;margin-top:4px;text-align:right;}
+#scdo-shard-blocks .sb-empty{grid-column:1/-1;color:#8b949e;padding:12px;}
+.charts-row .card{transition:transform .22s ease,box-shadow .22s;}
+.charts-row .card:hover{transform:translateY(-3px);box-shadow:0 8px 20px rgba(0,0,0,.35);}
+@media(max-width:1024px){#scdo-shard-blocks .sb-grid{grid-template-columns:repeat(3,minmax(0,1fr));}}
+@media(max-width:640px){
+  #scdo-shard-bar.show{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;padding:14px 12px;}
+  #scdo-shard-bar .shard-card{max-width:none;min-width:0;}
+  #scdo-shard-bar .shard-card.mainnet{grid-column:1/-1;}
+  #scdo-shard-bar .shard-card .tooltip{position:static;transform:none;width:auto;margin-top:8px;box-shadow:none;}
+  #scdo-shard-bar .shard-card .tooltip::after{display:none;}
+  #scdo-shard-bar .shard-card:hover .tooltip{display:none;}
+  #scdo-shard-bar .shard-card.active .tooltip,#scdo-shard-bar .shard-card.show-tip .tooltip{display:block;}
+  #scdo-shard-bar .shard-updated{grid-column:1/-1;text-align:center;}
+  #scdo-shard-blocks{padding:4px 12px 8px;}
+  #scdo-shard-blocks .sb-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;}
+  #scdo-hero{padding:18px 14px 14px;}
+  body.scdo-home .statsbar{gap:8px 14px!important;}
+  body.scdo-home .card table{display:block;overflow-x:auto;white-space:nowrap;}
+}
+</style>
+<script>
+/* SCDO multi-shard homepage v2: shard selection, 5s auto refresh (home only), shard-aware blocks/charts */
+(function(){
+  var API='https://api.scdoscan.io/api/v1';
+  var POLL_MS=5000;
+  var shardMeta=[
+    {id:0,name:'Shard 0',type:'live',desc:'Active Mainnet - EVM PoW chain (ChainID 5680), live block production, MetaMask supported.'},
+    {id:1,name:'Shard 1',type:'archive',desc:'Archive shard - historical SCDO mainnet blocks, accounts and transactions (26M+ txs indexed).'},
+    {id:2,name:'Shard 2',type:'archive',desc:'Archive shard - historical SCDO shard 2 data (~9.2M blocks).'},
+    {id:3,name:'Shard 3',type:'archive',desc:'Archive shard - historical SCDO shard 3 data (~9.2M blocks).'},
+    {id:4,name:'Shard 4',type:'archive',desc:'Archive shard - historical SCDO shard 4 data (~9.2M blocks, syncing).'}
+  ];
+  var currentShard=1;
+  try{var saved=parseInt(sessionStorage.getItem('scdoShard'),10);if(saved>=0&&saved<=4)currentShard=saved;}catch(e){}
+  window.__scdoShard=currentShard;
+  var timer=null,built=false,tipTimer=null,lastSummary=null,lastUpdated=0;
+
+  function isHome(){var h=location.hash||'';return h===''||h==='#'||h==='#/'||h.indexOf('#/?')===0;}
+  function $(id){return document.getElementById(id);}
+  function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+  function fmtNum(n){n=Number(n)||0;return n.toLocaleString();}
+  function shortAddr(a){a=String(a||'');return a.length>16?a.substring(0,8)+'...'+a.substring(a.length-6):a;}
+
+  // shared, memoised fetch of all-shard latest blocks (used by overlay + Vue Home patch)
+  var abCache={t:0,p:null};
+  function getAllShards(force){
+    var now=Date.now();
+    if(!force&&abCache.p&&now-abCache.t<2000)return abCache.p;
+    abCache.t=now;
+    abCache.p=fetch(API+'/blocks/latest/allshards?size=25',{cache:'no-store'}).then(function(r){return r.json();});
+    abCache.p.catch(function(){abCache.p=null;});
+    return abCache.p;
+  }
+  // Vue Home "Latest Blocks" data source for the selected shard (same shape as /blocks)
+  window.__scdoHomeBlocks=function(){
+    var sh=window.__scdoShard;
+    return getAllShards().then(function(d){
+      var list=(d&&d.byShard&&d.byShard[String(sh)])||[];
+      if(!list.length&&sh>=1)throw new Error('empty');
+      return {code:0,data:{list:list.slice(0,20)}};
+    }).catch(function(){
+      return fetch(API+'/blocks?p=1&s='+(sh>=1?sh:1)+'&ps=20').then(function(r){return r.json();});
+    }).then(function(res){
+      return sh!==window.__scdoShard?window.__scdoHomeBlocks():res; // shard switched mid-request
+    });
+  };
+  // chart fallback when /chart/* has no data for the selected shard (e.g. shard0)
+  window.__scdoChartFallback=function(){
+    var sh=window.__scdoShard;
+    return getAllShards().then(function(d){
+      var list=((d&&d.byShard&&d.byShard[String(sh)])||[]).slice().reverse();
+      var diff=[],bt=[],hr=[];
+      for(var i=1;i<list.length;i++){
+        var t=Math.max(1,Number(list[i].time)-Number(list[i-1].time));
+        var df=Number(list[i].difficulty)||0;
+        diff.push(df);bt.push(t);hr.push(df/t);
+      }
+      return {d:diff,h:hr,t:bt};
+    }).catch(function(){return {d:[],h:[],t:[]};});
+  };
+
+  function buildBar(){
+    var bar=$('scdo-shard-bar');
+    bar.innerHTML=shardMeta.map(function(s){
+      var live=s.type==='live';
+      var badge=live?'<span class="shard-badge badge-live">LIVE</span>':'<span class="shard-badge badge-arch">ARCHIVE</span>';
+      return '<div class="shard-card'+(live?' mainnet':'')+(s.id===currentShard?' active':'')+'" data-shard="'+s.id+'" role="button" tabindex="0" aria-pressed="'+(s.id===currentShard)+'">'+badge+
+        '<div class="shard-name"><span class="shard-dot" id="shard-dot-'+s.id+'"></span>'+s.name+'</div>'+
+        '<div class="shard-h" id="shard-h-'+s.id+'">--</div>'+
+        '<div class="shard-type" id="shard-type-'+s.id+'">'+(live?'Active Mainnet':'Archive')+'</div>'+
+        '<div class="shard-metrics"><span>TPS <b id="shard-tps-'+s.id+'">--</b></span><span>Gas <b id="shard-gas-'+s.id+'">--</b></span></div>'+
+        '<div class="tooltip">'+esc(s.desc)+'</div></div>';
+    }).join('')+'<div id="scdo-shard-updated" class="shard-updated"></div>';
+    bar.querySelectorAll('.shard-card').forEach(function(c){
+      c.addEventListener('click',function(){selectShard(parseInt(c.getAttribute('data-shard'),10),c);});
+      c.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();selectShard(parseInt(c.getAttribute('data-shard'),10),c);}});
+    });
+    built=true;
+    if(lastSummary)applySummary(lastSummary);
+  }
+
+  function selectShard(id,card){
+    if(isNaN(id))return;
+    var changed=id!==currentShard;
+    currentShard=id;window.__scdoShard=id;
+    try{sessionStorage.setItem('scdoShard',String(id));}catch(e){}
+    document.querySelectorAll('#scdo-shard-bar .shard-card').forEach(function(c){
+      var on=parseInt(c.getAttribute('data-shard'),10)===id;
+      c.classList.toggle('active',on);c.setAttribute('aria-pressed',on);
+      c.classList.remove('show-tip');
+    });
+    if(card){card.classList.add('show-tip');clearTimeout(tipTimer);tipTimer=setTimeout(function(){card.classList.remove('show-tip');},4000);}
+    if(changed){
+      renderNetbar();
+      renderBlocks(null,true);
+      getAllShards(true).then(renderBlocks).catch(function(){});
+      if(typeof window.__scdoHomeRefresh==='function'){try{window.__scdoHomeRefresh();}catch(e){}}
+      try{window.dispatchEvent(new CustomEvent('scdo-shard-change',{detail:{shard:id}}));}catch(e){}
+      if(typeof window.__scdoRefreshLegacyBlocks==='function'){try{window.__scdoRefreshLegacyBlocks();}catch(e){}}
+    }
+  }
+
+  function applySummary(d){
+    lastSummary=d;
+    if(!built||!d||!d.data)return;
+    d.data.forEach(function(s){
+      var h=$('shard-h-'+s.id),t=$('shard-tps-'+s.id),g=$('shard-gas-'+s.id),dot=$('shard-dot-'+s.id);
+      if(h){var nv=fmtNum(s.height);if(h.textContent!==nv&&h.textContent!=='--'){h.classList.remove('bump');void h.offsetWidth;h.classList.add('bump');}h.textContent=nv;}
+      if(t)t.textContent=(s.tps!=null?Number(s.tps).toFixed(s.tps>=1?2:3):'--');
+      if(g)g.textContent=fmtGwei(s.gasPrice,s.gasPriceUnit);
+      var ty=$('shard-type-'+s.id);if(ty&&s.type!=='live')ty.textContent=s.stale?'Archive \u00b7 stale (no new blocks >1h)':'Archive';
+      if(dot)dot.className='shard-dot '+(s.status==='live'?'dot-live':(s.status==='ok'?'dot-ok':'dot-sync'));
+    });
+    lastUpdated=Date.now();
+    renderNetbar();
+    var u=$('scdo-shard-updated');if(u)u.textContent='Auto refresh 5s \u00b7 updated '+new Date().toLocaleTimeString();
+  }
+
+
+  // legacy stats strip (#scdo-netbar, created by enhance.js) -> selected shard values from /network/summary
+  var PECTRA=9500000;
+  // adaptive gas price formatting: 1.27 / 0.000021 / 0 ; null -> n/a
+  // unit comes from /network/summary gasPriceUnit: shard0 'gwei' (EVM), archive shards 'wen' (old chain, wen per gas)
+  function fmtGwei(v,unit){
+    unit=unit||'gwei';
+    if(v==null||isNaN(Number(v)))return 'n/a';
+    v=Number(v);if(v===0)return '0 '+unit;
+    var d=v>=1?2:Math.min(9,Math.max(2,1-Math.floor(Math.log10(v))+1));
+    return String(Number(v.toFixed(d)))+' '+unit;
+  }
+  function renderNetbar(){
+    var bar=$('scdo-netbar');if(!bar||!lastSummary||!lastSummary.data)return;
+    var s=null;lastSummary.data.forEach(function(x){if(x.id===currentShard)s=x;});if(!s)return;
+    var h=Number(s.height)||0,bt=Number(s.avgBlockTime)||0,pect;
+    if(s.id===0){pect='n/a (new chain)';}
+    else{var rem=Math.max(0,PECTRA-h);pect=rem.toLocaleString()+' blk'+(bt>0?' (~'+(rem*bt/86400).toFixed(1)+'d)':'');}
+    var items=[['Shard '+s.id+' Height',h>0?fmtNum(h):'--'],['Avg Block Time',bt>0?bt.toFixed(1)+'s':'--'],['Pending',s.pendingTxs==null?'n/a':fmtNum(s.pendingTxs)],['Avg Gas',fmtGwei(s.gasPrice,s.gasPriceUnit)],['To Pectra',pect]];
+    var html=items.map(function(it){return '<div style="text-align:center"><div style="font-size:20px;font-weight:700;color:#e6edf3">'+esc(it[1])+'</div><div style="font-size:11px;color:#8b949e;text-transform:uppercase">'+esc(it[0])+'</div></div>';}).join('');
+    if(bar.getAttribute('data-sig')!==html){bar.innerHTML=html;bar.setAttribute('data-sig',html);}
+  }
+  window.__scdoRenderNetbar=renderNetbar;
+  function loadSummary(){
+    return fetch(API+'/network/summary',{cache:'no-store'}).then(function(r){return r.json();}).then(applySummary).catch(function(){});
+  }
+
+  function renderBlocks(d,loading){
+    var box=$('scdo-shard-blocks');if(!box)return;
+    var meta=shardMeta[currentShard]||shardMeta[1];
+    var head='<div class="sb-head"><h3>Latest Blocks - '+meta.name+(meta.type==='live'?' <span class="sb-tag live">Live</span>':' <span class="sb-tag">Archive</span>')+'</h3><div class="sb-desc">'+esc(meta.desc)+'</div></div>';
+    if(loading||!d){box.innerHTML=head+'<div class="sb-grid"><div class="sb-empty">Loading '+meta.name+' blocks...</div></div>';return;}
+    var list=((d.byShard||{})[String(currentShard)]||[]).slice(0,6);
+    if(!list.length){box.innerHTML=head+'<div class="sb-grid"><div class="sb-empty">No blocks available for '+meta.name+'.</div></div>';return;}
+    box.innerHTML=head+'<div class="sb-grid">'+list.map(function(b){
+      var link='#/block?height='+b.height+'&shard='+currentShard; /* 2026-09-29: shard0 blocks now have a page (enhance.js) */
+      var hTxt='#'+fmtNum(b.height);
+      return '<div class="sb-card">'+
+        '<div class="sb-h">'+(link?'<a href="'+link+'">'+hTxt+'</a>':hTxt)+'</div>'+
+        '<div class="sb-row"><span>Txns</span><b>'+(b.txn!=null?b.txn:b.txs||0)+'</b></div>'+
+        '<div class="sb-row"><span>Miner</span><b class="mono" title="'+esc(b.miner)+'">'+esc(shortAddr(b.miner))+'</b></div>'+
+        '<div class="sb-row"><span>Reward</span><b>'+(currentShard>=1?window.__scdoWen(b.reward):(Number(b.reward||0)/1e9).toFixed(2))+' SCDO</b></div>'+
+        '<div class="sb-age">'+esc(b.age||'')+'</div></div>';
+    }).join('')+'</div>';
+  }
+  function loadBlocks(){return getAllShards().then(renderBlocks).catch(function(){});}
+
+  function tick(){if(document.hidden)return;loadSummary();loadBlocks();}
+  function startPolling(){if(timer)return;tick();timer=setInterval(tick,POLL_MS);}
+  function stopPolling(){if(timer){clearInterval(timer);timer=null;}}
+
+  var lastHash=null;
+  function onRoute(){
+    var hash=location.hash;if(hash===lastHash)return;lastHash=hash;
+    var home=isHome(),bar=$('scdo-shard-bar'),hero=$('scdo-hero'),blocks=$('scdo-shard-blocks');
+    if(!bar||!hero||!blocks)return;
+    bar.className=home?'show':'';
+    if(document.body)document.body.classList.toggle('scdo-home',home);
+    hero.className=home?'show':'';
+    blocks.style.display=home?'block':'none';
+    if(home){if(!built)buildBar();startPolling();}else{stopPolling();}
+  }
+  // Vue router (hash history) uses pushState, which fires no hashchange -> hook it
+  ['pushState','replaceState'].forEach(function(m){
+    var orig=history[m];if(!orig)return;
+    history[m]=function(){var r=orig.apply(this,arguments);setTimeout(onRoute,0);return r;};
+  });
+  window.addEventListener('hashchange',onRoute);
+  window.addEventListener('popstate',onRoute);
+  document.addEventListener('visibilitychange',function(){if(!document.hidden&&isHome()&&timer)tick();});
+  setInterval(onRoute,1000); // safety net, cheap string compare
+  function init(){onRoute();if(isHome())renderBlocks(null,true);}
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
+})();
+</script><style id="scdo-hide-searchbox">.container > .searchbox{display:none !important}</style></head>
+  <body>
+  <div id="app"></div>
+  <div id="scdo-compliance-foot"><a href="/compliance.html">AUSTRAC Registered DCE &middot; DCE100714503-001 &middot; AFCA Member 124589 &middot; 9Y9 PTY LTD ABN 19 600 445 118</a></div>
+<script>
+/* compliance nav link (appends one <a> to the Vue topbar nav; idempotent) */
+(function(){
+  if(window.__scdoComplianceNav)return;window.__scdoComplianceNav=true;
+  function ensure(){try{if(document.getElementById('nav-compliance'))return;var nav=document.querySelector('header.topbar nav');if(!nav)return;var a=document.createElement('a');a.id='nav-compliance';a.href='/compliance.html';a.textContent='Compliance';nav.appendChild(a);}catch(e){}}
+  setInterval(ensure,1000);if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',ensure);else ensure();
+})();
+</script>
+
+<script>
+(function(){
+  if(window.__scdo_patch_loaded)return;window.__scdo_patch_loaded=true;['scdo-bal-fix','scdo-src20-fix','scdo-toktx-fix','scdo-block-fix','scdo-token-fix'].forEach(function(id){document.querySelectorAll('#'+id).forEach(function(e){e.remove()});});
+  var API='https://api.scdoscan.io/api/v1';
+  function addr(){var m=location.hash.match(/address=([A-Za-z0-9]+)/);return m?m[1]:null;}
+  function load(){
+    var a=addr();if(!a)return;
+    document.querySelectorAll('#scdo-bal-fix').forEach(function(e){e.remove()});
+    fetch(API+'/account?address='+a).then(function(r){return r.json()}).then(function(d){
+      if(!d.data)return;
+      var card=document.createElement('div');
+      card.id='scdo-bal-fix';card.className='card';
+      var bal=window.__scdoWen(d.data.balance);
+      var labels={
+      '1S01dfdbe4d921d507032cb83ee04bb7efc4fd9a51':'<span style="background:#1f6feb;color:#fff;padding:2px 8px;border-radius:4px;font-size:11px">Miner</span>',
+      '1S0100eb3cdfb4c5f8880805a950810aa21e260022':'<span style="background:#8957e5;color:#fff;padding:2px 8px;border-radius:4px;font-size:11px">Contract</span>'
+    };
+      var lbl=labels[a]||'';
+      card.innerHTML='<h3>Address Overview '+lbl+'</h3>'+
+        '<div style="display:grid;grid-template-columns:120px 1fr;gap:8px;font-size:14px">'+
+        '<div style="color:#8b949e">Address:</div><div class="mono">'+a+'</div>'+
+        '<div style="color:#8b949e">Balance:</div><div style="color:#58a6ff"><strong>'+bal+' SCDO</strong></div>'+
+        '<div style="color:#8b949e">Tx Count:</div><div>'+d.data.txcount+'</div>'+
+        '<div style="color:#8b949e">Shard:</div><div>'+d.data.shardnumber+'</div></div>';
+      var c=document.querySelector('.container');
+      if(c)c.insertBefore(card,c.firstChild);
+    }).catch(function(e){console.log('bal err',e)});
+  }
+  function loadTokens(){
+    var a=addr();if(!a)return;
+    document.querySelectorAll('#scdo-src20-fix').forEach(function(e){e.remove()});
+    fetch(API+'/accountSrc20?address='+a).then(function(r){return r.json()}).then(function(d){
+      if(!d.data||!d.data.length)return;
+      var card=document.createElement('div');
+      card.id='scdo-src20-fix';card.className='card';
+      var rows=d.data.map(function(t){
+        return '<tr style="border-bottom:1px solid #21262d;height:32px">'+
+          '<td><a style="color:#58a6ff" href="#/token?contract='+t.TokenAddress+'">'+(t.Contract?t.Contract.Symbol:'SRC20')+'</a></td>'+
+          '<td>'+(t.Contract?t.Contract.Name:'')+'</td>'+
+          '<td>'+(Number(t.Balance||0)).toLocaleString()+'</td>'+
+          '<td class="mono" style="font-size:12px">'+(t.TokenAddress||'').substring(0,16)+'...</td></tr>';
+      }).join('');
+      card.innerHTML='<h3>SRC-20 Token Holdings ('+d.data.length+')</h3>'+
+        '<table style="width:100%;font-size:13px"><thead><tr style="color:#8b949e"><th>Symbol</th><th>Name</th><th>Balance</th><th>Contract</th></tr></thead><tbody>'+rows+'</tbody></table>';
+      var c=document.querySelector('.container');
+      if(c)c.insertBefore(card,c.children[1]||null);
+    }).catch(function(){});
+  }
+  function loadTokenTxs(){
+    var a=addr();if(!a)return;
+    document.querySelectorAll('#scdo-toktx-fix').forEach(function(e){e.remove()});
+    fetch(API+'/accountSrc20Txs?address='+a).then(function(r){return r.json()}).then(function(d){
+      if(!d.data||!d.data.length)return;
+      var rows=d.data.slice(0,10).map(function(t){
+        var hash=t.hash||t.TxHash||'';
+        var from=t.from||t.From||'';
+        var to=t.to||t.To||'';
+        var val=t.actionAmount||t.amount||'0';
+        var sym=t.contract&&(t.contract.symbol||t.contract.ContractName)||'';
+        var tokName=t.contract&&t.contract.name||'';
+        return '<tr style="border-bottom:1px solid #21262d;height:32px">'+
+          '<td><a style="color:#58a6ff" href="#/tx?txhash='+hash+'">'+hash.substring(0,14)+'...</a></td>'+
+          '<td class="mono" style="font-size:12px">'+from.substring(0,12)+'...</td>'+
+          '<td class="mono" style="font-size:12px">'+to.substring(0,12)+'...</td>'+
+          '<td>'+Number(val).toLocaleString()+'</td>'+
+          '<td>'+sym+'</td></tr>';
+      }).join('');
+      var card=document.createElement('div');
+      card.id='scdo-toktx-fix';card.className='card';
+      card.innerHTML='<h3>SRC-20 Token Transfers ('+d.data.length+')</h3>'+
+        '<table style="width:100%;font-size:13px"><thead><tr style="color:#8b949e"><th>Tx</th><th>From</th><th>To</th><th>Value</th><th>Token</th></tr></thead><tbody>'+rows+'</tbody></table>';
+      var c=document.querySelector('.container');
+      if(c&&c.children[2])c.insertBefore(card,c.children[2]);
+    }).catch(function(){});
+  }
+  function tokenAddr(){var m=location.hash.match(/token\?contract=([A-Za-z0-9]+)/);return m?m[1]:null;}
+  function loadTokenChart(){
+    var c=tokenAddr();if(!c)return;
+    fetch(API+'/accountSrc20?address='+c).then(function(r){return r.json()}).then(function(d){
+      if(!d.data||!Array.isArray(d.data))return;
+      var holders=d.data.slice(0,10);
+      if(!holders.length)return;
+      var max=Math.max.apply(null,holders.map(function(h){return Number(h.balance||0)}));
+      var colors=['#3fb950','#58a6ff','#f0b72f','#f85149','#a371f7','#39c5cf','#db61a2','#d29922','#7ee787','#79c0ff'];
+      var html='<div style="margin-top:12px">';
+      holders.forEach(function(h,i){
+        var bal=Number(h.balance||0);
+        var pct=max>0?(bal/max*100):0;
+        html+='<div style="margin-bottom:4px"><div style="display:flex;justify-content:space-between;font-size:11px;color:#8b949e"><span>'+(h.address||'').substring(0,18)+'</span><span>'+bal.toLocaleString()+'</span></div>'+
+          '<div style="height:8px;background:#21262d;border-radius:4px;margin-top:2px"><div style="height:100%;width:'+pct+'%;background:'+colors[i%colors.length]+';border-radius:4px"></div></div></div>';
+      });
+      html+='</div>';
+      var card=document.createElement('div');
+      card.id='scdo-token-chart';card.className='card';
+      card.innerHTML='<h3>Top Holders Distribution</h3>'+html;
+      var c2=document.querySelector('.container');
+      if(c2)c2.appendChild(card);
+    }).catch(function(){});
+  }
+  function loadTokenPage(){
+    var c=tokenAddr();if(!c)return;
+    if(document.getElementById('scdo-token-fix'))return;
+    fetch(API+'/contract?address='+c).then(function(r){return r.json()}).then(function(d){
+      if(!d.data)return;
+      var t=d.data;
+      var card=document.createElement('div');
+      card.id='scdo-token-fix';card.className='card';
+      card.innerHTML='<h3>'+(t.ContractName||t.contractName||'Token')+' ('+(t.Symbol||t.symbol||'SRC20')+')</h3>'+
+        '<div style="display:grid;grid-template-columns:120px 1fr;gap:8px;font-size:14px">'+
+        '<div style="color:#8b949e">Contract:</div><div class="mono">'+c+'</div>'+
+        '<div style="color:#8b949e">Tx Count:</div><div>'+(t.txcount||0)+'</div></div>'+
+        '<div id="scdo-holders-loading" style="margin-top:12px;color:#8b949e;font-size:13px">Loading holders...</div>';
+      var container=document.querySelector('.container');
+      if(container)container.insertBefore(card,container.firstChild);
+      fetch(API+'/src20holders?address='+c).then(function(r){return r.json()}).then(function(h){
+        var el=document.getElementById('scdo-holders-loading');
+        if(!el)return;
+        if(!h.data||!h.data.length){el.remove();return;}
+        var total=h.data.reduce(function(s,x){return s+(Number(x.balance)||0)},0);
+        var rows=h.data.slice(0,20).map(function(x,i){
+          var pct=total>0?((Number(x.balance)/total)*100).toFixed(2):0;
+          return '<tr style="border-bottom:1px solid #21262d;height:32px">'+
+            '<td>'+(i+1)+'</td>'+
+            '<td><a style="color:#58a6ff" href="#/address?address='+x.address+'">'+x.address.substring(0,22)+'...</a></td>'+
+            '<td>'+Number(x.balance).toLocaleString()+'</td>'+
+            '<td>'+pct+'%</td></tr>';
+        }).join('');
+        el.outerHTML='<h4 style="margin:16px 0 8px;color:#58a6ff">Top Holders ('+h.data.length+')</h4>'+
+          '<table style="width:100%;font-size:13px"><thead><tr style="color:#8b949e"><th>#</th><th>Address</th><th>Balance</th><th>%</th></tr></thead><tbody>'+rows+'</tbody></table>';
+      }).catch(function(){var el=document.getElementById('scdo-holders-loading');if(el)el.remove();});
+    }).catch(function(){});
+  }
+  // CSV export helper
+  window.downloadCSV = function(filename, rows){
+    var csv = rows.map(function(r){return r.join(',')}).join('\n');
+    var blob = new Blob([csv], {type:'text/csv'});
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = filename;
+    a.click();
+  };
+  function loadReadContract(){
+    var a=addr();if(!a||window.__scdo_read_loaded)return;window.__scdo_read_loaded=true;
+    // Only show for known contract (has contract creation code)
+    fetch(API+'/contract?address='+a).then(function(r){return r.json()}).then(function(d){
+      if(!d.data||!d.data.contractCreationCode||d.data.contractCreationCode==='0x')return;
+      var card=document.createElement('div');
+      card.id='scdo-read-contract';card.className='card';
+      card.innerHTML='<h3>Read Contract</h3>'+
+        '<div style="font-size:13px;color:#8b949e;margin-bottom:8px">Standard ERC-20 methods</div>'+
+        '<div id="scdo-read-results"></div>';
+      var container=document.querySelector('.container');
+      if(container)container.appendChild(card);
+      // Call name(), symbol(), decimals(), totalSupply()
+      var fns=[
+        {sig:'0x06fdde03',label:'name()',decode:'string'},
+        {sig:'0x95d89b41',label:'symbol()',decode:'string'},
+        {sig:'0x313ce567',label:'decimals()',decode:'uint'},
+        {sig:'0x18160ddd',label:'totalSupply()',decode:'uint256'}
+      ];
+      // balanceOf query
+      var bq=document.createElement('div');
+      bq.style.cssText='margin-top:12px;padding-top:8px;border-top:1px solid #21262d';
+      bq.innerHTML='<div style="font-size:12px;color:#8b949e;margin-bottom:4px">balanceOf(address)</div>'+
+        '<div style="display:flex;gap:8px"><input id="scd-balanceof-addr" placeholder="address" style="flex:1;padding:4px 8px;background:#0d1117;border:1px solid #30363d;color:#c9d1d9;border-radius:4px;font-size:12px">'+
+        '<button id="scd-balanceof-btn" style="padding:4px 12px;cursor:pointer;background:#238636;color:#fff;border:none;border-radius:4px;font-size:12px">Query</button></div>'+
+        '<div id="scd-balanceof-result" style="margin-top:4px;font-size:13px;color:#3fb950"></div>';
+      document.getElementById('scdo-read-results').parentNode.appendChild(bq);
+      document.getElementById('scd-balanceof-btn').onclick=function(){
+        var addr=document.getElementById('scd-balanceof-addr').value.trim();
+        if(!addr)return;
+        var padded='000000000000000000000000'+addr.substring(2);
+        fetch(API+'/eth_call?to='+a+'&data=0x70a08231'+padded).then(function(r){return r.json()}).then(function(resp){
+          var hex=resp.data&&resp.data.result?resp.data.result.result:'0x0';
+          document.getElementById('scd-balanceof-result').textContent=(parseInt(hex,16)||0).toLocaleString()+' wei';
+        });
+      };
+      // Write Contract: transfer form
+      var w=document.createElement('div');
+      w.style.cssText='margin-top:16px;padding-top:8px;border-top:1px solid #21262d';
+      w.innerHTML='<h4 style="margin:0 0 8px;font-size:14px;color:#f0b72f">Write Contract</h4>'+
+        '<div style="font-size:12px;color:#8b949e;margin-bottom:8px">Generate calldata for transfer(address,uint256)</div>'+
+        '<div style="display:flex;flex-direction:column;gap:6px">'+
+        '<input id="scd-w-to" placeholder="to address" style="padding:4px 8px;background:#0d1117;border:1px solid #30363d;color:#c9d1d9;border-radius:4px;font-size:12px">'+
+        '<input id="scd-w-val" placeholder="amount (in wei)" style="padding:4px 8px;background:#0d1117;border:1px solid #30363d;color:#c9d1d9;border-radius:4px;font-size:12px">'+
+        '<button id="scd-w-btn" style="padding:4px 12px;cursor:pointer;background:#9e6a03;color:#fff;border:none;border-radius:4px;font-size:12px">Generate Calldata</button>'+
+        '<code id="scd-w-out" style="font-size:11px;color:#58a6ff;word-break:break-all;background:#0d1117;padding:6px;border-radius:4px"></code></div>';
+      document.getElementById('scdo-read-results').parentNode.appendChild(w);
+      document.getElementById('scd-w-btn').onclick=function(){
+        var to=document.getElementById('scd-w-to').value.trim();
+        var val=document.getElementById('scd-w-val').value.trim();
+        if(!to||!val)return;
+        var toHex='000000000000000000000000'+to.substring(2);
+        var valHex=BigInt(val).toString(16).padStart(64,'0');
+        document.getElementById('scd-w-out').textContent='0xa9059cbb'+toHex+valHex;
+      };
+      fns.forEach(function(fn){
+        fetch(API+'/eth_call?to='+a+'&data='+fn.sig).then(function(r){return r.json()}).then(function(resp){
+          var hex=resp.data&&resp.data.result?resp.data.result.result:'';
+          var val=decodeResult(hex,fn.decode);
+          var div=document.createElement('div');
+          div.style.cssText='display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #21262d;font-size:13px';
+          div.innerHTML='<span style="color:#8b949e">'+fn.label+'</span><span style="color:#3fb950">'+val+'</span>';
+          document.getElementById('scdo-read-results').appendChild(div);
+        }).catch(function(){});
+      });
+    }).catch(function(){});
+  }
+  function decodeResult(hex,type){
+    if(!hex||hex.length<66)return '-';
+    if(type==='string'){
+      try{
+        var offset=parseInt(hex.substring(34,66),16);
+        var len=parseInt(hex.substring(66,130),16);
+        var s=hex.substring(130,130+len*2);
+        return decodeURIComponent(s.replace(/(..)/g,'%$1'));
+      }catch(e){return hex;}
+    }
+    return (parseInt(hex.substring(2,66),16)||0).toLocaleString();
+  }
+  function loadBalanceChart(){
+    var a=addr();if(!a)return;
+    fetch(API+'/balanceHistory?address='+a).then(function(r){return r.json()}).then(function(d){
+      if(!d.data||!d.data.length)return;
+      var pts=d.data.slice(-100);
+      var bal=pts.map(function(p){return p.balance/1e8});
+      var min=Math.min.apply(null,bal),max=Math.max.apply(null,bal);
+      if(max===min)max=min+1;
+      var w=400,h=60;
+      var path=pts.map(function(p,i){
+        var x=(i/(pts.length-1))*w;
+        var y=h-((p.balance/1e8-min)/(max-min))*h;
+        return (i===0?'M':'L')+x.toFixed(0)+','+y.toFixed(0);
+      }).join('');
+      var card=document.getElementById('scdo-bal-fix');
+      if(!card)return;
+      var div=document.createElement('div');
+      div.id='scdo-bal-chart';
+      div.style.marginTop='12px';
+      div.innerHTML='<div style="font-size:12px;color:#8b949e;margin-bottom:4px">Balance History (last 100 txs)</div>'+
+        '<svg width="'+w+'" height="'+h+'" style="background:#0d1117;border-radius:4px">'+
+        '<path d="'+path+'" stroke="#58a6ff" fill="none" stroke-width="1.5"/></svg>';
+      card.appendChild(div);
+    }).catch(function(){});
+  }
+  setInterval(function(){
+    if(location.hash.indexOf('address=')>=0){
+      if(!document.getElementById('scdo-bal-fix'))load();
+      if(!document.getElementById('scdo-src20-fix'))loadTokens();
+      if(!document.getElementById('scdo-toktx-fix'))loadTokenTxs();
+    } else {
+      var ids=['scdo-bal-fix','scdo-src20-fix','scdo-toktx-fix'];
+      ids.forEach(function(id){var e=document.getElementById(id);if(e)e.remove();});
+    }
+    if(location.hash.indexOf('token?contract=')>=0){
+      if(!document.getElementById('scdo-token-fix'))loadTokenPage();
+      if(!document.getElementById('scdo-token-chart'))loadTokenChart();
+    } else {
+      var e=document.getElementById('scdo-token-fix');if(e)e.remove();
+    }
+    if(location.hash.indexOf('address=')>=0 && document.getElementById('scdo-bal-fix') && !document.getElementById('scdo-bal-chart')){
+      loadBalanceChart();
+    }
+    if(location.hash.indexOf('address=')>=0 && !document.getElementById('scdo-read-contract')){
+      loadReadContract();
+    } else if(location.hash.indexOf('address=')<0){
+      var e=document.getElementById('scdo-read-contract');if(e)e.remove();window.__scdo_read_loaded=false;
+    }
+    if(location.hash.indexOf('block?height=')>=0){
+      var m=location.hash.match(/height=(\d+)/);
+      if(m&&!document.getElementById('scdo-block-fix')&&!/[?&]shard=0(&|$)/.test(location.hash)){ /* shard0: enhance.js renders the block from /rpc/0 */
+        var h=m[1];
+        var card=document.createElement('div');
+        card.id='scdo-block-fix';card.className='card';
+        var shq=(location.hash.match(/[?&]shard=(\d+)/)||[])[1]||'1';
+        card.innerHTML='<h3>Block #'+h+'</h3><div id="scdo-block-fix-body" style="font-size:14px;color:#8b949e">Shard '+shq+' · loading reward...</div>';
+        var c=document.querySelector('.container');
+        if(c)c.insertBefore(card,c.firstChild);
+        /* was hard-coded 'Reward: 0.3 SCDO' + fixed miner; now from the block's coinbase tx (wen, 1e8 = 1 SCDO) */
+        fetch(API+'/txs?block='+h+'&s='+shq).then(function(r){return r.json()}).then(function(d){
+          var el=document.getElementById('scdo-block-fix-body');if(!el)return;
+          var l=(d&&d.data&&(d.data.list||d.data))||[];if(!Array.isArray(l))l=[];
+          var cb=null;l.forEach(function(t){if(!cb&&String(t.from||'').indexOf('0S0000000000')===0)cb=t;});
+          if(!cb){el.textContent='Shard '+shq+' · '+l.length+' txs';return;}
+          var mn=cb.to||'';
+          el.innerHTML='Shard '+shq+' · Miner: <a style="color:#58a6ff" href="#/address?address='+mn+'">'+mn+'</a>'+(mn==='1S01dfdbe4d921d507032cb83ee04bb7efc4fd9a51'?' <span style="background:#1f6feb;color:#fff;padding:2px 6px;border-radius:3px;font-size:10px">Miner</span>':'')+' · Reward: '+window.__scdoWen(cb.value)+' SCDO';
+        }).catch(function(){var el=document.getElementById('scdo-block-fix-body');if(el)el.textContent='Shard '+shq;});
+      }
+    } else {
+      var e=document.getElementById('scdo-block-fix');if(e)e.remove();
+    }
+  },2000);
+})();
+
+  function loadTracePanel(){
+    var m=location.hash.match(/txhash=(0x[a-fA-F0-9]+)/);if(!m)return;
+    var txhash=m[1];
+    var card=document.createElement('div');
+    card.className='card';
+    card.innerHTML='<h3>Internal Transactions (Trace)</h3><div id="scdo-trace-body" style="color:#8b949e;font-size:13px">Loading...</div>';
+    var c=document.querySelector('.container');
+    if(c)c.appendChild(card);
+    fetch('https://api.scdoscan.io/api/v1/tx?txhash='+txhash).then(function(r){return r.json()}).then(function(d){
+      if(!d.data)return;
+      var blockHeight=d.data.block||0;
+      fetch('https://api.scdoscan.io/api/v1/debug_trace?height='+blockHeight+'&hash='+txhash).then(function(r){return r.json()}).then(function(td){
+        var el=document.getElementById('scdo-trace-body');
+        if(td.code===0&&td.data&&td.data.result&&td.data.result.structLogs){
+          var calls=td.data.result.structLogs.filter(function(l){return l.op==='CALL'||l.op==='CREATE'||l.op==='CALLCODE'||l.op==='DELEGATECALL'});
+          if(calls.length){
+            el.innerHTML=calls.map(function(c,i){
+              return '<div style="padding:3px 0;border-bottom:1px solid #21262d;font-size:12px">#'+(i+1)+' <strong style="color:#58a6ff">'+c.op+'</strong> depth:'+c.depth+' gas:'+c.gas+'</div>';
+            }).join('');
+          }else{
+            el.textContent='No internal calls (plain transfer)';
+          }
+        }else{
+          el.textContent='Trace available (no internal calls)';
+        }
+      }).catch(function(){
+        var el=document.getElementById('scdo-trace-body');if(el)el.textContent='Trace not available';
+      });
+    }).catch(function(){});
+  }
+
+</script>
+<script src="/enhance.js?v=20260929t">
+  function loadTracePanel(){
+    var m=location.hash.match(/txhash=(0x[a-fA-F0-9]+)/);if(!m)return;
+    var txhash=m[1];
+    var card=document.createElement('div');
+    card.className='card';
+    card.innerHTML='<h3>Internal Transactions (Trace)</h3><div id="scdo-trace-body" style="color:#8b949e;font-size:13px">Loading...</div>';
+    var c=document.querySelector('.container');
+    if(c)c.appendChild(card);
+    fetch('https://api.scdoscan.io/api/v1/tx?txhash='+txhash).then(function(r){return r.json()}).then(function(d){
+      if(!d.data)return;
+      var blockHeight=d.data.block||0;
+      fetch('https://api.scdoscan.io/api/v1/debug_trace?height='+blockHeight+'&hash='+txhash).then(function(r){return r.json()}).then(function(td){
+        var el=document.getElementById('scdo-trace-body');
+        if(td.code===0&&td.data&&td.data.result&&td.data.result.structLogs){
+          var calls=td.data.result.structLogs.filter(function(l){return l.op==='CALL'||l.op==='CREATE'||l.op==='CALLCODE'||l.op==='DELEGATECALL'});
+          if(calls.length){
+            el.innerHTML=calls.map(function(c,i){
+              return '<div style="padding:3px 0;border-bottom:1px solid #21262d;font-size:12px">#'+(i+1)+' <strong style="color:#58a6ff">'+c.op+'</strong> depth:'+c.depth+' gas:'+c.gas+'</div>';
+            }).join('');
+          }else{
+            el.textContent='No internal calls (plain transfer)';
+          }
+        }else{
+          el.textContent='Trace available (no internal calls)';
+        }
+      }).catch(function(){
+        var el=document.getElementById('scdo-trace-body');if(el)el.textContent='Trace not available';
+      });
+    }).catch(function(){});
+  }
+
+
+  setInterval(function(){
+    try{
+      if(location.hash.indexOf('txhash=')>=0 && !document.getElementById('scdo-trace-body')){
+        loadTracePanel();
+      }
+    }catch(e){}
+  }, 1500);
+</script>
+<script>
+setInterval(function(){
+  try{
+    if(location.hash.indexOf('txhash=')>=0 && !document.getElementById('scdo-trace-body')){
+      loadTracePanel();
+    }
+  }catch(e){}
+}, 1500);
+</script>
+
+<script>
+function loadWritePanel(){
+  var m=location.hash.match(/contract=([0-9A-Za-z]+)/);
+  if(!m)return;
+  var contract=m[1];
+  if(document.getElementById('scdo-write-panel'))return;
+  var card=document.createElement('div');
+  card.className='card';
+  card.id='scdo-write-panel';
+  card.innerHTML='<h3>Write Contract (Send Transaction)</h3><button onclick="connectSCDOWallet()" style="background:#f6851b;color:#fff;border:none;padding:6px 14px;border-radius:6px;cursor:pointer;margin-bottom:10px">Connect MetaMask</button>'+
+    '<div style="font-size:13px;color:#8b949e;margin-bottom:10px">Generate calldata and broadcast via wallet or RPC</div>'+
+    '<div style="display:grid;grid-template-columns:120px 1fr;gap:8px;align-items:center">'+
+    '<div>Function:</div><select id="scdo-write-fn" style="background:#0d1117;color:#c9d1d9;border:1px solid #30363d;padding:6px;border-radius:4px"><option value="transfer">transfer(to,value)</option><option value="approve">approve(spender,value)</option></select>'+
+    '<div>To Address:</div><input id="scdo-write-to" placeholder="1S..." style="background:#0d1117;color:#c9d1d9;border:1px solid #30363d;padding:6px;border-radius:4px"/>'+
+    '<div>Amount:</div><input id="scdo-write-val" placeholder="100" style="background:#0d1117;color:#c9d1d9;border:1px solid #30363d;padding:6px;border-radius:4px"/>'+
+    '<div></div><button onclick="genCalldata()" style="background:#238636;color:#fff;border:none;padding:8px 16px;border-radius:6px;cursor:pointer">Generate & Broadcast</button>'+
+    '</div><div id="scdo-write-result" style="margin-top:10px;font-family:monospace;font-size:12px;color:#58a6ff;word-break:break-all"></div>';
+  var c=document.querySelector('.container');
+  if(c)c.appendChild(card);
+}
+function genCalldata(){
+  var fn=document.getElementById('scdo-write-fn').value;
+  var to=document.getElementById('scdo-write-to').value.trim();
+  var val=document.getElementById('scdo-write-val').value.trim();
+  var result=document.getElementById('scdo-write-result');
+  if(!to||!val){result.textContent='Please fill all fields';return;}
+  var addr=to.substring(2);
+  while(addr.length<64)addr='0'+addr;
+  var amount=parseInt(val).toString(16);
+  while(amount.length<64)amount='0'+amount;
+  var selector=fn==='transfer'?'0xa9059cbb':'0x095ea7b3';
+  var calldata=selector+addr+amount;
+  result.innerHTML='Calldata: <code>'+calldata+'</code><br><br>';
+  if(window.ethereum){
+    result.innerHTML+='<span style="color:#3fb950">Wallet detected! Broadcasting...</span>';
+    window.ethereum.request({method:'eth_sendTransaction',params:[{to:'0x'+contract.substring(2),data:calldata,from:window.ethereum.selectedAddress}]}).then(function(tx){
+      result.innerHTML+='<br>TxHash: '+tx;
+    }).catch(function(e){
+      result.innerHTML+='<br>Error: '+e.message;
+    });
+  }else{
+    result.innerHTML+='<span style="color:#d29922">No wallet detected. Use this calldata with your SCDO wallet.</span>';
+  }
+}
+setInterval(function(){
+  try{
+    if(location.hash.indexOf('contract=')>=0 && !document.getElementById('scdo-write-panel')){
+      loadWritePanel();
+    }
+  }catch(e){}
+},2000);
+</script>
+
+<script>
+async function connectSCDOWallet(){
+  var result=document.getElementById('scdo-write-result');
+  if(!window.ethereum){
+    result.innerHTML='<span style="color:#f85149">No Web3 wallet detected. Please install MetaMask extension, then click again.</span>';
+    return;
+  }
+  try{
+    await window.ethereum.request({
+      method:'wallet_addEthereumChain',
+      params:[{
+        // shard0 core-geth Ethash PoW: chainId 5680 (0x1630) (568 retired 2026-09-28: registered to Dogechain Testnet). Native SCDO uses 18 decimals (1 SCDO = 1e18 wei)
+        // since the 2026-09-28 migration, matching the declaration below, so MetaMask shows real amounts.
+        chainId:'0x1630',
+        chainName:'SCDO Shard 0',
+        nativeCurrency:{name:'SCDO',symbol:'SCDO',decimals:18},
+        rpcUrls:['https://scdoscan.io/rpc/0'],
+        blockExplorerUrls:['https://scdoscan.io'],
+        iconUrls:['https://scdoscan.io/brand/scdo-shard0-icon-512.png','https://scdoscan.io/brand/scdo-shard0-icon.svg']
+      }]
+    });
+    await window.ethereum.request({method:'eth_requestAccounts'});
+    result.innerHTML='<span style="color:#3fb950">Wallet connected to SCDO!</span>';
+  }catch(e){
+    result.innerHTML='<span style="color:#f85149">Error: '+e.message+'</span>';
+  }
+}
+</script>
+<!-- Add-SCDO-to-MetaMask button + Get Started nav link (standalone file, 2026-09-28) -->
+<script src="/scdo-addnet.js?v=20260929a"></script>
+<!-- SCDO Shard 0 icon next to shard0-specific titles (standalone file, 2026-09-29; favicon stays the all-shard SCDO icon) -->
+<script src="/scdo-shard0-icon.js?v=20260929a"></script>
+</body></html>
