@@ -47,7 +47,7 @@ curl -fLO https://scdoscan.io/downloads/node/docker-compose.yml
 docker compose up -d        # edit SHARD / MINE_ADDRESS in docker-compose.yml first</pre>
 <h2>Notes / 说明</h2>
 <ul><li>No address yet? <code>./scdo-client key --shard 1</code> creates one — keep the private key offline. / 没有地址？用 <code>scdo-client key --shard 1</code> 生成，私钥请离线保存。</li>
-<li>First sync downloads the full shard history (millions of blocks, tens of GB, many hours). Mining pays only once synced. / 首次同步耗时较长，同步完成后挖矿才有收益。</li>
+<li>First sync downloads the full shard history (millions of blocks, tens of GB, many hours). Mined blocks are accepted by the network only after the node has synced. / 首次同步耗时较长，节点同步完成后挖出的区块才会被网络接受。</li>
 <li>Ports (shard 1/2/3/4): P2P 8057/8058/8059/8056 TCP+UDP (open for inbound if you can); RPC 8037/8038/8039/8036 stays on 127.0.0.1.</li>
 <li>Shard0 (EVM, chainId 5680) runs core-geth (Ethash PoW): node binaries, genesis and README at <a href="/downloads/shard0/">/downloads/shard0/</a>. / Shard0（EVM，chainId 5680）使用 core-geth，下载见 <a href="/downloads/shard0/">/downloads/shard0/</a>。</li></ul>
 <p class="m">Built 2026-09-28 · <a href="README.md">README</a></p>

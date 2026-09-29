@@ -65,7 +65,7 @@ Shard0 (EVM, chainId 5680) runs core-geth (Ethash PoW) and is not included here;
 本软件包不含任何私钥或钱包。
 
 **查看状态：** `./status.sh 1`（或 `status.bat 1`），将 `CurrentBlockHeight` 与 scdoscan.io 上的高度对比。
-同步完成后挖矿才有收益。启动后最初几分钟可能出现 `failed to write block ... ODR ... leveldb: not found` 且高度暂停，属正常现象：
+节点同步完成后挖出的区块才会被网络接受。启动后最初几分钟可能出现 `failed to write block ... ODR ... leveldb: not found` 且高度暂停，属正常现象：
 节点需先同步其他分片的区块头，随后会继续同步。首次同步需下载整个分片历史（数百万区块、数十 GB，保存在 `~/.scdo/scdo-shardN`，
 Windows 为 `%USERPROFILE%\.scdo`），耗时数小时以上。
 

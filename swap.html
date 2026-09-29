@@ -21,7 +21,6 @@ button:disabled{background:#30363d}
 <h1>SCDO Swap</h1>
 <div class="card">
 <div class="row"><span>Pair</span><b>SCDO / SCDOT</b></div>
-<div class="row"><span>Price</span><span id="price">Loading...</span></div>
 <div class="row"><span>Fee</span><span>0.3%</span></div>
 </div>
 <div class="card">
@@ -114,6 +113,5 @@ async function doSwap(){
   }
   document.getElementById('btn').disabled=false;
 }
-fetch('/api/swap/pair').then(r=>r.json()).then(d=>document.getElementById('price').textContent=d.price);
 document.getElementById('pay').oninput=function(){this.recv.value=Math.floor(parseFloat(this.value)*97087)};
 </script></body></html>

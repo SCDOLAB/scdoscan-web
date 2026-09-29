@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Verify &amp; Publish Contract Source | 合约验证 | SCDO Scan</title>
+<meta name="description" content="Request verification of a smart contract on SCDO Mainnet (Shard 0, chainId 5680). The SCDO team reviews each request by hand; verified source code is shown on scdoscan.io. 申请在 scdoscan.io 验证并公开合约源码。">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<style>
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;scroll-behavior:smooth}
+body{margin:0;background:#0d1117;color:#c9d1d9;font-family:-apple-system,"Segoe UI",Roboto,"PingFang SC","Microsoft YaHei",sans-serif;line-height:1.6}
+a{color:#58a6ff;text-decoration:none}
+a:hover{text-decoration:underline}
+code,.mono{font-family:ui-monospace,Consolas,monospace}
+code{background:#161b22;border:1px solid #30363d;border-radius:4px;padding:0 5px;font-size:12px}
+.topbar{background:#161b22;border-bottom:1px solid #30363d;display:flex;align-items:center;gap:24px;padding:12px 24px;flex-wrap:wrap}
+.topbar .logo{color:#58a6ff;font-size:18px;font-weight:700;line-height:1.4}
+.topbar .logo a.home{color:#58a6ff}
+.topbar .logo #nav-wallet{margin-left:16px;font-size:16px;font-weight:600;color:#4CAF50;vertical-align:middle}
+.topbar nav{flex:1}
+.topbar nav a{color:#c9d1d9;margin-right:16px;white-space:nowrap;display:inline-block}
+.topbar nav a.active{color:#58a6ff;font-weight:600}
+.hero{background:linear-gradient(135deg,#0d1117 0%,#161b22 50%,#1a1f35 100%);border-bottom:2px solid #1f6feb;padding:34px 20px 28px;text-align:center}
+.hero h1{margin:0 0 6px;font-size:28px;font-weight:800;color:#e6edf3;letter-spacing:-.3px;line-height:1.25}
+.hero h1 .hl{color:#58a6ff}
+.hero .h1zh{font-size:20px;font-weight:700;color:#c9d1d9;margin:0 0 10px}
+.hero p{margin:0 auto;max-width:760px;color:#8b949e;font-size:14px}
+.hero p b{color:#e6edf3}
+.pills{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin-top:14px}
+.pill{font-size:12px;font-weight:600;padding:4px 11px;border-radius:999px;border:1px solid #30363d;background:#161b22;color:#e6edf3;white-space:nowrap}
+.pill.ok{border-color:#238636;background:#0d2818;color:#3fb950}
+.box{max-width:720px;margin:22px auto 0;background:#161b22;border:1px solid #30363d;border-radius:12px;padding:16px;text-align:left}
+.box label{display:block;font-size:13px;color:#8b949e;margin-bottom:6px}
+.row{display:flex;gap:8px;flex-wrap:wrap}
+.row input{flex:1;min-width:0;background:#0d1117;border:1px solid #30363d;color:#e6edf3;border-radius:8px;padding:11px 12px;font-size:14px;font-family:ui-monospace,Consolas,monospace}
+.row input:focus{outline:none;border-color:#58a6ff}
+.chk{font-size:13px;margin-top:8px;min-height:20px;word-break:break-all}
+.chk.ok{color:#3fb950}.chk.bad{color:#f85149}.chk.info{color:#d29922}
+.cta{display:flex;flex-wrap:wrap;justify-content:center;gap:10px;margin-top:14px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:0;border-radius:10px;padding:13px 22px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;text-decoration:none!important;line-height:1.25;text-align:center}
+.btn.green{background:#238636;color:#fff}.btn.green:hover{background:#2ea043}
+.btn.sec{background:#0d1117;color:#e6edf3;border:1px solid #30363d}.btn.sec:hover{border-color:#58a6ff}
+.container{max-width:1000px;margin:0 auto;padding:22px 20px 8px}
+.toc{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 6px}
+.toc a{font-size:12px;border:1px solid #30363d;border-radius:999px;padding:4px 11px;color:#c9d1d9;background:#161b22}
+.toc a:hover{border-color:#58a6ff;text-decoration:none}
+h2{display:flex;align-items:center;gap:10px;margin:30px 0 12px;font-size:20px;font-weight:700;color:#e6edf3;scroll-margin-top:12px}
+h2 .tag{font-size:11px;font-weight:700;padding:2px 9px;border-radius:999px;background:#1f6feb;color:#fff}
+h3{margin:0 0 8px;font-size:15px;color:#e6edf3}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.card{background:#161b22;border:1px solid #30363d;border-radius:10px;padding:16px 18px;margin-bottom:14px}
+.card.feature{border-color:#238636;background:linear-gradient(180deg,#0f2417 0%,#161b22 60%)}
+.card.warn{border-color:#9e6a03;background:#1d1606}
+ol.steps{margin:0;padding-left:20px;font-size:14px}
+ol.steps li{margin:8px 0}
+ol.steps li b{color:#e6edf3}
+ul.list{margin:0;padding-left:18px;font-size:13px}
+ul.list li{margin:5px 0}
+table.f{width:100%;border-collapse:collapse;font-size:13px}
+table.f td{padding:7px 8px;border-bottom:1px solid #21262d;vertical-align:top}
+table.f td:first-child{color:#e6edf3;font-weight:600;width:32%;padding-left:0}
+.note{font-size:12px;color:#8b949e;margin:10px 0 0}
+#vlist .it{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:8px 0;border-bottom:1px solid #21262d;font-size:13px}
+#vlist .it:last-child{border-bottom:0}
+.foot{text-align:center;padding:22px 16px 26px;margin-top:30px;border-top:1px solid #21262d;font-size:12px;color:#6e7681;line-height:1.8}
+.foot a{color:#8b949e}
+.foot a:hover{color:#58a6ff}
+@media (max-width:768px){
+  .topbar{gap:8px;padding:8px 12px}.topbar nav{order:3;flex-basis:100%}
+  .topbar nav a{margin-right:10px;font-size:13px}
+  .hero{padding:24px 14px 20px}.hero h1{font-size:22px}.hero .h1zh{font-size:17px}
+  .container{padding:14px 12px 4px}
+  .grid{grid-template-columns:1fr;gap:12px}
+  .card{padding:14px}
+  .btn{width:100%}
+  table.f td:first-child{width:40%}
+}
+</style>
+</head>
+<body>
+<header class="topbar">
+  <div class="logo"><a class="home" href="/#/">SCDO Scan</a><a href="/wallet/?v=2" id="nav-wallet">Wallet</a></div>
+  <nav><a href="/#/">Home</a><a href="/#/txs">Transactions</a><a href="/#/tokens">Tokens</a><a href="/start.html">Get Started</a><a href="/verify-contract.html" id="nav-verify" class="active" aria-current="page">Verify &amp; Publish</a><a href="/transparency/">Transparency</a><a href="/compliance.html">Compliance</a></nav>
+</header>
+
+<section class="hero">
+  <h1>Verify &amp; Publish <span class="hl">Contract Source Code</span></h1>
+  <div class="h1zh">合约验证与源码公开</div>
+  <p>Ask the SCDO team to verify a smart contract deployed on <b>SCDO Mainnet (Shard 0)</b>. Each request is <b>reviewed by hand</b>; once the source matches the on-chain code, it is shown on the contract's page in this explorer.</p>
+  <p>申请验证部署在 <b>SCDO Mainnet (Shard 0)</b> 上的智能合约。每个申请都由 SCDO 团队<b>人工审核</b>，源码与链上代码一致后，将显示在本浏览器的合约页面上。</p>
+  <div class="pills"><span class="pill ok">SCDO Mainnet (Shard 0)</span><span class="pill">chainId 5680 (0x1630)</span><span class="pill">Solidity · solc</span><span class="pill">Manual review / 人工审核</span></div>
+  <div class="box">
+    <label for="addr">Contract address (optional, pre-fills the request) / 合约地址（选填，自动填入申请表）</label>
+    <div class="row"><input id="addr" placeholder="0x…" autocomplete="off" spellcheck="false" maxlength="42"></div>
+    <div class="chk" id="chk" role="status" aria-live="polite"></div>
+    <div class="cta">
+      <a class="btn green" id="go" href="https://github.com/SCDOLAB/scdoscan-web/issues/new?template=contract-verification.yml" target="_blank" rel="noopener">Submit a verification request on GitHub &rarr;<br>在 GitHub 提交验证申请</a>
+    </div>
+    <p class="note" style="text-align:center">Opens the "Contract verification request" form in the public <a href="https://github.com/SCDOLAB/scdoscan-web" target="_blank" rel="noopener">SCDOLAB/scdoscan-web</a> repository (a free GitHub account is needed). 将打开公开仓库中的"Contract verification request"表单（需要免费的 GitHub 账号）。</p>
+  </div>
+</section>
+
+<main class="container">
+  <div class="toc"><a href="#en">English</a><a href="#zh">中文</a><a href="#verified">Verified contracts / 已验证合约</a></div>
+
+  <section id="en" lang="en">
+    <h2><span class="tag">EN</span> How contract verification works</h2>
+    <div class="card feature">
+      <h3>Steps</h3>
+      <ol class="steps">
+        <li><b>Deploy</b> your contract on SCDO Mainnet (Shard 0), chainId 5680 (RPC <code>https://scdoscan.io/rpc/0</code>), and note the contract address and the deployment transaction.</li>
+        <li><b>Collect your build settings</b>: the exact solc compiler version, whether the optimizer was on and how many runs, the evmVersion, and the constructor arguments. Your build tool (Hardhat, Foundry, Remix, Truffle) shows these.</li>
+        <li><b>Prepare the source</b>: either one flattened <code>.sol</code> file, or the solc <b>standard JSON input</b> (recommended for multi-file projects).</li>
+        <li><b>Open the request form</b> with the green button above and fill in every field. The form is a public GitHub issue, so never paste private keys, seed phrases or passwords.</li>
+        <li><b>Manual review by the SCDO team.</b> We compile your source with exactly the settings you gave and compare the result with the code stored on chain (<code>eth_getCode</code>), byte for byte. We reply in the issue if anything is missing or does not match.</li>
+        <li><b>Published on the explorer.</b> When the code matches, the contract's address page on scdoscan.io shows a <b>"Contract: Verified"</b> badge, the source code, the ABI and the compiler settings, plus a Read/Write contract panel. Your browser also re-checks the on-chain code hash live each time the page is opened.</li>
+      </ol>
+    </div>
+    <div class="grid">
+      <div class="card">
+        <h3>What the form asks for</h3>
+        <table class="f">
+          <tr><td>Contract address</td><td>0x + 40 hex characters</td></tr>
+          <tr><td>Chain</td><td>SCDO Mainnet (Shard 0), chainId 5680</td></tr>
+          <tr><td>Compiler version</td><td>e.g. <code>v0.8.24+commit.e11b9ed9</code></td></tr>
+          <tr><td>Optimizer &amp; runs</td><td>enabled / disabled, runs (usually 200)</td></tr>
+          <tr><td>evmVersion</td><td>e.g. <code>paris</code>, <code>shanghai</code>, or compiler default</td></tr>
+          <tr><td>Source</td><td>flattened file or standard JSON input</td></tr>
+          <tr><td>Constructor args</td><td>ABI-encoded hex, or "none"</td></tr>
+          <tr><td>License</td><td>SPDX identifier, e.g. MIT</td></tr>
+          <tr><td>Contact</td><td>email or Telegram (shown publicly)</td></tr>
+        </table>
+      </div>
+      <div class="card">
+        <h3>Good to know</h3>
+        <ul class="list">
+          <li>Only an exact match is published (the trailing metadata hash included). A metadata-only difference is a "partial" match and is not published by default.</li>
+          <li>Contracts with <code>immutable</code> variables, linked libraries or proxies may need extra details; add them in the "Notes" field.</li>
+          <li>Verification is free. The team will never ask you for keys, seed phrases or a payment.</li>
+          <li>Contracts on the archived legacy shards 1&ndash;4 are not covered by this process.</li>
+          <li>How we check, and how to reproduce it yourself: <a href="/verified/METHOD.txt">/verified/METHOD.txt</a>.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section id="zh" lang="zh-CN">
+    <h2><span class="tag">中文</span> 合约验证流程</h2>
+    <div class="card feature">
+      <h3>步骤</h3>
+      <ol class="steps">
+        <li><b>部署合约</b>：在 SCDO Mainnet (Shard 0)（chainId 5680，RPC <code>https://scdoscan.io/rpc/0</code>）上部署合约，记下合约地址和部署交易哈希。</li>
+        <li><b>整理编译参数</b>：准确的 solc 编译器版本、是否开启优化器及 runs 次数、evmVersion、构造函数参数。可在 Hardhat、Foundry、Remix、Truffle 等工具中查看。</li>
+        <li><b>准备源码</b>：一个展平后的 <code>.sol</code> 单文件，或 solc <b>标准 JSON 输入</b>（多文件项目建议使用）。</li>
+        <li><b>打开申请表</b>：点击上方绿色按钮，填写所有字段。申请表是公开的 GitHub issue，请勿填写私钥、助记词或密码。</li>
+        <li><b>SCDO 团队人工审核</b>：我们按照你填写的参数编译源码，并与链上代码（<code>eth_getCode</code>）逐字节比对。如有缺漏或不一致，会在 issue 中回复。</li>
+        <li><b>在浏览器中公开</b>：比对一致后，scdoscan.io 的合约地址页面会显示 <b>"Contract: Verified"</b> 标记、源码、ABI 和编译参数，并提供读/写合约面板。每次打开页面时，浏览器还会实时复核链上代码哈希。</li>
+      </ol>
+    </div>
+    <div class="grid">
+      <div class="card">
+        <h3>申请表需要填写</h3>
+        <table class="f">
+          <tr><td>合约地址</td><td>0x + 40 位十六进制</td></tr>
+          <tr><td>链</td><td>SCDO Mainnet (Shard 0)，chainId 5680</td></tr>
+          <tr><td>编译器版本</td><td>例如 <code>v0.8.24+commit.e11b9ed9</code></td></tr>
+          <tr><td>优化器与 runs</td><td>开启 / 关闭，runs（通常为 200）</td></tr>
+          <tr><td>evmVersion</td><td>例如 <code>paris</code>、<code>shanghai</code> 或编译器默认</td></tr>
+          <tr><td>源码</td><td>展平单文件或标准 JSON 输入</td></tr>
+          <tr><td>构造函数参数</td><td>ABI 编码的十六进制，或填 "none"</td></tr>
+          <tr><td>许可证</td><td>SPDX 标识，例如 MIT</td></tr>
+          <tr><td>联系方式</td><td>邮箱或 Telegram（公开显示）</td></tr>
+        </table>
+      </div>
+      <div class="card">
+        <h3>注意事项</h3>
+        <ul class="list">
+          <li>只有完全一致（包括末尾的元数据哈希）才会公开。仅元数据不同属于"部分匹配"，默认不公开。</li>
+          <li>含 <code>immutable</code> 变量、链接库或代理合约的，可能需要补充信息，请写在"备注"中。</li>
+          <li>合约验证免费。团队不会向你索要私钥、助记词或任何付款。</li>
+          <li>已归档的旧分片 1&ndash;4 上的合约不适用本流程。</li>
+          <li>验证方法及自行复现方式：<a href="/verified/METHOD.txt">/verified/METHOD.txt</a>。</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <h2 id="verified">Verified contracts / 已验证合约</h2>
+  <div class="card"><div id="vlist" class="note" style="margin:0">Loading… / 加载中…</div></div>
+</main>
+
+<footer class="foot">
+  <div><a href="/compliance.html">AUSTRAC DCE100714503-001 &middot; AFCA 124589</a></div>
+  <div>Registration with AUSTRAC does not mean AUSTRAC endorses or approves 9Y9 PTY LTD, SCDO, or any product or service.</div>
+  <div><a href="/#/">Explorer</a> &middot; <a href="/start.html">Get Started</a> &middot; <a href="/mine/">Mining &amp; Nodes</a> &middot; <a href="/pool/">Pool</a> &middot; <a href="/nodes/">Nodes / 节点服务费</a> &middot; <a href="/transparency/">Transparency</a> &middot; <a href="/compliance.html">Compliance</a></div>
+  <div class="scdo-foot-links" id="scdo-foot-links"><a href="/verify-contract.html">Verify Contract / 合约验证</a> &middot; <a href="https://github.com/SCDOLAB" target="_blank" rel="noopener">GitHub</a> &middot; <a href="https://x.com/SCDOLabor" target="_blank" rel="noopener">X</a> &middot; <a href="https://www.facebook.com/profile.php?id=61594957349207" target="_blank" rel="noopener">Facebook</a></div>
+</footer>
+
+<script>
+(function(){
+  var BASE='https://github.com/SCDOLAB/scdoscan-web/issues/new?template=contract-verification.yml';
+  var inp=document.getElementById('addr'), go=document.getElementById('go'), chk=document.getElementById('chk');
+  function setChk(cls,txt){chk.className='chk '+(cls||'');chk.textContent=txt||'';}
+  function rpc(m,p){return fetch('/rpc/0',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({jsonrpc:'2.0',id:1,method:m,params:p})}).then(function(r){return r.json();}).then(function(d){if(d.error)throw new Error(d.error.message);return d.result;});}
+  var seq=0;
+  function update(){
+    var a=(inp.value||'').trim(), my=++seq;
+    if(!a){go.href=BASE;setChk('','');return;}
+    if(!/^0x[0-9a-fA-F]{40}$/.test(a)){go.href=BASE;setChk('bad','Not a valid 0x address (0x + 40 hex characters). / 地址格式不正确。');return;}
+    go.href=BASE+'&title='+encodeURIComponent('[Verify] '+a)+'&address='+encodeURIComponent(a);
+    setChk('','Checking on chain… / 正在链上检查…');
+    Promise.all([rpc('eth_getCode',[a,'latest']),fetch('/verified/index.json',{cache:'no-cache'}).then(function(r){return r.ok?r.json():{};}).catch(function(){return {};})]).then(function(x){
+      if(my!==seq)return;
+      var code=x[0]||'0x', vi=(x[1]&&x[1].contracts)||{};
+      if(vi[a.toLowerCase()]){setChk('ok','\u2713 Already verified: '+vi[a.toLowerCase()].contractName+' — see the address page. / 该合约已验证。');return;}
+      if(code==='0x'||code==='0x0'){setChk('info','No contract code at this address on Shard 0 (it may be a wallet address, or not deployed yet). / 该地址在 Shard 0 上没有合约代码。');return;}
+      setChk('ok','\u2713 Contract found on Shard 0 ('+((code.length-2)/2)+' bytes of code). The request form will be pre-filled with this address. / 已找到合约，申请表将自动填入该地址。');
+    }).catch(function(e){if(my===seq)setChk('info','Could not check the address right now; you can still submit the request. / 暂时无法检查，仍可提交申请。');});
+  }
+  var t;inp.addEventListener('input',function(){clearTimeout(t);t=setTimeout(update,350);});
+  var q=new URLSearchParams(location.search).get('address');
+  if(q&&/^0x[0-9a-fA-F]{40}$/.test(q)){inp.value=q;update();}
+  fetch('/verified/index.json',{cache:'no-cache'}).then(function(r){return r.json();}).then(function(d){
+    var box=document.getElementById('vlist'), c=(d&&d.contracts)||{}, ks=Object.keys(c);
+    box.textContent='';box.className='';
+    if(!ks.length){box.className='note';box.textContent='None yet. / 暂无。';return;}
+    ks.forEach(function(k){
+      var it=document.createElement('div');it.className='it';
+      var l=document.createElement('a');l.href='/#/address?address='+k;l.className='mono';l.textContent=k;
+      var n=document.createElement('span');n.textContent=(c[k].contractName||'')+' · '+(c[k].compiler||'')+' · '+(c[k].match==='full'?'full match':'partial')+' · '+String(c[k].verifiedAt||'').slice(0,10);n.style.color='#8b949e';
+      it.appendChild(l);it.appendChild(n);box.appendChild(it);
+    });
+  }).catch(function(){var box=document.getElementById('vlist');box.textContent='Could not load the list. / 无法加载列表。';});
+})();
+</script>
+</body>
+</html>
