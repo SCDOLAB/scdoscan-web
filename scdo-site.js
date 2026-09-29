@@ -2,7 +2,8 @@
    injected by nginx sub_filter into explorer pages (proxied from .44) and the web wallet.
    1) footer links row: Verify Contract / 合约验证 · GitHub · X · Facebook (adds a standard compliance footer if a page has none)
    2) explorer top nav: "Verify & Publish" (replaces the legacy "Verify" router link)
-   3) shard0 contract address page: prominent "Verify & Publish" button when the source is not verified yet
+   3) shard0 contract address page: prominent "Verify & Publish" button when the source is not verified yet (opens the automatic form)
+   4) verified-source panel: "Verified automatically · submitted by … (KYC-verified)" line
    Idempotent; DOM built with textContent only. */
 (function(){
   if(window.__scdoSite)return;window.__scdoSite=true;
@@ -34,9 +35,13 @@
       f.id='scdo-site-foot';f.appendChild(complianceLines());f.appendChild(linksRow());document.body.appendChild(f);styleLinks(f);return;
     }
     hosts.forEach(function(h){
-      if(h.querySelector('.scdo-foot-links'))return;
-      if(!/DCE100714503-001/.test(h.textContent)&&h.tagName==='FOOTER')h.appendChild(complianceLines());
-      h.appendChild(linksRow());styleLinks(h);
+      var isP=h.tagName==='P', box=h;
+      if(isP){ if(h.nextElementSibling&&h.nextElementSibling.classList.contains('scdo-foot-box'))return;
+        box=el('div','font-size:12px;color:#6e7681;line-height:1.8;margin-top:-16px;padding-bottom:12px');box.className='scdo-foot-box';h.parentNode.insertBefore(box,h.nextSibling); }
+      else if(h.querySelector('.scdo-foot-links'))return;
+      if(!/DCE100714503-001/.test(h.textContent)&&h.tagName==='FOOTER')box.appendChild(complianceLines());
+      else if(!/124589/.test(h.textContent)){var af=el('div');af.className='scdo-foot-afca';var aa=el('a',null,'AFCA 124589');aa.href='/compliance.html';af.appendChild(aa);box.appendChild(af);}
+      box.appendChild(linksRow());styleLinks(box);
     });
   }
   function styleLinks(h){[].forEach.call(h.querySelectorAll('.scdo-foot-links'),function(d){d.style.marginTop=d.style.marginTop||'2px';});}
@@ -46,14 +51,14 @@
     var a=el('a',null,'Verify & Publish');a.id='nav-verify';a.href=VERIFY;a.title='Verify & Publish contract source code / 合约验证';
     if(old){old.style.display='none';old.parentNode.insertBefore(a,old.nextSibling);}else nav.appendChild(a);
   }
-  // legacy SPA route #/verify (old shards 1-4 form): point Shard 0 users to the manual-review process
+  // legacy SPA route #/verify (old shards 1-4 form): point Shard 0 users to the automatic Verify & Publish form
   function ensureLegacyNote(){
     if(!/^#\/verify(\?|$)/.test(location.hash)){var o=document.getElementById('scdo-verify-legacy-note');if(o)o.remove();return;}
     if(document.getElementById('scdo-verify-legacy-note'))return;
     var h3=[].slice.call(document.querySelectorAll('#app h3')).filter(function(h){return h.textContent.trim()==='Verify Contract Source';})[0];if(!h3)return;
     var n=el('div','margin:0 0 14px;padding:14px 16px;border:1px solid #238636;border-radius:8px;background:#0f2417;font-size:13px;color:#c9d1d9;line-height:1.6');n.id='scdo-verify-legacy-note';
     n.appendChild(el('b','color:#e6edf3','SCDO Mainnet (Shard 0, chainId 5680) contracts / Shard 0 合约'));n.appendChild(el('br'));
-    n.appendChild(document.createTextNode('Use Verify & Publish: submit a request and the SCDO team reviews it by hand. The form below is the legacy tool for archived shards 1\u20134. / 请使用"合约验证"提交申请，由 SCDO 团队人工审核。下方表单仅用于已归档的旧分片 1\u20134。 '));
+    n.appendChild(document.createTextNode('Use Verify & Publish: paste the source and settings, sign with a KYC-verified address, and it is compiled and compared with the on-chain code automatically. The form below is the legacy tool for archived shards 1\u20134. / 请使用"合约验证"：填写源码和编译参数，用已通过 KYC 的地址签名，系统自动编译并与链上代码比对。下方表单仅用于已归档的旧分片 1\u20134。 '));
     var b=el('a','display:inline-block;margin-top:8px;padding:8px 16px;background:#238636;color:#fff;border-radius:6px;font-weight:700;text-decoration:none','Verify & Publish \u2192');b.href=VERIFY;n.appendChild(el('br'));n.appendChild(b);
     h3.parentNode.insertBefore(n,h3.nextSibling);
   }
@@ -79,12 +84,25 @@
     var box=el('div','margin:14px 0 4px;padding:14px 16px;border:1px solid #1f6feb;border-radius:8px;background:#0c1d33;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap');box.id='scdo-verify-cta';
     var t=el('div','font-size:13px;color:#c9d1d9;line-height:1.55');
     t.appendChild(el('b','color:#e6edf3;font-size:14px','Contract source code not verified / 合约源码未验证'));t.appendChild(el('br'));
-    t.appendChild(document.createTextNode('Are you the contract creator? Verify and publish your contract source code. / 你是合约部署者吗？提交源码进行验证并公开。'));
+    t.appendChild(document.createTextNode('Have the source code? Verify and publish it automatically (a signature from a KYC-verified address is needed). / 有源码？可自动验证并公开（需已通过 KYC 的地址签名）。'));
     var b=el('a','display:inline-block;padding:10px 18px;background:#238636;color:#fff;border-radius:8px;font-weight:700;font-size:14px;text-decoration:none;white-space:nowrap','\u2713 Verify & Publish');b.href=VERIFY+'?address='+cAddr;b.id='scdo-verify-btn';
     box.appendChild(t);box.appendChild(b);
     var h3=card.querySelector('h3');if(h3&&h3.nextSibling)card.insertBefore(box,h3.nextSibling);else card.appendChild(box);
   }
-  function tick(){try{ensureFooter();}catch(e){}try{ensureNav();}catch(e){}try{ensureLegacyNote();}catch(e){}try{checkContract();}catch(e){}}
+
+  // verified-source panel (rendered by enhance.js): show how it was verified and by whom (automatic, KYC-verified submitter)
+  var vvDone=null;
+  function ensureVerifiedVia(){
+    var p=document.getElementById('s0-verified-panel');if(!p||p.getAttribute('data-vv'))return;
+    var m=location.hash.match(/address=(0x[0-9a-fA-F]{40})/);if(!m)return;var a=m[1].toLowerCase();p.setAttribute('data-vv','1');
+    fetch('/verified/'+a+'.json',{cache:'no-cache'}).then(function(r){return r.ok?r.json():null;}).then(function(v){
+      if(!v||!v.verifiedVia)return;var d=el('div','font-size:12px;color:#8b949e;margin:-4px 0 10px');
+      var who=v.submitter&&v.submitter.address?' \u00b7 submitted by '+v.submitter.address+' (KYC-verified'+(v.submitter.kyc&&v.submitter.kyc.tier?', tier '+v.submitter.kyc.tier:'')+')':'';
+      d.textContent='Verified automatically'+who+' / 自动验证'+(who?'，提交人已通过 KYC':'');
+      var h=p.querySelector('h3');if(h&&h.nextSibling)p.insertBefore(d,h.nextSibling);else p.appendChild(d);
+    }).catch(function(){});
+  }
+  function tick(){try{ensureFooter();}catch(e){}try{ensureNav();}catch(e){}try{ensureLegacyNote();}catch(e){}try{checkContract();}catch(e){}try{ensureVerifiedVia();}catch(e){}}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',tick);else tick();
   window.addEventListener('hashchange',function(){setTimeout(tick,50);});
   setInterval(tick,1000);

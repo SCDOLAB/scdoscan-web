@@ -1,5 +1,5 @@
 blank_issues_enabled: true
 contact_links:
-  - name: Contract verification guide / 合约验证说明
+  - name: Verify a contract (automatic) / 合约自动验证
     url: https://scdoscan.io/verify-contract.html
-    about: How contract verification on scdoscan.io works, step by step.
+    about: Verification is automatic for KYC-verified submitters. Submit your source there; use the "problem" form here only if something goes wrong.

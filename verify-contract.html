@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Verify &amp; Publish Contract Source | 合约验证 | SCDO Scan</title>
-<meta name="description" content="Request verification of a smart contract on SCDO Mainnet (Shard 0, chainId 5680). The SCDO team reviews each request by hand; verified source code is shown on scdoscan.io. 申请在 scdoscan.io 验证并公开合约源码。">
+<meta name="description" content="Automatic smart contract verification on SCDO Mainnet (Shard 0, chainId 5680) for KYC-verified submitters. The source is compiled and compared with the on-chain code, then published on scdoscan.io. 合约自动验证与源码公开。">
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <style>
 *{box-sizing:border-box}
@@ -76,6 +76,50 @@ table.f td:first-child{color:#e6edf3;font-weight:600;width:32%;padding-left:0}
   .btn{width:100%}
   table.f td:first-child{width:40%}
 }
+
+.form{max-width:1000px;margin:0 auto}
+.step{background:#161b22;border:1px solid #30363d;border-radius:12px;padding:16px 18px;margin:14px 0}
+.step h3{display:flex;align-items:center;gap:10px;font-size:16px;margin:0 0 12px}
+.step h3 .n{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;background:#1f6feb;color:#fff;font-size:13px;font-weight:800;flex:none}
+.step h3 small{font-weight:500;color:#8b949e;font-size:13px}
+.f2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 16px}
+.f3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px 16px}
+.fld label{display:block;font-size:12.5px;color:#8b949e;margin-bottom:5px}
+.fld input[type=text],.fld input[type=number],.fld select,.fld textarea{width:100%;background:#0d1117;border:1px solid #30363d;color:#e6edf3;border-radius:8px;padding:10px 11px;font-size:14px;font-family:inherit}
+.fld input.mono,.fld textarea{font-family:ui-monospace,Consolas,monospace;font-size:12.5px}
+.fld textarea{min-height:220px;resize:vertical;line-height:1.45;white-space:pre;overflow:auto}
+.fld input:focus,.fld select:focus,.fld textarea:focus{outline:none;border-color:#58a6ff}
+.fld .hint{font-size:11.5px;color:#6e7681;margin-top:4px}
+.seg{display:inline-flex;border:1px solid #30363d;border-radius:8px;overflow:hidden;flex-wrap:wrap}
+.seg label{margin:0;padding:8px 14px;font-size:13px;color:#c9d1d9;cursor:pointer;background:#0d1117;display:flex;align-items:center;gap:6px}
+.seg input{accent-color:#1f6feb}
+.seg label.on{background:#1f6feb22;color:#e6edf3}
+.inline{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.tog{display:flex;align-items:center;gap:8px;font-size:14px;color:#e6edf3;cursor:pointer;margin:8px 0 0}
+.tog input{width:18px;height:18px;accent-color:#238636}
+.btn.sm{padding:9px 14px;font-size:13.5px;border-radius:8px}
+.btn.blue{background:#1f6feb;color:#fff}.btn.blue:hover{background:#388bfd}
+.btn[disabled]{opacity:.5;cursor:not-allowed}
+.signbox{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.opt{border:1px solid #30363d;border-radius:10px;padding:14px;background:#0d1117}
+.opt h4{margin:0 0 8px;font-size:14px;color:#e6edf3}
+.msg{font-family:ui-monospace,Consolas,monospace;font-size:12px;background:#161b22;border:1px dashed #30363d;border-radius:6px;padding:8px 10px;word-break:break-all;color:#e6edf3;margin:6px 0}
+.status{border-radius:10px;padding:12px 14px;font-size:13.5px;margin-top:12px;border:1px solid #30363d;background:#0d1117;word-break:break-word}
+.status.ok{border-color:#238636;background:#0d2818;color:#aff5b4}
+.status.bad{border-color:#da3633;background:#2d0f0f;color:#ffc1bd}
+.status.warn{border-color:#9e6a03;background:#1d1606;color:#f2cc60}
+.status.run{border-color:#1f6feb;background:#0c1a33;color:#a5d6ff}
+.status b{color:#fff}
+.status a{color:#79c0ff;text-decoration:underline}
+.status .zh{display:block;margin-top:4px;opacity:.92}
+.status ul{margin:8px 0 0;padding-left:18px}
+.status pre{white-space:pre-wrap;font-size:12px;background:#0006;padding:8px;border-radius:6px;max-height:240px;overflow:auto;margin:8px 0 0}
+.spin{display:inline-block;width:14px;height:14px;border:2px solid #a5d6ff55;border-top-color:#a5d6ff;border-radius:50%;animation:sp 0.8s linear infinite;vertical-align:-2px;margin-right:6px}
+@keyframes sp{to{transform:rotate(360deg)}}
+.submitrow{display:flex;justify-content:center;margin-top:14px}
+.submitrow .btn{min-width:280px}
+.report{text-align:center;font-size:12.5px;color:#8b949e;margin:10px 0 0}
+@media (max-width:768px){.f2,.f3,.signbox{grid-template-columns:1fr}.step{padding:14px 12px}.submitrow .btn{min-width:0;width:100%}.fld textarea{min-height:180px}}
 </style>
 </head>
 <body>
@@ -83,155 +127,273 @@ table.f td:first-child{color:#e6edf3;font-weight:600;width:32%;padding-left:0}
   <div class="logo"><a class="home" href="/#/">SCDO Scan</a><a href="/wallet/?v=2" id="nav-wallet">Wallet</a></div>
   <nav><a href="/#/">Home</a><a href="/#/txs">Transactions</a><a href="/#/tokens">Tokens</a><a href="/start.html">Get Started</a><a href="/verify-contract.html" id="nav-verify" class="active" aria-current="page">Verify &amp; Publish</a><a href="/transparency/">Transparency</a><a href="/compliance.html">Compliance</a></nav>
 </header>
-
 <section class="hero">
   <h1>Verify &amp; Publish <span class="hl">Contract Source Code</span></h1>
   <div class="h1zh">合约验证与源码公开</div>
-  <p>Ask the SCDO team to verify a smart contract deployed on <b>SCDO Mainnet (Shard 0)</b>. Each request is <b>reviewed by hand</b>; once the source matches the on-chain code, it is shown on the contract's page in this explorer.</p>
-  <p>申请验证部署在 <b>SCDO Mainnet (Shard 0)</b> 上的智能合约。每个申请都由 SCDO 团队<b>人工审核</b>，源码与链上代码一致后，将显示在本浏览器的合约页面上。</p>
-  <div class="pills"><span class="pill ok">SCDO Mainnet (Shard 0)</span><span class="pill">chainId 5680 (0x1630)</span><span class="pill">Solidity · solc</span><span class="pill">Manual review / 人工审核</span></div>
-  <div class="box">
-    <label for="addr">Contract address (optional, pre-fills the request) / 合约地址（选填，自动填入申请表）</label>
-    <div class="row"><input id="addr" placeholder="0x…" autocomplete="off" spellcheck="false" maxlength="42"></div>
-    <div class="chk" id="chk" role="status" aria-live="polite"></div>
-    <div class="cta">
-      <a class="btn green" id="go" href="https://github.com/SCDOLAB/scdoscan-web/issues/new?template=contract-verification.yml" target="_blank" rel="noopener">Submit a verification request on GitHub &rarr;<br>在 GitHub 提交验证申请</a>
-    </div>
-    <p class="note" style="text-align:center">Opens the "Contract verification request" form in the public <a href="https://github.com/SCDOLAB/scdoscan-web" target="_blank" rel="noopener">SCDOLAB/scdoscan-web</a> repository (a free GitHub account is needed). 将打开公开仓库中的"Contract verification request"表单（需要免费的 GitHub 账号）。</p>
-  </div>
+  <p>Verification is <b>automatic</b>: paste your source and compiler settings, sign with a <b>KYC-verified</b> address, and the server compiles it and compares the result with the code on <b>SCDO Mainnet (Shard 0)</b>. On a match, the source code, ABI and a Read/Write panel appear on the contract page right away.</p>
+  <p>验证<b>全自动</b>完成：填写源码和编译参数，用<b>已通过 KYC</b> 的地址签名，服务器即会编译并与 <b>SCDO Mainnet (Shard 0)</b> 链上代码比对。比对一致后，源码、ABI 和读/写面板会立即显示在合约页面。</p>
+  <div class="pills"><span class="pill ok">SCDO Mainnet (Shard 0)</span><span class="pill">chainId 5680 (0x1630)</span><span class="pill">Automatic / 自动验证</span><span class="pill">KYC-verified submitters / 需通过 KYC</span></div>
 </section>
+<main class="container form">
+  <form id="vf" autocomplete="off" novalidate>
+  <div class="step" id="s1">
+    <h3><span class="n">1</span>Contract <small>/ 合约</small></h3>
+    <div class="fld"><label for="addr">Contract address on Shard 0 / Shard 0 合约地址</label>
+      <input type="text" id="addr" class="mono" placeholder="0x…" maxlength="42" spellcheck="false"></div>
+    <div class="chk" id="chk" role="status" aria-live="polite"></div>
+  </div>
 
-<main class="container">
-  <div class="toc"><a href="#en">English</a><a href="#zh">中文</a><a href="#verified">Verified contracts / 已验证合约</a></div>
+  <div class="step" id="s2">
+    <h3><span class="n">2</span>Compiler settings &amp; source <small>/ 编译参数与源码</small></h3>
+    <div class="f3">
+      <div class="fld"><label for="ver">Compiler version / 编译器版本</label><select id="ver"><option value="">Loading… / 加载中…</option></select>
+        <div class="hint">Official solc releases, checked by SHA-256. / 官方 solc 发布版，校验 SHA-256。</div></div>
+      <div class="fld"><label for="evm">EVM version / evmVersion</label><select id="evm"></select></div>
+      <div class="fld"><label for="lic">License / 许可证</label><select id="lic"></select></div>
+    </div>
+    <div class="f3" style="margin-top:10px">
+      <div class="fld"><label class="tog" style="margin-top:22px"><input type="checkbox" id="opt" checked> Optimizer enabled / 开启优化器</label></div>
+      <div class="fld"><label for="runs">Optimizer runs / 优化 runs</label><input type="number" id="runs" value="200" min="1" max="4294967295"></div>
+      <div class="fld"><label for="cname">Contract name (optional) / 合约名（选填）</label><input type="text" id="cname" class="mono" placeholder="MyToken" maxlength="100">
+        <div class="hint">Empty = try every contract in the source. / 留空则尝试源码中所有合约。</div></div>
+    </div>
+    <div class="fld" style="margin-top:12px"><label>Source format / 源码格式</label>
+      <div class="seg" id="stype"><label class="on"><input type="radio" name="stype" value="single" checked> Single file (.sol, flattened) / 单文件（已展平）</label><label><input type="radio" name="stype" value="standard-json"> Standard JSON input / 标准 JSON 输入</label></div></div>
+    <div class="f2" style="margin-top:10px">
+      <div class="fld" id="fnwrap"><label for="fname">File name / 文件名</label><input type="text" id="fname" class="mono" placeholder="MyToken.sol" maxlength="200">
+        <div class="hint">Must be the same name used at deploy time for a full match. / 与部署时文件名一致才能完全匹配。</div></div>
+      <div class="fld"><label for="file">Load from file / 从文件读取</label><input type="file" id="file" accept=".sol,.json,text/plain,application/json" style="font-size:13px;color:#8b949e;margin-top:4px"></div>
+    </div>
+    <div class="fld" style="margin-top:10px"><label for="src">Source code / 源码</label>
+      <textarea id="src" spellcheck="false" placeholder="// SPDX-License-Identifier: MIT&#10;pragma solidity 0.8.24;&#10;contract MyToken { … }"></textarea>
+      <div class="hint" id="srcinfo">Max 1.5 MB, 300 files. Imports are not downloaded: flatten the source or use standard JSON with every file inline. / 最大 1.5 MB、300 个文件。不会下载 import，请展平源码，或使用内联全部文件的标准 JSON。</div></div>
+    <div class="fld" style="margin-top:10px"><label for="args">Constructor arguments, ABI-encoded hex (optional) / 构造函数参数，ABI 编码十六进制（选填）</label>
+      <input type="text" id="args" class="mono" placeholder="0x… (empty = read from the creation transaction / 留空则从部署交易读取)" spellcheck="false"></div>
+  </div>
 
+  <div class="step" id="s3">
+    <h3><span class="n">3</span>Sign &amp; KYC <small>/ 签名与 KYC</small></h3>
+    <p class="note" style="margin:0 0 10px">Sign the message below with a <b>KYC-verified</b> address (the deployer, the owner, or any KYC-verified address). Signing is free and sends no transaction. Each signature is valid for 10 minutes and works once.<br>请用<b>已通过 KYC</b> 的地址（部署者、owner 或任意已认证地址）签署下方消息。签名免费，不会发送交易。每个签名 10 分钟内有效，只能使用一次。</p>
+    <div class="signbox">
+      <div class="opt">
+        <h4>A. MetaMask (or another browser wallet) / 浏览器钱包</h4>
+        <button type="button" class="btn blue sm" id="mmConnect">Connect wallet / 连接钱包</button>
+        <div class="note" id="mmInfo">The wallet will ask you to sign when you press "Verify &amp; publish". / 点击"验证并发布"时钱包会请求签名。</div>
+      </div>
+      <div class="opt">
+        <h4>B. SCDO web wallet / SCDO 网页钱包（手动签名）</h4>
+        <div class="fld"><label for="signer">Signer address / 签名地址</label><input type="text" id="signer" class="mono" placeholder="0x…" maxlength="42" spellcheck="false"></div>
+        <div class="inline" style="margin-top:8px"><button type="button" class="btn sec sm" id="mkMsg">Create message / 生成消息</button><button type="button" class="btn sec sm" id="cpMsg" disabled>Copy / 复制</button>
+          <a class="btn sec sm" href="/wallet/" target="_blank" rel="noopener">Open wallet / 打开钱包 &rarr;</a></div>
+        <div class="msg" id="msg" hidden></div>
+        <div class="note" id="msgNote" hidden>In the SCDO web wallet, open <b>Sign Message</b>, paste this text, sign with the address above, then paste the signature here. / 在 SCDO 网页钱包打开"签名消息"，粘贴这段文字并用上面的地址签名，再把签名粘贴到下面。</div>
+        <div class="fld" style="margin-top:8px"><label for="sig">Signature / 签名 (0x…, 65 bytes)</label><input type="text" id="sig" class="mono" placeholder="0x…" spellcheck="false"></div>
+      </div>
+    </div>
+    <div class="status" id="kyc" role="status" aria-live="polite">KYC status: connect a wallet or enter a signer address. / KYC 状态：请连接钱包或填写签名地址。</div>
+  </div>
+
+  <div class="step" id="s4">
+    <h3><span class="n">4</span>Verify &amp; publish <small>/ 验证并发布</small></h3>
+    <div class="submitrow"><button type="submit" class="btn green" id="go">Verify &amp; publish / 验证并发布</button></div>
+    <div class="status" id="res" role="status" aria-live="polite" hidden></div>
+    <p class="report">Problems? <a href="https://github.com/SCDOLAB/scdoscan-web/issues/new?template=contract-verification.yml" target="_blank" rel="noopener">Report here</a> (GitHub). / 遇到问题？<a href="https://github.com/SCDOLAB/scdoscan-web/issues/new?template=contract-verification.yml" target="_blank" rel="noopener">在这里反馈</a>（GitHub）。</p>
+  </div>
+  </form>
+
+  <div class="toc" style="margin-top:24px"><a href="#en">How it works</a><a href="#zh">验证流程</a><a href="#verified">Verified contracts / 已验证合约</a></div>
   <section id="en" lang="en">
-    <h2><span class="tag">EN</span> How contract verification works</h2>
-    <div class="card feature">
-      <h3>Steps</h3>
-      <ol class="steps">
-        <li><b>Deploy</b> your contract on SCDO Mainnet (Shard 0), chainId 5680 (RPC <code>https://scdoscan.io/rpc/0</code>), and note the contract address and the deployment transaction.</li>
-        <li><b>Collect your build settings</b>: the exact solc compiler version, whether the optimizer was on and how many runs, the evmVersion, and the constructor arguments. Your build tool (Hardhat, Foundry, Remix, Truffle) shows these.</li>
-        <li><b>Prepare the source</b>: either one flattened <code>.sol</code> file, or the solc <b>standard JSON input</b> (recommended for multi-file projects).</li>
-        <li><b>Open the request form</b> with the green button above and fill in every field. The form is a public GitHub issue, so never paste private keys, seed phrases or passwords.</li>
-        <li><b>Manual review by the SCDO team.</b> We compile your source with exactly the settings you gave and compare the result with the code stored on chain (<code>eth_getCode</code>), byte for byte. We reply in the issue if anything is missing or does not match.</li>
-        <li><b>Published on the explorer.</b> When the code matches, the contract's address page on scdoscan.io shows a <b>"Contract: Verified"</b> badge, the source code, the ABI and the compiler settings, plus a Read/Write contract panel. Your browser also re-checks the on-chain code hash live each time the page is opened.</li>
-      </ol>
-    </div>
-    <div class="grid">
-      <div class="card">
-        <h3>What the form asks for</h3>
-        <table class="f">
-          <tr><td>Contract address</td><td>0x + 40 hex characters</td></tr>
-          <tr><td>Chain</td><td>SCDO Mainnet (Shard 0), chainId 5680</td></tr>
-          <tr><td>Compiler version</td><td>e.g. <code>v0.8.24+commit.e11b9ed9</code></td></tr>
-          <tr><td>Optimizer &amp; runs</td><td>enabled / disabled, runs (usually 200)</td></tr>
-          <tr><td>evmVersion</td><td>e.g. <code>paris</code>, <code>shanghai</code>, or compiler default</td></tr>
-          <tr><td>Source</td><td>flattened file or standard JSON input</td></tr>
-          <tr><td>Constructor args</td><td>ABI-encoded hex, or "none"</td></tr>
-          <tr><td>License</td><td>SPDX identifier, e.g. MIT</td></tr>
-          <tr><td>Contact</td><td>email or Telegram (shown publicly)</td></tr>
-        </table>
-      </div>
-      <div class="card">
-        <h3>Good to know</h3>
-        <ul class="list">
-          <li>Only an exact match is published (the trailing metadata hash included). A metadata-only difference is a "partial" match and is not published by default.</li>
-          <li>Contracts with <code>immutable</code> variables, linked libraries or proxies may need extra details; add them in the "Notes" field.</li>
-          <li>Verification is free. The team will never ask you for keys, seed phrases or a payment.</li>
-          <li>Contracts on the archived legacy shards 1&ndash;4 are not covered by this process.</li>
-          <li>How we check, and how to reproduce it yourself: <a href="/verified/METHOD.txt">/verified/METHOD.txt</a>.</li>
-        </ul>
-      </div>
-    </div>
+    <h2><span class="tag">EN</span> How automatic verification works</h2>
+    <div class="card feature"><ol class="steps">
+      <li><b>KYC check.</b> The signed message <code>SCDO contract verification &lt;address&gt; &lt;timestamp&gt;</code> proves which address is submitting. That address must be KYC-verified in the Shard 0 KYC registry, which stores only a status, tier, expiry and a record hash, never personal data. Not verified yet? Complete KYC in the <a href="https://scdoscan.io/wallet/">SCDO web wallet (KYC tab)</a>.</li>
+      <li><b>Compile.</b> The server downloads the exact official solc release you chose (SHA-256 checked, cached) and compiles your source in a sandbox with your optimizer, runs and evmVersion settings.</li>
+      <li><b>Compare.</b> The compiled runtime bytecode is compared with <code>eth_getCode</code> on chainId 5680. <code>immutable</code> slots are masked and the metadata hash is compared separately: <b>full match</b> (identical) or <b>partial match</b> (only the metadata hash differs). Where the creation transaction is found, its creation code and constructor arguments are checked too.</li>
+      <li><b>Publish.</b> On a match the record is published at once. The contract page shows a "Contract: Verified" badge, the source, ABI and compiler settings, and a Read/Write panel. Your browser re-checks the on-chain code hash live each time the page is opened.</li>
+    </ol>
+    <p class="note">Limits: 2 MB per request, 1.5 MB of source, 60 s compile time, 12 submissions per hour per network. Verification is free; nobody will ask you for keys, seed phrases or a payment. Contracts on the archived legacy shards 1&ndash;4 are not covered. Details: <a href="/verified/METHOD.txt">/verified/METHOD.txt</a>.</p></div>
   </section>
-
   <section id="zh" lang="zh-CN">
-    <h2><span class="tag">中文</span> 合约验证流程</h2>
-    <div class="card feature">
-      <h3>步骤</h3>
-      <ol class="steps">
-        <li><b>部署合约</b>：在 SCDO Mainnet (Shard 0)（chainId 5680，RPC <code>https://scdoscan.io/rpc/0</code>）上部署合约，记下合约地址和部署交易哈希。</li>
-        <li><b>整理编译参数</b>：准确的 solc 编译器版本、是否开启优化器及 runs 次数、evmVersion、构造函数参数。可在 Hardhat、Foundry、Remix、Truffle 等工具中查看。</li>
-        <li><b>准备源码</b>：一个展平后的 <code>.sol</code> 单文件，或 solc <b>标准 JSON 输入</b>（多文件项目建议使用）。</li>
-        <li><b>打开申请表</b>：点击上方绿色按钮，填写所有字段。申请表是公开的 GitHub issue，请勿填写私钥、助记词或密码。</li>
-        <li><b>SCDO 团队人工审核</b>：我们按照你填写的参数编译源码，并与链上代码（<code>eth_getCode</code>）逐字节比对。如有缺漏或不一致，会在 issue 中回复。</li>
-        <li><b>在浏览器中公开</b>：比对一致后，scdoscan.io 的合约地址页面会显示 <b>"Contract: Verified"</b> 标记、源码、ABI 和编译参数，并提供读/写合约面板。每次打开页面时，浏览器还会实时复核链上代码哈希。</li>
-      </ol>
-    </div>
-    <div class="grid">
-      <div class="card">
-        <h3>申请表需要填写</h3>
-        <table class="f">
-          <tr><td>合约地址</td><td>0x + 40 位十六进制</td></tr>
-          <tr><td>链</td><td>SCDO Mainnet (Shard 0)，chainId 5680</td></tr>
-          <tr><td>编译器版本</td><td>例如 <code>v0.8.24+commit.e11b9ed9</code></td></tr>
-          <tr><td>优化器与 runs</td><td>开启 / 关闭，runs（通常为 200）</td></tr>
-          <tr><td>evmVersion</td><td>例如 <code>paris</code>、<code>shanghai</code> 或编译器默认</td></tr>
-          <tr><td>源码</td><td>展平单文件或标准 JSON 输入</td></tr>
-          <tr><td>构造函数参数</td><td>ABI 编码的十六进制，或填 "none"</td></tr>
-          <tr><td>许可证</td><td>SPDX 标识，例如 MIT</td></tr>
-          <tr><td>联系方式</td><td>邮箱或 Telegram（公开显示）</td></tr>
-        </table>
-      </div>
-      <div class="card">
-        <h3>注意事项</h3>
-        <ul class="list">
-          <li>只有完全一致（包括末尾的元数据哈希）才会公开。仅元数据不同属于"部分匹配"，默认不公开。</li>
-          <li>含 <code>immutable</code> 变量、链接库或代理合约的，可能需要补充信息，请写在"备注"中。</li>
-          <li>合约验证免费。团队不会向你索要私钥、助记词或任何付款。</li>
-          <li>已归档的旧分片 1&ndash;4 上的合约不适用本流程。</li>
-          <li>验证方法及自行复现方式：<a href="/verified/METHOD.txt">/verified/METHOD.txt</a>。</li>
-        </ul>
-      </div>
-    </div>
+    <h2><span class="tag">中文</span> 自动验证流程</h2>
+    <div class="card feature"><ol class="steps">
+      <li><b>KYC 检查</b>：签名消息 <code>SCDO contract verification &lt;地址&gt; &lt;时间戳&gt;</code> 用于证明提交人地址。该地址须在 Shard 0 KYC 注册合约中为"已认证"。注册合约只存状态、等级、有效期和记录哈希，不存个人信息。尚未认证？请在 <a href="https://scdoscan.io/wallet/">SCDO 网页钱包（KYC 页面）</a>完成认证。</li>
+      <li><b>编译</b>：服务器下载你所选的官方 solc 发布版（校验 SHA-256 并缓存），按你填写的优化器、runs 和 evmVersion 在沙箱中编译。</li>
+      <li><b>比对</b>：将编译得到的运行时字节码与 chainId 5680 上的 <code>eth_getCode</code> 比对。immutable 位置会被屏蔽，元数据哈希单独比较：<b>完全匹配</b>（完全相同）或<b>部分匹配</b>（仅元数据哈希不同）。如能找到部署交易，还会核对创建字节码和构造函数参数。</li>
+      <li><b>发布</b>：比对一致后立即发布。合约页面显示"Contract: Verified"标记、源码、ABI、编译参数和读/写面板。每次打开页面时，浏览器还会实时复核链上代码哈希。</li>
+    </ol>
+    <p class="note">限制：每次请求 2 MB、源码 1.5 MB、编译 60 秒、每个网络每小时 12 次提交。验证免费，任何人都不会向你索要私钥、助记词或付款。已归档的旧分片 1&ndash;4 上的合约不适用。详情：<a href="/verified/METHOD.txt">/verified/METHOD.txt</a>。</p></div>
   </section>
-
   <h2 id="verified">Verified contracts / 已验证合约</h2>
   <div class="card"><div id="vlist" class="note" style="margin:0">Loading… / 加载中…</div></div>
 </main>
-
 <footer class="foot">
   <div><a href="/compliance.html">AUSTRAC DCE100714503-001 &middot; AFCA 124589</a></div>
   <div>Registration with AUSTRAC does not mean AUSTRAC endorses or approves 9Y9 PTY LTD, SCDO, or any product or service.</div>
   <div><a href="/#/">Explorer</a> &middot; <a href="/start.html">Get Started</a> &middot; <a href="/mine/">Mining &amp; Nodes</a> &middot; <a href="/pool/">Pool</a> &middot; <a href="/nodes/">Nodes / 节点服务费</a> &middot; <a href="/transparency/">Transparency</a> &middot; <a href="/compliance.html">Compliance</a></div>
   <div class="scdo-foot-links" id="scdo-foot-links"><a href="/verify-contract.html">Verify Contract / 合约验证</a> &middot; <a href="https://github.com/SCDOLAB" target="_blank" rel="noopener">GitHub</a> &middot; <a href="https://x.com/SCDOLabor" target="_blank" rel="noopener">X</a> &middot; <a href="https://www.facebook.com/profile.php?id=61594957349207" target="_blank" rel="noopener">Facebook</a></div>
 </footer>
-
 <script>
 (function(){
-  var BASE='https://github.com/SCDOLAB/scdoscan-web/issues/new?template=contract-verification.yml';
-  var inp=document.getElementById('addr'), go=document.getElementById('go'), chk=document.getElementById('chk');
-  function setChk(cls,txt){chk.className='chk '+(cls||'');chk.textContent=txt||'';}
+  'use strict';
+  var API='/api/verify', WALLET_KYC='https://scdoscan.io/wallet/';
+  function $(id){return document.getElementById(id);}
+  function el(t,c,txt){var e=document.createElement(t);if(c)e.className=c;if(txt!=null)e.textContent=txt;return e;}
+  function isAddr(a){return /^0x[0-9a-fA-F]{40}$/.test(a||'');}
+  var cfg=null, offset=0, mmAcct=null, manualTs=null, manualMsgFor=null, lastTs=0;
+  function now(){return Math.floor(Date.now()/1000)+offset;}
+  function freshTs(){var t=Math.max(now(),lastTs+1);lastTs=t;return t;} // each signature is single-use: never reuse a timestamp
+  function message(addr,ts){return 'SCDO contract verification '+addr.toLowerCase()+' '+ts;}
+  function utf8hex(s){var b=new TextEncoder().encode(s),h='0x';for(var i=0;i<b.length;i++)h+=('0'+b[i].toString(16)).slice(-2);return h;}
   function rpc(m,p){return fetch('/rpc/0',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({jsonrpc:'2.0',id:1,method:m,params:p})}).then(function(r){return r.json();}).then(function(d){if(d.error)throw new Error(d.error.message);return d.result;});}
-  var seq=0;
-  function update(){
-    var a=(inp.value||'').trim(), my=++seq;
-    if(!a){go.href=BASE;setChk('','');return;}
-    if(!/^0x[0-9a-fA-F]{40}$/.test(a)){go.href=BASE;setChk('bad','Not a valid 0x address (0x + 40 hex characters). / 地址格式不正确。');return;}
-    go.href=BASE+'&title='+encodeURIComponent('[Verify] '+a)+'&address='+encodeURIComponent(a);
+  function setStatus(box,cls,parts){box.hidden=false;box.className='status '+(cls||'');box.textContent='';parts.forEach(function(p){if(typeof p==='string')box.appendChild(document.createTextNode(p));else if(p)box.appendChild(p);});}
+  function link(href,txt){var a=el('a',null,txt);a.href=href;if(/^https?:/.test(href)){a.target='_blank';a.rel='noopener';}return a;}
+  function zh(t){return el('span','zh',t);}
+  function b(t){return el('b',null,t);}
+
+  // ---- config
+  fetch(API+'/config',{cache:'no-store'}).then(function(r){return r.json();}).then(function(c){
+    cfg=c; if(c.serverTime) offset=c.serverTime-Math.floor(Date.now()/1000);
+    if(c.walletKycUrl) WALLET_KYC=c.walletKycUrl;
+    var v=$('ver'); v.textContent='';
+    (c.compilers||[]).forEach(function(x){var o=el('option',null,x);o.value=x;v.appendChild(o);});
+    var pref=(c.compilers||[]).filter(function(x){return x.indexOf('v0.8.24+')===0;})[0]; if(pref) v.value=pref;
+    var e=$('evm'); (c.evmVersions||[]).forEach(function(x){var o=el('option',null,x==='default'?'compiler default / 默认':x);o.value=x;e.appendChild(o);}); e.value='paris';
+    var l=$('lic'); (c.licenses||[]).forEach(function(x){var o=el('option',null,x);o.value=x;l.appendChild(o);}); l.value='MIT';
+    if(!c.kycRegistryAvailable) kycClosedNote();
+  }).catch(function(){ var v=$('ver'); v.textContent=''; var o=el('option',null,'Service unavailable / 服务暂不可用'); o.value=''; v.appendChild(o);
+    setStatus($('res'),'bad',[b('The verification service is not reachable right now. Please try again later. '),zh('验证服务暂时无法访问，请稍后再试。')]); });
+
+  function kycClosedNote(){
+    setStatus($('kyc'),'warn',[b('KYC registry not live yet. '),'Submissions stay closed until the Shard 0 KYC registry is online. You can prepare your KYC in the ',link(WALLET_KYC,'SCDO web wallet (KYC tab)'),'.',zh('KYC 注册合约尚未上线，上线前暂不能提交验证。可先在 SCDO 网页钱包（KYC 页面）准备认证：'),link(WALLET_KYC,WALLET_KYC)]);
+  }
+
+  // ---- address check
+  var seq=0, chk=$('chk');
+  function setChk(cls,txt){chk.className='chk '+(cls||'');chk.textContent=txt||'';}
+  function checkAddr(){
+    var a=$('addr').value.trim(), my=++seq; manualMsgFor=null; $('msg').hidden=true; $('msgNote').hidden=true; $('cpMsg').disabled=true;
+    if(!a){setChk('','');return;}
+    if(!isAddr(a)){setChk('bad','Not a valid 0x address (0x + 40 hex characters). / 地址格式不正确。');return;}
     setChk('','Checking on chain… / 正在链上检查…');
     Promise.all([rpc('eth_getCode',[a,'latest']),fetch('/verified/index.json',{cache:'no-cache'}).then(function(r){return r.ok?r.json():{};}).catch(function(){return {};})]).then(function(x){
-      if(my!==seq)return;
-      var code=x[0]||'0x', vi=(x[1]&&x[1].contracts)||{};
-      if(vi[a.toLowerCase()]){setChk('ok','\u2713 Already verified: '+vi[a.toLowerCase()].contractName+' — see the address page. / 该合约已验证。');return;}
-      if(code==='0x'||code==='0x0'){setChk('info','No contract code at this address on Shard 0 (it may be a wallet address, or not deployed yet). / 该地址在 Shard 0 上没有合约代码。');return;}
-      setChk('ok','\u2713 Contract found on Shard 0 ('+((code.length-2)/2)+' bytes of code). The request form will be pre-filled with this address. / 已找到合约，申请表将自动填入该地址。');
-    }).catch(function(e){if(my===seq)setChk('info','Could not check the address right now; you can still submit the request. / 暂时无法检查，仍可提交申请。');});
+      if(my!==seq)return; var code=x[0]||'0x', vi=(x[1]&&x[1].contracts)||{}, k=a.toLowerCase();
+      if(vi[k]){chk.className='chk ok';chk.textContent='\u2713 Already verified: '+vi[k].contractName+' ('+vi[k].match+' match). / 该合约已验证。 ';chk.appendChild(link('/#/address?address='+k,'Open contract page / 打开合约页面'));return;}
+      if(code==='0x'||code==='0x0'){setChk('bad','No contract code at this address on Shard 0. / 该地址在 Shard 0 上没有合约代码。');return;}
+      setChk('ok','\u2713 Contract found on Shard 0 ('+((code.length-2)/2)+' bytes of code), not verified yet. / 已找到合约（尚未验证）。');
+    }).catch(function(){if(my===seq)setChk('info','Could not check the address right now. / 暂时无法检查该地址。');});
   }
-  var t;inp.addEventListener('input',function(){clearTimeout(t);t=setTimeout(update,350);});
+  var t1; $('addr').addEventListener('input',function(){clearTimeout(t1);t1=setTimeout(checkAddr,350);});
+
+  // ---- source type / file
+  function stype(){return (document.querySelector('input[name=stype]:checked')||{}).value||'single';}
+  function syncType(){document.querySelectorAll('#stype label').forEach(function(l){l.classList.toggle('on',l.querySelector('input').checked);});$('fnwrap').style.display=stype()==='single'?'':'none';}
+  document.querySelectorAll('input[name=stype]').forEach(function(r){r.addEventListener('change',syncType);});
+  $('file').addEventListener('change',function(){var f=this.files&&this.files[0];if(!f)return;
+    if(f.size>1500000){setStatus($('res'),'bad',[b('File is larger than 1.5 MB. '),zh('文件超过 1.5 MB。')]);return;}
+    var rd=new FileReader();rd.onload=function(){$('src').value=rd.result;var json=/\.json$/i.test(f.name)||/^\s*\{/.test(rd.result);
+      document.querySelector('input[name=stype][value="'+(json?'standard-json':'single')+'"]').checked=true;syncType();
+      if(!json){$('fname').value=f.name;var m=String(rd.result).match(/\bcontract\s+([A-Za-z_][A-Za-z0-9_]*)/g);}
+      srcInfo();};rd.readAsText(f);});
+  function srcInfo(){var n=new Blob([$('src').value]).size;$('srcinfo').textContent=(n?(n/1024).toFixed(1)+' KB · ':'')+'Max 1.5 MB, 300 files. Imports are not downloaded: flatten the source or use standard JSON with every file inline. / 最大 1.5 MB、300 个文件。不会下载 import，请展平源码，或使用内联全部文件的标准 JSON。';$('srcinfo').style.color=n>1500000?'#f85149':'';}
+  $('src').addEventListener('input',function(){clearTimeout(t1);t1=setTimeout(srcInfo,300);});
+  $('opt').addEventListener('change',function(){$('runs').disabled=!this.checked;});
+
+  // ---- KYC status
+  var kseq=0;
+  function checkKyc(a){
+    var my=++kseq; if(!isAddr(a)){ if(cfg&&!cfg.kycRegistryAvailable) kycClosedNote(); else setStatus($('kyc'),'',['KYC status: connect a wallet or enter a signer address. / KYC 状态：请连接钱包或填写签名地址。']); return; }
+    setStatus($('kyc'),'run',[el('span','spin'),'Checking KYC status of '+a+' … / 正在查询 KYC 状态…']);
+    fetch(API+'/kyc?address='+a,{cache:'no-store'}).then(function(r){return r.json();}).then(function(d){ if(my!==kseq)return; var k=d.kyc||{};
+      if(!d.ok){setStatus($('kyc'),'bad',[d.message||'KYC lookup failed.',zh(d.message_zh||'')]);return;}
+      if(k.verified){setStatus($('kyc'),'ok',[b('\u2713 KYC verified. '),a+' (tier '+k.tier+') can submit.',zh('\u2713 已通过 KYC，可以提交。')]);return;}
+      if(!k.registryAvailable){setStatus($('kyc'),'warn',[b('KYC status cannot be confirmed: the Shard 0 KYC registry is not live yet, so submissions are closed for now. '),'Prepare your KYC in the ',link(WALLET_KYC,'SCDO web wallet (KYC tab)'),'.',zh('无法确认 KYC 状态：Shard 0 KYC 注册合约尚未上线，暂不能提交。可先在 SCDO 网页钱包（KYC 页面）准备认证。')]);return;}
+      setStatus($('kyc'),'bad',[b('\u2717 Not KYC-verified. '),a+' has not completed KYC. Complete KYC in the ',link(WALLET_KYC,'SCDO web wallet (KYC tab)'),', then come back and submit.',zh('\u2717 该地址尚未通过 KYC。请先在 SCDO 网页钱包（KYC 页面）完成认证，再回来提交。')]);
+    }).catch(function(){ if(my===kseq) setStatus($('kyc'),'warn',['Could not check KYC status right now. / 暂时无法查询 KYC 状态。']); });
+  }
+  var t2; $('signer').addEventListener('input',function(){clearTimeout(t2);var a=this.value.trim();t2=setTimeout(function(){if(!mmAcct)checkKyc(a);},400);});
+
+  // ---- MetaMask
+  $('mmConnect').addEventListener('click',function(){
+    if(!window.ethereum){setStatus($('kyc'),'warn',[b('No browser wallet found. '),'Install MetaMask, open this page in the MetaMask app, or use option B (SCDO web wallet).',zh('未检测到浏览器钱包。请安装 MetaMask、在 MetaMask App 中打开本页，或使用方式 B（SCDO 网页钱包）。')]);return;}
+    window.ethereum.request({method:'eth_requestAccounts'}).then(function(acc){ mmAcct=(acc&&acc[0])||null; if(!mmAcct)return;
+      $('mmInfo').textContent='Connected: '+mmAcct+' / 已连接'; $('mmConnect').textContent='Connected / 已连接'; $('signer').value=mmAcct; checkKyc(mmAcct); })
+    .catch(function(e){setStatus($('kyc'),'bad',['Wallet connection was cancelled or failed: '+((e&&e.message)||e)+' / 钱包连接已取消或失败。']);});
+  });
+  if(window.ethereum&&window.ethereum.on) window.ethereum.on('accountsChanged',function(acc){ if(!mmAcct)return; mmAcct=(acc&&acc[0])||null; $('signer').value=mmAcct||''; $('mmInfo').textContent=mmAcct?'Connected: '+mmAcct+' / 已连接':'Disconnected / 已断开'; checkKyc(mmAcct); });
+
+  // ---- manual message
+  $('mkMsg').addEventListener('click',function(){
+    var a=$('addr').value.trim(); if(!isAddr(a)){setChk('bad','Enter the contract address first (step 1). / 请先在第 1 步填写合约地址。');$('addr').focus();return;}
+    manualTs=freshTs(); manualMsgFor=a.toLowerCase(); $('msg').textContent=message(a,manualTs); $('msg').hidden=false; $('msgNote').hidden=false; $('cpMsg').disabled=false; $('sig').value='';
+    mmAcct=null; $('mmConnect').textContent='Connect wallet / 连接钱包'; $('mmInfo').textContent='The wallet will ask you to sign when you press "Verify & publish". / 点击"验证并发布"时钱包会请求签名。';
+  });
+  $('cpMsg').addEventListener('click',function(){var t=$('msg').textContent,btn=this;try{navigator.clipboard.writeText(t).then(function(){btn.textContent='Copied / 已复制';setTimeout(function(){btn.textContent='Copy / 复制';},1500);});}catch(e){}});
+
+  // ---- submit
+  var busy=false;
+  $('vf').addEventListener('submit',function(ev){ev.preventDefault(); if(busy)return; submit();});
+  function fail(parts){setStatus($('res'),'bad',parts);}
+  function submit(){
+    var res=$('res'), a=$('addr').value.trim();
+    if(!isAddr(a)){fail([b('Enter a valid contract address. '),zh('请填写有效的合约地址。')]);$('addr').focus();return;}
+    if(!$('ver').value){fail([b('Choose a compiler version. '),zh('请选择编译器版本。')]);return;}
+    if(!$('src').value.trim()){fail([b('Paste the source code. '),zh('请粘贴源码。')]);$('src').focus();return;}
+    if(new Blob([$('src').value]).size>1500000){fail([b('Source is larger than 1.5 MB. '),zh('源码超过 1.5 MB。')]);return;}
+    var body={address:a,compilerVersion:$('ver').value,optimizer:$('opt').checked,runs:parseInt($('runs').value,10)||200,evmVersion:$('evm').value,
+      sourceType:stype(),source:$('src').value,fileName:stype()==='single'?$('fname').value.trim():'',contractName:$('cname').value.trim(),
+      constructorArgs:$('args').value.trim(),license:$('lic').value};
+    var p;
+    if(mmAcct){
+      var ts=freshTs(), msg=message(a,ts);
+      setStatus(res,'run',[el('span','spin'),'Please sign the message in your wallet… / 请在钱包中签名…']);
+      p=window.ethereum.request({method:'personal_sign',params:[utf8hex(msg),mmAcct]}).then(function(sig){body.signer=mmAcct;body.timestamp=ts;body.signature=sig;});
+    } else {
+      var s=$('signer').value.trim(), sig=$('sig').value.trim();
+      if(!isAddr(s)){fail([b('Connect a wallet (A) or enter the signer address (B). '),zh('请连接钱包（A）或填写签名地址（B）。')]);return;}
+      if(!manualTs||manualMsgFor!==a.toLowerCase()){fail([b('Press "Create message", sign it in the wallet and paste the signature. '),zh('请点击"生成消息"，在钱包中签名后粘贴签名。')]);return;}
+      if(!/^0x?[0-9a-fA-F]{130}$/.test(sig)){fail([b('The signature must be 65 bytes of hex (0x + 130 characters). '),zh('签名须为 65 字节十六进制（0x + 130 个字符）。')]);$('sig').focus();return;}
+      body.signer=s;body.timestamp=manualTs;body.signature=sig.indexOf('0x')===0?sig:'0x'+sig;
+      p=Promise.resolve();
+    }
+    busy=true; $('go').disabled=true;
+    p.then(function(){
+      setStatus(res,'run',[el('span','spin'),b('Checking signature and KYC, compiling with '+body.compilerVersion+' and comparing with the on-chain code… '),'This can take up to a minute.',zh('正在校验签名和 KYC、编译并与链上代码比对……最长约 1 分钟。')]);
+      return fetch(API+'/submit',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}).then(function(r){return r.text().then(function(t){var j;try{j=JSON.parse(t);}catch(e){j={ok:false,code:'http_'+r.status,message:r.status===413?'Request too large (max 2 MB).':r.status===429?'Too many requests. Please wait a minute.':'Server error (HTTP '+r.status+').',message_zh:r.status===413?'请求过大（最大 2 MB）。':r.status===429?'请求过多，请稍后再试。':'服务器错误。'};}return j;});});
+    }).then(show).catch(function(e){fail([b('Signing was cancelled or failed. '),String((e&&e.message)||e),zh('签名已取消或失败。')]);})
+    .then(function(){busy=false;$('go').disabled=false;});
+  }
+  function show(j){
+    var res=$('res'), a=$('addr').value.trim().toLowerCase();
+    if(!mmAcct){ manualTs=null; manualMsgFor=null; $('sig').value=''; $('msg').hidden=true; $('msgNote').hidden=true; $('cpMsg').disabled=true; }
+    if(j.ok){
+      var page='/#/address?address='+(j.address||a);
+      setStatus(res,'ok',[b('\u2713 '+(j.message||'Verified.')+' '),(j.contractName?'Contract '+j.contractName+'. ':''),link(page,'Open the contract page \u2192'),zh((j.message_zh||'验证成功。')+' '),link(page,'打开合约页面 \u2192')]);
+      var ul=el('ul'); [['Match / 匹配',j.match],['Compiler / 编译器',j.compiler||j.compilerVersion],['Creation check / 部署交易核对',j.creationCheck],['Constructor args / 构造参数',j.constructorArgs&&j.constructorArgs!=='0x'?j.constructorArgs:(j.constructorArgs?'none / 无':'')],['Code sha256',j.codeSha256]].forEach(function(x){if(x[1]){var li=el('li',null,x[0]+': '+x[1]);ul.appendChild(li);}}); if(ul.children.length)res.appendChild(ul);
+      loadList(); checkAddr(); return;
+    }
+    var parts=[b('\u2717 '+(j.message||'Verification failed.')+' '),zh(j.message_zh||'')];
+    setStatus(res,'bad',parts);
+    var d=j.detail||{};
+    if(j.code==='kyc_required'){var p=el('div');p.style.marginTop='8px';p.appendChild(document.createTextNode('\u2192 '));p.appendChild(link(WALLET_KYC,'Complete KYC in the SCDO web wallet (KYC tab) / 前往 SCDO 网页钱包 KYC 页面'));res.appendChild(p);}
+    if(d.compared&&d.compared.length){var ul=el('ul');d.compared.forEach(function(c){ul.appendChild(el('li',null,(c.contract||'?')+': '+(c.reason||'differs')));});res.appendChild(el('div',null,'Bytecode comparison / 字节码比对（on chain '+(d.onchainBytes||'?')+' bytes）:'));res.appendChild(ul);}
+    if(d.hint) res.appendChild(el('div',null,d.hint));
+    if(d.errors&&d.errors.length) res.appendChild(el('pre',null,d.errors.join('\n\n')));
+    if(d.fromCreationTx) res.appendChild(el('div',null,'Constructor args in the creation transaction / 部署交易中的构造参数: '+(d.fromCreationTx==='0x'?'none / 无':d.fromCreationTx)));
+    if(/^sig_|bad_signature/.test(j.code||'')) res.appendChild(el('div',null,'Please sign again (each signature works once, for 10 minutes). / 请重新签名（每个签名只能用一次，10 分钟内有效）。'));
+    var c=el('div',null,'Code / 代码: '+(j.code||'error')); c.style.cssText='margin-top:8px;font-size:11.5px;opacity:.7'; res.appendChild(c);
+  }
+
+  // ---- verified list
+  function loadList(){
+    fetch('/verified/index.json',{cache:'no-cache'}).then(function(r){return r.json();}).then(function(d){
+      var box=$('vlist'), c=(d&&d.contracts)||{}, ks=Object.keys(c); box.textContent=''; box.className='';
+      if(!ks.length){box.className='note';box.textContent='None yet. / 暂无。';return;}
+      ks.forEach(function(k){var it=el('div','it');var l=el('a','mono',k);l.href='/#/address?address='+k;var n=el('span',null,(c[k].contractName||'')+' · '+(c[k].compiler||'')+' · '+(c[k].match==='full'?'full match':'partial match')+(c[k].verifiedVia==='automatic'?' · automatic':'')+' · '+String(c[k].verifiedAt||'').slice(0,10));n.style.color='#8b949e';it.appendChild(l);it.appendChild(n);box.appendChild(it);});
+    }).catch(function(){$('vlist').textContent='Could not load the list. / 无法加载列表。';});
+  }
+  loadList();
   var q=new URLSearchParams(location.search).get('address');
-  if(q&&/^0x[0-9a-fA-F]{40}$/.test(q)){inp.value=q;update();}
-  fetch('/verified/index.json',{cache:'no-cache'}).then(function(r){return r.json();}).then(function(d){
-    var box=document.getElementById('vlist'), c=(d&&d.contracts)||{}, ks=Object.keys(c);
-    box.textContent='';box.className='';
-    if(!ks.length){box.className='note';box.textContent='None yet. / 暂无。';return;}
-    ks.forEach(function(k){
-      var it=document.createElement('div');it.className='it';
-      var l=document.createElement('a');l.href='/#/address?address='+k;l.className='mono';l.textContent=k;
-      var n=document.createElement('span');n.textContent=(c[k].contractName||'')+' · '+(c[k].compiler||'')+' · '+(c[k].match==='full'?'full match':'partial')+' · '+String(c[k].verifiedAt||'').slice(0,10);n.style.color='#8b949e';
-      it.appendChild(l);it.appendChild(n);box.appendChild(it);
-    });
-  }).catch(function(){var box=document.getElementById('vlist');box.textContent='Could not load the list. / 无法加载列表。';});
+  if(q&&isAddr(q)){$('addr').value=q;checkAddr();}
+  syncType(); srcInfo();
 })();
 </script>
 </body>
