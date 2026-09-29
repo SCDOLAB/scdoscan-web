@@ -1,0 +1,159 @@
+name: Contract verification request
+description: Ask the SCDO team to verify and publish a smart contract's source code on scdoscan.io (SCDO Mainnet, Shard 0, chainId 5680). 申请在 scdoscan.io 验证并公开合约源码。
+title: "[Verify] <contract address>"
+labels: ["contract-verification"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **Contract verification request / 合约验证申请**
+
+        The SCDO team reviews every request by hand. We compile your source with exactly the settings you give below and compare the result with the code stored on chain (`eth_getCode`). If it matches byte for byte, the source code, ABI and compiler settings are published on the contract's address page on [scdoscan.io](https://scdoscan.io) with a "Contract: Verified" badge. How it works: [/verified/METHOD.txt](https://scdoscan.io/verified/METHOD.txt) · Guide: [scdoscan.io/verify-contract.html](https://scdoscan.io/verify-contract.html)
+
+        SCDO 团队会人工审核每一个申请：按照下面填写的编译参数编译源码，并与链上代码（`eth_getCode`）逐字节比对。完全一致后，源码、ABI 和编译参数会显示在 scdoscan.io 的合约地址页面，并标注"Contract: Verified"。
+
+        ⚠️ Do not paste private keys, seed phrases or passwords here. This issue is public. / 请勿填写私钥、助记词或密码，本 issue 公开可见。
+  - type: input
+    id: address
+    attributes:
+      label: Contract address / 合约地址
+      description: The deployed contract address on SCDO Mainnet (Shard 0), 0x + 40 hex characters.
+      placeholder: "0x..."
+    validations:
+      required: true
+  - type: dropdown
+    id: chain
+    attributes:
+      label: Chain / 链
+      description: Only SCDO Mainnet (Shard 0) contracts can be verified. RPC https://scdoscan.io/rpc/0
+      options:
+        - "SCDO Mainnet (Shard 0), chainId 5680 (0x1630)"
+      default: 0
+    validations:
+      required: true
+  - type: input
+    id: creation_tx
+    attributes:
+      label: Creation transaction hash (optional) / 部署交易哈希（选填）
+      description: Lets us confirm the deployer and extract constructor arguments.
+      placeholder: "0x... (64 hex characters)"
+    validations:
+      required: false
+  - type: input
+    id: contract_name
+    attributes:
+      label: Contract name / 合约名称
+      description: The name of the contract to verify, as written in the source (e.g. MyToken). If the file has several contracts, give the one that was deployed.
+      placeholder: "MyToken"
+    validations:
+      required: true
+  - type: input
+    id: compiler
+    attributes:
+      label: Compiler version / 编译器版本
+      description: The exact solc version, including the commit, e.g. v0.8.24+commit.e11b9ed9
+      placeholder: "v0.8.24+commit.e11b9ed9"
+    validations:
+      required: true
+  - type: dropdown
+    id: optimizer
+    attributes:
+      label: Optimizer / 优化器
+      options:
+        - "Enabled / 开启"
+        - "Disabled / 关闭"
+    validations:
+      required: true
+  - type: input
+    id: runs
+    attributes:
+      label: Optimizer runs / 优化次数 (runs)
+      description: Usually 200. Leave as 200 if the optimizer was disabled.
+      placeholder: "200"
+    validations:
+      required: true
+  - type: dropdown
+    id: evm_version
+    attributes:
+      label: evmVersion
+      description: The evmVersion setting used when compiling. If you did not set one, choose "compiler default".
+      options:
+        - "compiler default / 编译器默认"
+        - "cancun"
+        - "shanghai"
+        - "paris"
+        - "london"
+        - "berlin"
+        - "istanbul"
+        - "petersburg"
+        - "constantinople"
+        - "byzantium"
+        - "other (write it in the notes below)"
+    validations:
+      required: true
+  - type: dropdown
+    id: source_format
+    attributes:
+      label: Source format / 源码格式
+      options:
+        - "Solidity single file (flattened) / 单文件（已展平）"
+        - "Solidity standard JSON input / 标准 JSON 输入"
+    validations:
+      required: true
+  - type: textarea
+    id: source
+    attributes:
+      label: Source code or standard JSON input / 源码或标准 JSON 输入
+      description: Paste the flattened source, or the full standard JSON input. For large files, attach the file here or link a public gist or repository at a fixed commit.
+      render: text
+    validations:
+      required: true
+  - type: textarea
+    id: constructor_args
+    attributes:
+      label: Constructor arguments (ABI-encoded) / 构造函数参数（ABI 编码）
+      description: The ABI-encoded constructor arguments as hex, without 0x. Write "none" if the constructor takes no arguments.
+      placeholder: "none"
+      render: text
+    validations:
+      required: true
+  - type: dropdown
+    id: license
+    attributes:
+      label: License / 许可证
+      description: Should match the SPDX-License-Identifier in the source.
+      options:
+        - "MIT"
+        - "Apache-2.0"
+        - "GPL-3.0"
+        - "LGPL-3.0"
+        - "BSD-3-Clause"
+        - "MPL-2.0"
+        - "AGPL-3.0"
+        - "Unlicense"
+        - "UNLICENSED (no license / 无许可证)"
+        - "Other (write it in the notes below)"
+    validations:
+      required: true
+  - type: input
+    id: contact
+    attributes:
+      label: Contact / 联系方式
+      description: How we can reach you about this request (email or Telegram). It is shown publicly in this issue.
+      placeholder: "name@example.com"
+    validations:
+      required: true
+  - type: textarea
+    id: notes
+    attributes:
+      label: Notes (optional) / 备注（选填）
+      description: Libraries and their addresses, proxy or implementation details, or anything else we should know.
+    validations:
+      required: false
+  - type: checkboxes
+    id: confirm
+    attributes:
+      label: Confirmation / 确认
+      options:
+        - label: I deployed this contract or am authorised by its deployer, and the source I submit can be made public. / 我是该合约的部署者或已获授权，同意公开所提交的源码。
+          required: true
