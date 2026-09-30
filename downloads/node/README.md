@@ -1,6 +1,6 @@
 # SCDO node — quick start / 快速开始
 
-Official go-scdo full node (legacy PoW chain, shards 1–4), built from
+Official go-scdo full node for SCDO Shard1 (Classic), SCDO Shard2 (Classic), SCDO Shard3 (Classic) and SCDO Shard4 (Classic) (PoW), built from
 https://github.com/SCDOLAB/go-scdo at commit `cd31d1c` (the same code the public
 nodes run) with Go 1.12.7. One small local-only patch: the TCP RPC (port 802x) now
 binds to the address in the config (127.0.0.1) instead of always 0.0.0.0.

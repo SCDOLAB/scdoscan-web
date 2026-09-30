@@ -6,7 +6,7 @@ scdoscan.io shows blocks, transactions, addresses, tokens and nodes for:
 
 | Chain | Consensus | Chain ID | Decimals | Public RPC |
 |---|---|---|---|---|
-| SCDO Shard1 (Classic) to SCDO Shard4 (Classic) (original go-scdo chain, not EVM, producing blocks) | ZPoW | n/a (shard numbers 1-4) | 8 | `https://scdoscan.io/rpc/1` ... `/rpc/4` |
+| SCDO Shard1 (Classic), SCDO Shard2 (Classic), SCDO Shard3 (Classic) and SCDO Shard4 (Classic) (original go-scdo chain, not EVM, producing blocks) | ZPoW | n/a | 8 | `https://scdoscan.io/rpc/1`, `/rpc/2`, `/rpc/3`, `/rpc/4` |
 | SCDO Shard0 (EVM) (core-geth fork) | Ethash PoW | **5680** (`0x1630`) | **18** | `https://scdoscan.io/rpc/0` |
 
 ## Layout
@@ -25,7 +25,7 @@ The explorer back-end APIs (`/api/`, `/enhance/`) and the RPC proxies are not pa
 
 These binaries are published on <https://scdoscan.io/downloads/> and are not stored in git. Check them against the `SHA256SUMS` files in `downloads/`.
 
-- `downloads/scdo-node-linux-amd64`, `downloads/scdo-client-linux-amd64` (go-scdo, shards 1-4)
+- `downloads/scdo-node-linux-amd64`, `downloads/scdo-client-linux-amd64` (go-scdo: SCDO Shard1 (Classic), SCDO Shard2 (Classic), SCDO Shard3 (Classic) and SCDO Shard4 (Classic))
 - `downloads/node/scdo-node-linux-amd64.tar.gz`, `scdo-node-windows-amd64.zip`, `scdo-node-darwin-amd64.tar.gz`
 - `downloads/shard0/core-geth-scdo-linux-amd64`, `scdo-shard0-core-geth-darwin-arm64.tar.gz`
 - `downloads/shard0/scdo-shard0-gpu-miner-windows-amd64.zip`, `scdo-shard0-gpu-miner-linux-amd64.tar.gz` (also in [scdo-gpu-miner releases](https://github.com/SCDOLAB/scdo-gpu-miner/releases))
@@ -34,7 +34,7 @@ Source: [go-scdo](https://github.com/SCDOLAB/go-scdo), [scdo-shard0](https://git
 
 ## 中文说明
 
-本仓库是 [scdoscan.io](https://scdoscan.io) 区块浏览器与网页钱包的静态前端代码。浏览器支持 SCDO 原链分片 1-4（ZPoW）以及分片 0（基于 core-geth 的 Ethash PoW EVM 链，chainId 5680 / 0x1630，精度 18 位）。网页钱包为非托管钱包，私钥只保存在用户浏览器中。大型下载文件（节点、挖矿程序）不在仓库中，请从 scdoscan.io/downloads 下载并用 SHA256SUMS 校验。本项目采用 MIT 许可证。
+本仓库是 [scdoscan.io](https://scdoscan.io) 区块浏览器与网页钱包的静态前端代码。浏览器支持 SCDO Shard1 (Classic)、SCDO Shard2 (Classic)、SCDO Shard3 (Classic)、SCDO Shard4 (Classic)（原链，ZPoW）以及 SCDO Shard0 (EVM)（基于 core-geth 的 Ethash PoW EVM 链，chainId 5680 / 0x1630，精度 18 位）。网页钱包为非托管钱包，私钥只保存在用户浏览器中。大型下载文件（节点、挖矿程序）不在仓库中，请从 scdoscan.io/downloads 下载并用 SHA256SUMS 校验。本项目采用 MIT 许可证。
 
 ## License
 
