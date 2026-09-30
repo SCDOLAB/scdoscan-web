@@ -6,8 +6,8 @@ scdoscan.io shows blocks, transactions, addresses, tokens and nodes for:
 
 | Chain | Consensus | Chain ID | Decimals | Public RPC |
 |---|---|---|---|---|
-| SCDO shards 1-4 (original go-scdo chain, not EVM) | ZPoW | n/a (shard numbers 1-4) | 8 | `https://scdoscan.io/rpc/1` ... `/rpc/4` |
-| SCDO shard 0 (core-geth fork, EVM) | Ethash PoW | **5680** (`0x1630`) | **18** | `https://scdoscan.io/rpc/0` |
+| SCDO Shard1 (Classic) to SCDO Shard4 (Classic) (original go-scdo chain, not EVM, producing blocks) | ZPoW | n/a (shard numbers 1-4) | 8 | `https://scdoscan.io/rpc/1` ... `/rpc/4` |
+| SCDO Shard0 (EVM) (core-geth fork) | Ethash PoW | **5680** (`0x1630`) | **18** | `https://scdoscan.io/rpc/0` |
 
 ## Layout
 

@@ -111,7 +111,7 @@ a { color: #58a6ff; text-decoration: none; }
 // Public P2P endpoints (TCP+UDP). Port per shard: 1=8057, 2=8058, 3=8059, 4=8056.
 var HOSTS = ['74.208.207.184', '82.223.19.88', '217.160.65.210', '74.208.136.152'];
 var P2P = {1: 8057, 2: 8058, 3: 8059, 4: 8056};
-var EXTRA = {1: ['104.254.244.44:18058']};
+var EXTRA = {};
 var shardSel = 1;
 function shardOf(a){ var m = /^([1-4])S0\1/.exec(a); return m ? parseInt(m[1], 10) : 0; }
 function seeds(){
