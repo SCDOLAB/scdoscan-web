@@ -791,7 +791,7 @@ async function scanChainTxs(){
     status.textContent='Connecting...';
     try{
       const {SignClient}=await import('https://esm.sh/@walletconnect/sign-client@2');
-      const client=await SignClient.init({projectId:window.WC_PROJECT_ID,metadata:{name:'SCDO Wallet',description:'SCDO Web Wallet',url:'https://scdoscan.io',icons:['https://scdoscan.io/icons/icon-192.png']}});
+      const client=await SignClient.init({projectId:window.WC_PROJECT_ID,metadata:{name:'SCDO Wallet',description:'SCDO Web Wallet',url:'https://scdoscan.io',icons:['https://scdoscan.io/wallet/icon-192.png']}});
       window._wc=client;
       const uri=document.getElementById('wc-uri').value.trim();
       const {approval}=await client.connect({uri});
