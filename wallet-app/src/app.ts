@@ -20,7 +20,7 @@ import { lockAttribution, lockedRef, lockedSrc } from './ref'
 import { copyText, installId, platformName, replaceUrl, startIdleLock } from './security'
 import { createPasskey, passkeyAvailable, passkeyIds, readPrf } from './passkey'
 import { emptyVault, idbGetVault, idbPutVault, importLegacyVault, openVault, openWithPrf, resealData, sealVault, wipePlain, wrapDekWithPrf, type StoredVault, type VaultAccount, type VaultPlain } from './vault'
-import { detectLang, getLang, setLang, setStringOverrides, t, type Lang } from './i18n'
+import { detectLang, getLang, LANG_CHOICES, setLang, setStringOverrides, t } from './i18n'
 import { PANEL_PAGES, panelUrl, withPanelLang, type PanelPage } from './panel'
 import { formatUnits, parseUnits, shortAddr } from './format'
 import { drawQr } from './qr'
@@ -977,12 +977,7 @@ function drawWelcome(parent: HTMLElement): void {
 
 function langRow(): HTMLElement {
   const row = el('div', { class: 'chips' })
-  const choices: Array<[Lang, string]> = [
-    ['en', 'English'],
-    ['zh-Hant', '繁體'],
-    ['zh-Hans', '简体'],
-  ]
-  for (const [code, label] of choices) {
+  for (const [code, label] of LANG_CHOICES) {
     row.append(
       button(label, getLang() === code ? 'chip on' : 'chip', () => {
         setLang(code)

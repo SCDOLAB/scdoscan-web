@@ -43,7 +43,7 @@ The agent ledger, RPC, pay links, and join links use the page's own origin first
 - Pay links are created as `https://scdo.com.au/pay` or `https://apeccapital.org/pay`, matching the current https origin. EIP-681 links have no host.
 - Referral links are `{origin}/join?ref=<code>`. A code returned by the ledger is rebuilt locally.
 - Old pay and wallet QR codes whose host is the legacy explorer are recognised and are not contacted. No other path on that host is used.
-- Links to `/wallet/hub`, `/wallet/news`, `/wallet/events`, `/wallet/invite`, `/wallet/agents`, `/wallet/pool`, and `/wallet/help` get `?lang=en` or `?lang=zh`. Traditional and Simplified Chinese both use `zh`.
+- Links to `/wallet/hub`, `/wallet/news`, `/wallet/events`, `/wallet/invite`, `/wallet/agents`, `/wallet/pool`, and `/wallet/help` get `?lang=en` or `?lang=zh`. The wallet offers English and 華語. 華語 strings are Traditional. Panel links still use `zh`.
 
 ## Agent
 

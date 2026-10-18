@@ -1,7 +1,7 @@
 /**
  * Wallet panel pages live at /wallet/{hub,news,events,invite,agents,pool,help}.
  * Those links carry ?lang=en or ?lang=zh so the page matches this UI.
- * Traditional and Simplified both use lang=zh. The wallet itself stays zh-Hant / zh-Hans.
+ * 華語 in the wallet is Traditional script. Panel URLs still use lang=zh.
  */
 import type { Lang } from './i18n'
 

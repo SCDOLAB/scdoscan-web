@@ -56,6 +56,9 @@ for (const file of files) {
       fail(rel, 'bookkeeping wording')
     }
   }
+  if (rel.includes('/src/') && /中文|简体|簡體|繁體|繁体/.test(text)) {
+    fail(rel, 'language label')
+  }
   if (rel.includes('/src/') && /\binnerHTML\b|insertAdjacentHTML|document\.write\s*\(|\beval\s*\(|new Function\s*\(/.test(text)) {
     fail(rel, 'unsafe HTML or eval')
   }

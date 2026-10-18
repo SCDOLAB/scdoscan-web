@@ -50,6 +50,21 @@ describe('signed wallet ui', () => {
     expect(acc.config.homeCards).toHaveLength(0)
   })
 
+  it('keeps 華語 overrides and drops a simplified table', () => {
+    const doc = sign({
+      minVersion: '0.1.0',
+      strings: {
+        'zh-Hant': { appName: '傳統' },
+        'zh-Hans': { appName: '简体名' },
+        zh: { tagline: '華語' },
+      },
+    })
+    const acc = acceptConfig(doc, null, '0.1.0', pubB64)
+    expect(acc.config.strings.zh).toEqual({ tagline: '華語' })
+    expect(acc.config.strings.en).toBeUndefined()
+    expect(Object.keys(acc.config.strings)).toEqual(['zh'])
+  })
+
   it('pauses send when this build is older than minVersion', () => {
     const doc = sign({ minVersion: '9.0.0', flags: { send: true } })
     const acc = acceptConfig(doc, null, '0.1.0', pubB64)

@@ -113,7 +113,9 @@ export function acceptConfig(raw: unknown, previousMin: string | null, appVersio
   if (obj.strings && typeof obj.strings === 'object') {
     for (const [lang, table] of Object.entries(obj.strings as Record<string, unknown>)) {
       const rec = asStringRecord(table)
-      if (rec && ['en', 'zh-Hant', 'zh-Hans'].includes(lang)) strings[lang] = rec
+      if (!rec) continue
+      if (lang === 'en' || lang === 'zh') strings[lang] = rec
+      else if (lang === 'zh-Hant' && !strings.zh) strings.zh = rec
     }
   }
   const homeCards: HomeCard[] = []

@@ -1,4 +1,10 @@
-export type Lang = 'en' | 'zh-Hant' | 'zh-Hans'
+export type Lang = 'en' | 'zh'
+
+/** Visible language control. Labels stay in this script in both languages. */
+export const LANG_CHOICES: ReadonlyArray<readonly [Lang, string]> = [
+  ['en', 'English'],
+  ['zh', '華語'],
+]
 
 const en: Record<string, string> = {
   appName: 'SCDO Wallet',
@@ -135,7 +141,7 @@ const en: Record<string, string> = {
   sendPaused: 'Sending is paused.',
 }
 
-const zhHant: Record<string, string> = {
+const zh: Record<string, string> = {
   appName: 'SCDO 錢包',
   tagline: '非託管記帳錢包。鑰匙只留在這部裝置。',
   create: '建立錢包',
@@ -270,142 +276,7 @@ const zhHant: Record<string, string> = {
   sendPaused: '送出已暫停。',
 }
 
-const zhHans: Record<string, string> = {
-  appName: 'SCDO 钱包',
-  tagline: '非托管记账钱包。钥匙只留在这台设备。',
-  create: '创建钱包',
-  import: '导入恢复短语',
-  importKey: '导入私钥',
-  importLegacy: '解锁已保存的钱包',
-  legacyHint: '这个浏览器里有上一版钱包。它会留在原地。输入它的密码，复制到这个应用。',
-  unlock: '解锁',
-  password: '密码',
-  confirmPassword: '再输入密码',
-  understand: '我明白 SCDO 无法找回这个密码。恢复短语才是备份。',
-  continue: '继续',
-  back: '返回',
-  cancel: '取消',
-  confirm: '确认',
-  send: '发送',
-  receive: '收款',
-  agent: '代理',
-  invite: '邀请',
-  settings: '设置',
-  backup: '备份',
-  lock: '锁定',
-  home: '首页',
-  networkFee: '网络费',
-  bookkeeping: '记账',
-  shard0: 'Shard0',
-  classic: '经典分片 {n}',
-  amount: '金额',
-  to: '收款地址',
-  token: '代币',
-  memo: '备注',
-  balance: '余额',
-  copy: '复制',
-  copied: '已复制',
-  wrongPassword: '密码不对',
-  language: '语言',
-  online: '在线 · 请保持此标签页打开',
-  offline: '离线 · 打开钱包以继续',
-  startAgent: '启动我的代理',
-  agentIntro: '登记一个记账代理。它用自己的钥匙，和保管 SCDO 的钥匙分开。收款地址是这个钱包的 Shard0 地址。',
-  agentNote: '代理只在这个钱包开着的时候在线。浏览器在标签页关闭后无法让它保持在线。若要保持在线，请安装成应用并保持打开。',
-  agentNoteDismiss: '知道了',
-  installApp: '安装应用',
-  payout: '收款地址',
-  shareCode: '你的代码',
-  shareLink: '分享链接',
-  refLocked: '这个代理的推荐代码已锁定',
-  rewardsNote: '若有记账回馈，只在有真实签名活动之后由账本记录。安装或打开钱包不会付款。',
-  givingOwn: '你送出的是自己的 {amount} SCDO。',
-  claimTitle: '领取邀请',
-  claimFrom: '{referrer} 送给你 {amount} SCDO',
-  claimConsent: '把这个钱包链接到 {referrer} 作为你的邀请人。这是永久的，只能设置一次。',
-  claimSubmit: '领取',
-  claimSubmitting: '正在提交领取…',
-  claimSoon: '领取稍后开放',
-  claimPending: '已提交。正在等账本确认。',
-  alreadyUsed: '这个邀请已使用、已取消或已过期。',
-  notOpen: '这个邀请不是开放状态。',
-  backupAsk: '请备份恢复短语。可以先跳过，之后不会再问。',
-  backupDismiss: '稍后',
-  backupNow: '立即备份',
-  reveal: '按住显示',
-  recovery: '恢复短语',
-  passkey: '同时用这台设备的通行密钥解锁',
-  passkeyHint: '通行密钥在这台设备上加密钥匙。若无法使用，仍可用密码。',
-  passkeyButton: '用通行密钥解锁',
-  autoLock: '自动锁定（分钟）',
-  nonCustodial: '没有服务器保管你的钥匙、通行密钥秘密或密码。',
-  dryRunOk: '试算成功',
-  dryRunFail: '试算失败',
-  dryRunOverride: '以当前余额调用会失败。若有足够余额，同样的调用会成功。',
-  dryRunStill: '即使这个地址有余额，调用仍会失败。',
-  unlimited: '这是没有上限的授权。对方可以转走代币。',
-  tonHandoff: '这是 TON 转账。SCDO 钱包不保管 TON 钥匙。',
-  tonOpen: '用 TON 钱包打开',
-  statusStarting: '正在启动…',
-  hub: '钱包中心',
-  history: '记录',
-  noHistory: '还没有转账',
-  createInvite: '创建邀请',
-  gift: '赠送（SCDO）',
-  sponsorFee: '代付费用（SCDO）',
-  cancelInvite: '取消邀请',
-  reclaim: '取回',
-  invites: '邀请',
-  yourAddress: '你的地址',
-  phrase: '12 或 24 个词',
-  privateKey: '私钥',
-  setPassword: '设置密码',
-  creating: '加密中…',
-  agentCard: '记账代理',
-  notStarted: '尚未启动',
-  share: '复制分享链接',
-  network: '网络',
-  review: '查看',
-  checking: '检查中…',
-  confirmed: '已确认',
-  failed: '失败',
-  pending: '等待中',
-  gotIt: '知道了',
-  activityNote: '账本只计算签名记录或实际使用。下载、安装或发帖不算。',
-  classicNote: '经典分片没有 EVM 试算。发送时由节点检查签名和余额。',
-  passwordShort: '密码至少 8 个字符',
-  passwordMismatch: '两次密码不相同',
-  needTick: '请勾选以确认你已了解',
-  noVault: '这台设备还没有钱包',
-  saved: '已在这台设备上',
-  wiped: '邀请秘密已从地址栏移除。',
-  selfClaim: '这个地址已有 SCDO，会直接自行领取。',
-  linkBad: '无法读取这个链接',
-  updateRequired: '这个版本低于已签名的最低版本。发送已暂停。',
-  configIgnored: '远程设置的签名无法验证，已忽略。',
-  addToken: '添加代币',
-  contract: '合约',
-  decimals: '小数位',
-  symbol: '符号',
-  receiveHint: '把这个地址给对方，即可在所选网络上收款。',
-  feeUpTo: '最多 {fee} SCDO',
-  after: '预估之后余额',
-  logout: '立即锁定',
-  about: '关于',
-  version: '版本',
-  openHub: '打开中心',
-  more: '更多',
-  pageNews: '消息',
-  pageEvents: '活动',
-  pageInvite: '邀请页',
-  pageAgents: '代理页',
-  pagePool: '池',
-  pageHelp: '说明',
-  phraseOnce: '请把这些词写下来。这是备份，这个画面是抄写的时候。',
-  sendPaused: '发送已暂停。',
-}
-
-const dictionaries: Record<Lang, Record<string, string>> = { en, 'zh-Hant': zhHant, 'zh-Hans': zhHans }
+const dictionaries: Record<Lang, Record<string, string>> = { en, zh }
 
 let lang: Lang = 'en'
 let overrides: Record<string, string> = {}
@@ -417,26 +288,30 @@ export function setLang(next: Lang): void {
   } catch {
     /* private mode */
   }
-  document.documentElement.lang = next === 'en' ? 'en' : next === 'zh-Hant' ? 'zh-Hant' : 'zh-Hans'
+  if (typeof document !== 'undefined') document.documentElement.lang = next === 'en' ? 'en' : 'zh-Hant'
 }
 
 export function getLang(): Lang {
   return lang
 }
 
-export function detectLang(): Lang {
-  try {
-    const saved = localStorage.getItem('scdoapp_lang')
-    if (saved === 'en' || saved === 'zh-Hant' || saved === 'zh-Hans') return saved
-  } catch {
-    /* ignore */
-  }
-  const n = (navigator.language || 'en').toLowerCase()
-  if (n.startsWith('zh')) {
-    if (n.includes('cn') || n.includes('sg') || n.includes('hans')) return 'zh-Hans'
-    return 'zh-Hant'
-  }
+/** Saved zh-Hant and zh-Hans both become 華語. Browser zh-* does too. */
+export function normalizeLang(saved: string | null, navigatorLanguage = 'en'): Lang {
+  if (saved === 'en') return 'en'
+  if (saved === 'zh' || saved === 'zh-Hant' || saved === 'zh-Hans') return 'zh'
+  if (navigatorLanguage.toLowerCase().startsWith('zh')) return 'zh'
   return 'en'
+}
+
+export function detectLang(): Lang {
+  let saved: string | null = null
+  try {
+    saved = localStorage.getItem('scdoapp_lang')
+  } catch {
+    saved = null
+  }
+  const nav = typeof navigator !== 'undefined' ? navigator.language || 'en' : 'en'
+  return normalizeLang(saved, nav)
 }
 
 export function setStringOverrides(table: Record<string, string> | undefined): void {
