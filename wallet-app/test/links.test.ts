@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { buildEip681, buildPayLink, buildShareLink, parseLink } from '../src/links'
+import { buildEip681, buildPayLink, buildShareLink, payLinkOrder, parseLink, shareLinkOrder } from '../src/links'
 import { INVITE_REGISTRY } from '../src/chains'
 
 const TO = '0x9858EfFD232B4033E47d90003D41EC34EcaEda94'
@@ -53,6 +53,17 @@ describe('link parser', () => {
     expect(buildShareLink('ab.CD_12', 'https://apeccapital.org/wallet/app/')).toBe('https://apeccapital.org/join?ref=ab.CD_12')
     expect(buildShareLink('abc', 'https://evil.example/wallet')).toBe('https://scdo.com.au/join?ref=abc')
     expect(() => buildShareLink('bad code', 'https://scdo.com.au')).toThrow()
+    const payOrder = payLinkOrder(link, 'https://apeccapital.org/wallet/app/')
+    expect(payOrder[0].startsWith('https://apeccapital.org/pay?')).toBe(true)
+    expect(payOrder[1].startsWith('https://scdo.com.au/pay?')).toBe(true)
+    expect(payLinkOrder(link, 'https://scdo.com.au/wallet/app/')[1].startsWith('https://apeccapital.org/pay?')).toBe(true)
+    expect(payLinkOrder(link, 'http://127.0.0.1:4173/wallet/app/')[0].startsWith('https://scdo.com.au/pay?')).toBe(true)
+    expect(shareLinkOrder('ab.CD_12', 'https://apeccapital.org/wallet/app/')).toEqual([
+      'https://apeccapital.org/join?ref=ab.CD_12',
+      'https://scdo.com.au/join?ref=ab.CD_12',
+    ])
+    expect(shareLinkOrder('abc', 'https://scdo.com.au/wallet/app/')[1]).toBe('https://apeccapital.org/join?ref=abc')
+    expect(payOrder.join(' ') + shareLinkOrder('abc', 'https://apeccapital.org')[0]).not.toContain('scdoscan')
   })
 
 })

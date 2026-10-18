@@ -1,15 +1,39 @@
-/** JSON-RPC with a primary host and one fallback. No other hosts. */
-import { RPC_FALLBACK, RPC_PRIMARY, type Shard } from './chains'
+/** JSON-RPC. The page origin is tried first, then the other allowed host. */
+import { orderByOrigin, RPC_FALLBACK, RPC_PRIMARY, type Shard } from './chains'
 
 export interface RpcOpts {
   timeoutMs?: number
   fetchImpl?: typeof fetch
+  origin?: string
+  bases?: readonly string[]
+}
+
+const DEFAULT_RPC = [RPC_PRIMARY, RPC_FALLBACK]
+let configuredRpc: readonly string[] = DEFAULT_RPC
+
+/** Remember signed-config RPC bases. Each call still puts the page origin first. */
+export function useRpcBases(bases: readonly string[]): void {
+  configuredRpc = bases.length ? bases : DEFAULT_RPC
+}
+
+export function rpcEndpoints(shard: Shard, origin?: string, bases?: readonly string[]): string[] {
+  const ordered = orderByOrigin(bases && bases.length ? bases : configuredRpc, origin ?? pageOrigin(), DEFAULT_RPC)
+  return ordered.map((base) => base.replace(/\/+$/, '') + '/' + String(shard))
+}
+
+function pageOrigin(): string | undefined {
+  try {
+    if (typeof location !== 'undefined' && location.origin) return location.origin
+  } catch {
+    /* tests and workers have no page */
+  }
+  return undefined
 }
 
 export async function rpc(shard: Shard, method: string, params: unknown[], opts: RpcOpts = {}): Promise<unknown> {
   const fetchImpl = opts.fetchImpl || fetch
   const timeoutMs = opts.timeoutMs ?? 12000
-  const urls = [RPC_PRIMARY + shard, RPC_FALLBACK + shard]
+  const urls = rpcEndpoints(shard, opts.origin, opts.bases)
   let last = 'rpc failed'
   for (const url of urls) {
     const ctrl = new AbortController()

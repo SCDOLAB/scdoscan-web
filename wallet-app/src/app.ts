@@ -6,10 +6,10 @@
 import type { Address, Hex } from 'viem'
 import { APP_VERSION } from './version'
 import { bytesToHex, randomBytes, wipe } from './bytes'
-import { CHAIN_ID, CLASSIC_DECIMALS, INVITE_REGISTRY, SHARD0_DECIMALS, hostAllowed, tokenBySymbol, tokensFor, txExplorerUrl, type Shard, type TokenInfo } from './chains'
+import { CHAIN_ID, CLASSIC_DECIMALS, INVITE_REGISTRY, LEDGER_URLS, SHARD0_DECIMALS, hostAllowed, orderByOrigin, tokenBySymbol, tokensFor, txExplorerUrl, type Shard, type TokenInfo } from './chains'
 import { deriveAddress, generatePhrase, normalizePriv, phraseOk, privateKeyFromPhrase, toChecksum } from './derive'
 import { classicAddTxParam, signClassicTx } from './classic'
-import { rpc } from './rpc'
+import { rpc, useRpcBases } from './rpc'
 import { erc20Balance, shard0Balance, signAndSendShard0 } from './evm'
 import { erc20BalanceData, erc20TransferData, previewShard0, type Preview } from './simulate'
 import { HEARTBEAT_CODE, deviceHash, heartbeatPayload, postLedger, refcodePayload, registerBody, registerPayload, signPayload, startHeartbeats, type HeartbeatController, type PostResult } from './agent'
@@ -244,7 +244,27 @@ function noteDismissed(): boolean {
   }
 }
 
+/** #/legacy is the import screen only when a legacy vault is stored. */
+export function routeWithLegacy(route: Route, hasLegacyVault: boolean): Route {
+  if (route === 'legacy' && !hasLegacyVault) return 'home'
+  return route
+}
+
+function legacyVaultPresent(): boolean {
+  try {
+    return !!localStorage.getItem('scdo_vault')
+  } catch {
+    return false
+  }
+}
+
+function ledgerBases(): string[] {
+  const here = typeof location !== 'undefined' ? location.origin : undefined
+  return orderByOrigin(session.ui.links.ledger, here, LEDGER_URLS)
+}
+
 function go(route: Route): void {
+  route = routeWithLegacy(route, legacyVaultPresent())
   if (!session.plain && !PUBLIC_ROUTES.has(route)) {
     session.after = route
     route = session.stored ? 'unlock' : 'welcome'
@@ -579,7 +599,7 @@ async function sendHeartbeat(): Promise<void> {
   const payload = heartbeatPayload(agent.priv, seq, Date.now(), APP_VERSION)
   if ((payload.body as { code?: string }).code !== HEARTBEAT_CODE) return
   const env = await signPayload(agent.priv, payload)
-  await postLedger(session.ui.links.ledger, '/heartbeat', env)
+  await postLedger(ledgerBases(), '/heartbeat', env)
 }
 
 async function startAgent(): Promise<void> {
@@ -615,7 +635,7 @@ async function startAgent(): Promise<void> {
       device: deviceHash(installId(localStorage)),
     })
     const env = await signPayload(agent.priv, registerPayload({ priv: agent.priv, seq: agent.seq, ts: Date.now(), body }))
-    const res = await postLedger(session.ui.links.ledger, '/register', env)
+    const res = await postLedger(ledgerBases(), '/register', env)
     if (!res.ok) throw new Error(failText(res))
     agent.registered = true
     await save()
@@ -635,7 +655,7 @@ async function fetchRefcode(): Promise<void> {
   const agent = session.plain?.agent
   if (!agent?.registered) return
   const env = await signPayload(agent.priv, refcodePayload(agent.priv, Date.now()))
-  const res = await postLedger(session.ui.links.ledger, '/refcode', env)
+  const res = await postLedger(ledgerBases(), '/refcode', env)
   const code = res.body?.code
   if (!res.ok || typeof code !== 'string' || !/^[A-Za-z0-9_.-]{1,64}$/.test(code)) return
   agent.refcode = code
@@ -749,7 +769,7 @@ async function submitClaim(): Promise<void> {
     const deadline = Math.floor(Date.now() / 1000) + 3600
     const claimSig = await signClaim(secret, claimKey, me)
     const acceptSig = await signAccept(active().priv, claimKey, me, BigInt(deadline))
-    const res = await postLedger(session.ui.links.ledger, '/invite/claim', claimRelayBody({ claimKey, newAddr: me, claimSig, deadline, acceptSig }))
+    const res = await postLedger(ledgerBases(), '/invite/claim', claimRelayBody({ claimKey, newAddr: me, claimSig, deadline, acceptSig }))
     if (res.status === 503 && res.body?.error === 'relay_disabled') {
       session.claimPhase = 'soon'
       session.statusLine = t('claimSoon')
@@ -1550,6 +1570,15 @@ function drawSettings(parent: HTMLElement): void {
 }
 
 function render(): void {
+  if (session.route === 'legacy' && !legacyVaultPresent()) {
+    session.legacy = false
+    if (session.plain) session.route = 'home'
+    else {
+      session.after = 'home'
+      session.route = session.stored ? 'unlock' : 'welcome'
+    }
+    replaceUrl(session.route === 'welcome' ? '#/' : '#/' + session.route)
+  }
   const root = document.getElementById('app')
   if (!root) return
   document.title = t('appName')
@@ -1653,6 +1682,7 @@ async function loadConfig(): Promise<void> {
       /* ignore */
     }
     session.ui = accepted.config
+    useRpcBases(accepted.config.links.rpc)
     session.updateRequired = accepted.updateRequired
     setStringOverrides(accepted.config.strings[getLang()])
     render()
@@ -1660,6 +1690,8 @@ async function loadConfig(): Promise<void> {
     /* keep the built-in config */
   }
 }
+
+let suppressLegacy = false
 
 export function boot(): void {
   const root = document.getElementById('app')
@@ -1680,8 +1712,11 @@ export function boot(): void {
       if (parsed.link.kind === 'ton') session.ton = parsed.link.uri
       if (parsed.link.kind === 'join' && !session.after) session.after = 'home'
     }
+    session.legacy = legacyVaultPresent()
     const hashed = routeFromHash()
-    if (!session.after && hashed && hashed !== 'welcome') session.after = hashed
+    const routed = hashed ? routeWithLegacy(hashed, session.legacy) : null
+    if (hashed === 'legacy' && !session.legacy && session.after !== 'claim' && session.after !== 'send') suppressLegacy = true
+    if (!session.after && routed && routed !== 'welcome' && !suppressLegacy) session.after = routed
     replaceUrl(session.after && session.after !== 'welcome' ? '#/' + session.after : '#/')
     window.addEventListener('beforeinstallprompt', (ev) => {
       ev.preventDefault()
@@ -1697,33 +1732,40 @@ export function boot(): void {
   }
 }
 
+function registerServiceWorker(): void {
+  if (!import.meta.env.PROD || !('serviceWorker' in navigator)) return
+  const url = import.meta.env.BASE_URL + 'sw.js'
+  const factory = (globalThis as { trustedTypes?: { createPolicy(name: string, rules: { createScriptURL(input: string): string }): { createScriptURL(input: string): string } } }).trustedTypes
+  const script = factory
+    ? factory.createPolicy('scdo', {
+        createScriptURL: (input) => {
+          if (input !== url) throw new Error('script')
+          return input
+        },
+      }).createScriptURL(url)
+    : url
+  void navigator.serviceWorker.register(script, { scope: import.meta.env.BASE_URL }).catch(() => {
+    /* install is optional */
+  })
+}
+
 async function continueBoot(): Promise<void> {
   try {
     session.stored = await idbGetVault()
   } catch {
     session.stored = null
   }
-  try {
-    session.legacy = !!localStorage.getItem('scdo_vault')
-  } catch {
-    session.legacy = false
+  session.legacy = legacyVaultPresent()
+  const askedLegacy = suppressLegacy || session.after === 'legacy' || routeFromHash() === 'legacy'
+  suppressLegacy = false
+  if (askedLegacy && !session.legacy && session.after !== 'claim' && session.after !== 'send') {
+    go('home')
+    void loadConfig()
+    registerServiceWorker()
+    return
   }
   session.route = session.stored ? 'unlock' : 'welcome'
   render()
   void loadConfig()
-  if (import.meta.env.PROD && 'serviceWorker' in navigator) {
-    const url = import.meta.env.BASE_URL + 'sw.js'
-    const factory = (globalThis as { trustedTypes?: { createPolicy(name: string, rules: { createScriptURL(input: string): string }): { createScriptURL(input: string): string } } }).trustedTypes
-    const script = factory
-      ? factory.createPolicy('scdo', {
-          createScriptURL: (input) => {
-            if (input !== url) throw new Error('script')
-            return input
-          },
-        }).createScriptURL(url)
-      : url
-    void navigator.serviceWorker.register(script, { scope: import.meta.env.BASE_URL }).catch(() => {
-      /* install is optional */
-    })
-  }
+  registerServiceWorker()
 }

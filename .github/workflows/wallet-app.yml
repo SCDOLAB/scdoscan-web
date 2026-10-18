@@ -21,6 +21,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: node 22
+        run: node -e "if (Number(process.versions.node.split('.')[0]) !== 22) { console.error(process.version); process.exit(1) }"
           cache: npm
           cache-dependency-path: wallet-app/package-lock.json
       - run: npm ci --ignore-scripts

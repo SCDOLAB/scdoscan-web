@@ -36,7 +36,7 @@ The production `index.html` gets a Content-Security-Policy and sha384 integrity 
 5. Use the headers in `deploy/nginx-snippet.conf` (CSP, `nosniff`, `no-referrer`, `COOP`, `X-Frame-Options`). Enable HSTS for the site if it is not already on.
 6. Do the same copy on apeccapital.org. Do not redirect that origin at scdo.com.au; each origin has its own vault.
 
-RPC, the agent ledger, and the explorer are `https://scdo.com.au` with `https://apeccapital.org` as the fallback. The app does not load `/config/site-functions.json`.
+The agent ledger, RPC, pay links, and join links use the page's own origin first (`https://scdo.com.au` or `https://apeccapital.org`). The other origin is the fallback. A signed `wallet-ui.json` list is reordered the same way, and a missing host is filled in. The app does not load `/config/site-functions.json`.
 
 ## Links
 
@@ -53,4 +53,4 @@ RPC, the agent ledger, and the explorer are `https://scdo.com.au` with `https://
 
 New vaults are in IndexedDB (`scdo-wallet-app`), AES-256-GCM, with the key wrapped by PBKDF2-SHA256 at 600,000 iterations. A passkey on this device can wrap the same key when the browser supports the PRF extension. A password still unlocks it.
 
-If `localStorage['scdo_vault']` is present, the unlock screen can copy it into the new vault. The old record is read and left in place.
+If `localStorage['scdo_vault']` is present, the unlock screen can copy it into the new vault. The old record is read and left in place. `#/legacy` opens that import only when the old record exists. With nothing to import, the app leaves that URL and goes home (the start screen, until a wallet is unlocked).

@@ -3,7 +3,7 @@
  * TON links are recognised and handed off; this wallet does not hold TON keys.
  */
 import { b64urlDecode, hexToBytes } from './bytes'
-import { CHAIN_ID, INVITE_REGISTRY, tokenByAddress, tokenBySymbol, type Shard } from './chains'
+import { CHAIN_ID, INVITE_REGISTRY, preferredOrigin, tokenByAddress, tokenBySymbol, type Shard } from './chains'
 import { toChecksum } from './derive'
 import { sanitizeRef, sanitizeSrc } from './ref'
 
@@ -231,18 +231,16 @@ function legacyQrPath(pathname: string): boolean {
   return p === '/pay' || p === '/wallet'
 }
 
-/** https://scdo.com.au, or the current https origin when it is apeccapital.org. */
+/** https://scdo.com.au, or the current https origin when it is an allowed host. */
 export function linkOrigin(current?: string): string {
-  if (current) {
-    try {
-      const u = new URL(current)
-      const origin = u.origin
-      if (LINK_ORIGINS.includes(origin)) return origin
-    } catch {
-      /* use the default */
-    }
-  }
-  return 'https://scdo.com.au'
+  return preferredOrigin(current)
+}
+
+/** Same origin first, then the other allowed domain. */
+export function serviceOrigins(current?: string): [string, string] {
+  const first = linkOrigin(current)
+  const second = LINK_ORIGINS.find((origin) => origin !== first) || 'https://apeccapital.org'
+  return [first, second]
 }
 
 export function payQuery(link: Extract<ParsedLink, { kind: 'pay' }>): string {
@@ -254,9 +252,15 @@ export function payQuery(link: Extract<ParsedLink, { kind: 'pay' }>): string {
   return q.toString()
 }
 
-/** Pay links are created only on /pay of an allowed origin. */
+/** Pay links are created only on /pay of an allowed origin. Same origin first. */
+export function payLinkOrder(link: Extract<ParsedLink, { kind: 'pay' }>, current?: string): [string, string] {
+  const query = payQuery(link)
+  const [first, second] = serviceOrigins(current)
+  return [first + '/pay?' + query, second + '/pay?' + query]
+}
+
 export function buildPayLink(link: Extract<ParsedLink, { kind: 'pay' }>, current?: string): string {
-  return linkOrigin(current) + '/pay?' + payQuery(link)
+  return payLinkOrder(link, current)[0]
 }
 
 export function buildEip681(link: Extract<ParsedLink, { kind: 'pay' }>): string {
@@ -266,8 +270,14 @@ export function buildEip681(link: Extract<ParsedLink, { kind: 'pay' }>): string 
   return 'ethereum:' + toChecksum(tok.address) + '@' + CHAIN_ID + '/transfer?address=' + toChecksum(link.to) + '&uint256=' + link.units.toString()
 }
 
-/** Referral share link. The code is local; nothing is fetched to build it. */
-export function buildShareLink(code: string, origin: string): string {
+/** Referral share links. The code is local; nothing is fetched to build them. */
+export function shareLinkOrder(code: string, origin: string): [string, string] {
   if (!/^[A-Za-z0-9_.-]{1,64}$/.test(code)) throw new Error('bad code')
-  return linkOrigin(origin) + '/join?ref=' + encodeURIComponent(code)
+  const ref = encodeURIComponent(code)
+  const [first, second] = serviceOrigins(origin)
+  return [first + '/join?ref=' + ref, second + '/join?ref=' + ref]
+}
+
+export function buildShareLink(code: string, origin: string): string {
+  return shareLinkOrder(code, origin)[0]
 }

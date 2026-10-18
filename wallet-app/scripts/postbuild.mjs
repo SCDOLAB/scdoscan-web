@@ -78,7 +78,7 @@ const listed = walk(dist)
   .filter((rel) => rel !== 'BUILD.txt')
   .sort()
 
-const lines = ['SOURCE_DATE_EPOCH=1700000000', 'name=scdo-wallet-app', 'version=0.1.0']
+const lines = ['SOURCE_DATE_EPOCH=1700000000', 'name=scdo-wallet-app', 'version=0.1.0', 'node=22']
 for (const rel of listed) {
   const hash = createHash('sha256').update(readFileSync(join(dist, rel))).digest('hex')
   lines.push(hash + '  ' + rel)

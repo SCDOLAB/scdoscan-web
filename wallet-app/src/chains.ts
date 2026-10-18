@@ -13,6 +13,60 @@ export const LEDGER_URLS = [
   'https://apeccapital.org/agent-ledger/api',
 ] as const
 
+const SERVICE_ORIGINS = ['https://scdo.com.au', 'https://apeccapital.org'] as const
+
+/**
+ * Origin used for links and service order. An allowed https page uses itself.
+ * Local preview and any other host stay on scdo.com.au.
+ */
+export function preferredOrigin(current?: string): string {
+  if (current) {
+    try {
+      const origin = new URL(current).origin
+      if ((SERVICE_ORIGINS as readonly string[]).includes(origin)) return origin
+    } catch {
+      /* use the default */
+    }
+  }
+  return 'https://scdo.com.au'
+}
+
+function serviceKey(url: string): string {
+  const u = new URL(url)
+  const path = u.pathname.length > 1 ? u.pathname.replace(/\/+$/, '') : u.pathname
+  return u.origin + path + u.search
+}
+
+/**
+ * Same host as the page first, then the other allowed host.
+ * URLs on any other host are dropped. A missing host is filled from `defaults`
+ * so one configured origin still has a fallback.
+ */
+export function orderByOrigin(urls: readonly string[], current?: string, defaults: readonly string[] = []): string[] {
+  const preferred = new URL(preferredOrigin(current)).hostname
+  const same: string[] = []
+  const rest: string[] = []
+  const seen = new Set<string>()
+  const hosts = new Set<string>()
+  const push = (url: string) => {
+    if (!hostAllowed(url)) return
+    const key = serviceKey(url)
+    if (seen.has(key)) return
+    seen.add(key)
+    const host = new URL(url).hostname
+    hosts.add(host)
+    if (host === preferred) same.push(url)
+    else rest.push(url)
+  }
+  for (const url of urls) push(url)
+  for (const url of defaults) {
+    if (!hostAllowed(url)) continue
+    if (hosts.has(new URL(url).hostname)) continue
+    push(url)
+  }
+  return [...same, ...rest]
+}
+
 export const INVITE_REGISTRY = '0x458F974CcC4F1DB16Fe9F57489b134D7013bAD0d' as const
 
 /** Domain separator published with the deployed InviteRegistry. */
@@ -74,9 +128,10 @@ export function tokenByAddress(addr: string): TokenInfo | null {
   return TOKENS.find((t) => t.address && t.address.toLowerCase() === a) || null
 }
 
-export function rpcUrl(shard: Shard, which: 'primary' | 'fallback' = 'primary'): string {
-  const base = which === 'primary' ? RPC_PRIMARY : RPC_FALLBACK
-  return base + String(shard)
+export function rpcUrl(shard: Shard, which: 'primary' | 'fallback' = 'primary', current?: string): string {
+  const ordered = orderByOrigin([RPC_PRIMARY, RPC_FALLBACK], current, [RPC_PRIMARY, RPC_FALLBACK])
+  const base = which === 'primary' ? ordered[0] : ordered[1] || ordered[0]
+  return base.replace(/\/+$/, '') + '/' + String(shard)
 }
 
 export function hostAllowed(url: string): boolean {

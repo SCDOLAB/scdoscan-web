@@ -5,7 +5,7 @@
   "type": "module",
   "description": "SCDO non-custodial web wallet (P0). Static app for /wallet/app/.",
   "engines": {
-    "node": ">=20"
+    "node": ">=22"
   },
   "scripts": {
     "dev": "vite",
