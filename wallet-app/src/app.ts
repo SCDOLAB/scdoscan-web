@@ -16,7 +16,7 @@ import { HEARTBEAT_CODE, deviceHash, heartbeatPayload, postLedger, refcodePayloa
 import { claimKeyOf, claimRelayBody, decodeGetInvite, encodeCancel, encodeClaim, encodeGetInvite, encodeInvite, encodeReclaim, signAccept, signClaim, type InviteView } from './invite'
 import { acceptConfig, fetchWalletUi, DEFAULT_UI, type WalletUi } from './config'
 import { buildEip681, buildPayLink, buildShareLink, linkOrigin, parseLink, type ParsedLink } from './links'
-import { lockAttribution, lockedRef, lockedSrc } from './ref'
+import { extractInviteCode, lockAttribution, lockedRef, lockedSrc } from './ref'
 import { copyText, installId, platformName, replaceUrl, startIdleLock } from './security'
 import { createPasskey, passkeyAvailable, passkeyIds, readPrf } from './passkey'
 import { emptyVault, idbGetVault, idbPutVault, importLegacyVault, openVault, openWithPrf, resealData, sealVault, wipePlain, wrapDekWithPrf, type StoredVault, type VaultAccount, type VaultPlain } from './vault'
@@ -120,6 +120,7 @@ const session: {
   claimPhase: 'idle' | 'submitting' | 'soon' | 'done' | 'error'
   install: InstallPrompt | null
   idle: { poke: () => void; stop: () => void } | null
+  refDraft: string
 } = {
   stored: null,
   plain: null,
@@ -149,6 +150,7 @@ const session: {
   claimPhase: 'idle',
   install: null,
   idle: null,
+  refDraft: '',
 }
 
 function lockMinutes(): number {
@@ -602,8 +604,92 @@ async function sendHeartbeat(): Promise<void> {
   await postLedger(ledgerBases(), '/heartbeat', env)
 }
 
+function inviteCodeLocked(): string | null {
+  return session.plain?.agent?.ref || lockedRef(localStorage)
+}
+
+function applyInviteCode(code: string): void {
+  if (session.plain?.agent?.registered || inviteCodeLocked()) return
+  lockAttribution(localStorage, code, null)
+  session.refDraft = ''
+  session.error = ''
+  render()
+}
+
+async function pasteInviteCode(): Promise<void> {
+  if (inviteCodeLocked() || session.plain?.agent?.registered) return
+  let text = ''
+  try {
+    if (!navigator.clipboard?.readText) throw new Error('clipboard')
+    text = await navigator.clipboard.readText()
+  } catch {
+    session.error = t('pasteFailed')
+    render()
+    return
+  }
+  const code = extractInviteCode(text)
+  if (!code) {
+    session.error = t('badCode')
+    render()
+    return
+  }
+  applyInviteCode(code)
+}
+
+function drawInviteCode(parent: HTMLElement): void {
+  const registered = !!session.plain?.agent?.registered
+  const locked = inviteCodeLocked()
+  if (registered && !locked) return
+  const box = input({ value: locked || session.refDraft })
+  box.className = 'mono'
+  box.setAttribute('data-invite-code', '1')
+  if (locked) {
+    box.readOnly = true
+    parent.append(field(t('inviteCode'), box))
+    parent.append(el('p', { class: 'tiny', text: t('refLocked') }))
+    const copyBtn = button(t('copy'), 'ghost', () => {
+      void copyText(locked)
+        .then(() => {
+          copyBtn.textContent = t('copied')
+        })
+        .catch(() => {
+          session.error = t('failed')
+          render()
+        })
+    })
+    copyBtn.setAttribute('data-invite-copy', '1')
+    parent.append(copyBtn)
+    return
+  }
+  box.addEventListener('input', () => {
+    session.refDraft = box.value
+  })
+  box.addEventListener('paste', (ev) => {
+    const text = ev.clipboardData?.getData('text') ?? ''
+    if (!text) return
+    ev.preventDefault()
+    const code = extractInviteCode(text)
+    if (!code) {
+      session.error = t('badCode')
+      render()
+      return
+    }
+    applyInviteCode(code)
+  })
+  parent.append(field(t('inviteCode'), box))
+  const pasteBtn = button(t('paste'), 'ghost', () => {
+    void pasteInviteCode()
+  })
+  pasteBtn.setAttribute('data-invite-paste', '1')
+  parent.append(pasteBtn)
+}
+
 async function startAgent(): Promise<void> {
   if (!session.plain || !session.dek || session.busy || !session.ui.flags.agent) return
+  if (!lockedRef(localStorage)) {
+    const typed = extractInviteCode(session.refDraft)
+    if (typed) lockAttribution(localStorage, typed, null)
+  }
   session.busy = true
   session.statusLine = t('statusStarting')
   session.error = ''
@@ -1365,11 +1451,11 @@ function drawAgent(parent: HTMLElement): void {
   agentNote(parent)
   parent.append(el('p', { class: 'tiny muted', text: t('rewardsNote') }))
   parent.append(el('p', { class: 'tiny muted', text: t('activityNote') }))
+  drawInviteCode(parent)
   const agent = session.plain?.agent
   if (agent?.registered) {
     parent.append(el('p', { class: 'k', text: t('payout') }))
     parent.append(el('p', { class: 'mono tiny', text: agent.payout }))
-    if (agent.ref) parent.append(el('p', { class: 'tiny', text: t('refLocked') }))
     if (agent.refcode) {
       const link = buildShareLink(agent.refcode, location.origin)
       parent.append(el('p', { class: 'k', text: t('shareCode') }))

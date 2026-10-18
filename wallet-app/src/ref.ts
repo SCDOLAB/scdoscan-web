@@ -15,6 +15,49 @@ export function sanitizeRef(raw: string | null | undefined): string | null {
   return null
 }
 
+const JOIN_HOSTS = new Set(['scdo.com.au', 'apeccapital.org'])
+
+/**
+ * Invite code from a typed value or a join link.
+ * https://scdo.com.au/join, https://apeccapital.org/join, and scdowallet://join
+ * contribute only their ref. Anything else that looks like a URL is rejected.
+ * The result is always sanitizeRef.
+ */
+export function extractInviteCode(raw: string | null | undefined): string | null {
+  if (raw == null) return null
+  const text = raw.trim()
+  if (!text) return null
+  const fromJoin = refFromJoinUrl(text)
+  if (fromJoin !== undefined) return sanitizeRef(fromJoin)
+  return sanitizeRef(text)
+}
+
+function refFromJoinUrl(text: string): string | null | undefined {
+  if (/^scdowallet:/i.test(text)) {
+    try {
+      const u = new URL(text)
+      const host = (u.hostname || u.pathname.replace(/^\/+/, '')).toLowerCase()
+      if (host !== 'join' || u.username || u.password) return null
+      return u.searchParams.get('ref')
+    } catch {
+      return null
+    }
+  }
+  if (/^https?:\/\//i.test(text)) {
+    try {
+      const u = new URL(text)
+      if (u.protocol !== 'https:' || u.username || u.password) return null
+      if (!JOIN_HOSTS.has(u.hostname.toLowerCase())) return null
+      const path = u.pathname.replace(/\/+$/, '') || '/'
+      if (path !== '/join') return null
+      return u.searchParams.get('ref')
+    } catch {
+      return null
+    }
+  }
+  return undefined
+}
+
 export function sanitizeSrc(raw: string | null | undefined): string | null {
   if (raw == null) return null
   const s = raw.trim()

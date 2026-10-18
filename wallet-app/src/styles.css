@@ -117,6 +117,11 @@ input, select {
   background: var(--card);
 }
 
+input[readonly] {
+  cursor: text;
+  user-select: text;
+}
+
 .check { display: flex; gap: 10px; align-items: flex-start; margin: 12px 0; font-size: 14px; }
 
 .check input { width: auto; margin-top: 3px; }
