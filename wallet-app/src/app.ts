@@ -1758,8 +1758,8 @@ async function continueBoot(): Promise<void> {
   session.legacy = legacyVaultPresent()
   const askedLegacy = suppressLegacy || session.after === 'legacy' || routeFromHash() === 'legacy'
   suppressLegacy = false
-  if (askedLegacy && !session.legacy && session.after !== 'claim' && session.after !== 'send') {
-    go('home')
+  if (askedLegacy && session.after !== 'claim' && session.after !== 'send') {
+    go(session.legacy ? 'legacy' : 'home')
     void loadConfig()
     registerServiceWorker()
     return
