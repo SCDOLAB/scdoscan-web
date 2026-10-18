@@ -1,0 +1,42 @@
+name: wallet-app
+
+on:
+  push:
+    paths:
+      - 'wallet-app/**'
+      - '.github/workflows/wallet-app.yml'
+  pull_request:
+    paths:
+      - 'wallet-app/**'
+      - '.github/workflows/wallet-app.yml'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: wallet-app
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: wallet-app/package-lock.json
+      - run: npm ci --ignore-scripts
+      - run: npm test
+      - run: npm run typecheck
+      - run: npm run build
+      - name: reproducible dist
+        run: |
+          cp -a dist /tmp/wallet-dist-a
+          npm run build
+          diff -rq /tmp/wallet-dist-a dist
+      - name: dist hosts
+        run: |
+          test -s dist/BUILD.txt
+          if grep -R -n -E 'https?://scdoscan\.io|82\.223\.19\.88|site-functions|google-analytics|googletagmanager' dist; then
+            echo 'dist contains a blocked host or menu config'
+            exit 1
+          fi
+          grep -q 'code:"ONLINE"\|ONLINE' dist/assets/*.js

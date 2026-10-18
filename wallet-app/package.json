@@ -1,0 +1,31 @@
+{
+  "name": "scdo-wallet-app",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "SCDO non-custodial web wallet (P0). Static app for /wallet/app/.",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "SOURCE_DATE_EPOCH=1700000000 vite build && node scripts/postbuild.mjs",
+    "preview": "vite preview --host 127.0.0.1 --port 4173 --strictPort",
+    "test": "vitest run && node scripts/check-forbidden.mjs src public index.html scripts deploy",
+    "typecheck": "tsc --noEmit",
+    "vectors": "vitest run test/derive.test.ts"
+  },
+  "dependencies": {
+    "@noble/curves": "1.9.7",
+    "@noble/hashes": "1.8.0",
+    "@scure/bip32": "1.7.0",
+    "@scure/bip39": "1.6.0",
+    "uqr": "0.1.2",
+    "viem": "2.38.3"
+  },
+  "devDependencies": {
+    "typescript": "5.9.3",
+    "vite": "6.3.6",
+    "vitest": "3.2.4"
+  }
+}
