@@ -21,7 +21,7 @@ import { copyText, installId, platformName, replaceUrl, startIdleLock } from './
 import { createPasskey, passkeyAvailable, passkeyIds, readPrf } from './passkey'
 import { emptyVault, idbGetVault, idbPutVault, importLegacyVault, openVault, openWithPrf, resealData, sealVault, wipePlain, wrapDekWithPrf, type StoredVault, type VaultAccount, type VaultPlain } from './vault'
 import { detectLang, getLang, LANG_CHOICES, setLang, setStringOverrides, t } from './i18n'
-import { PANEL_PAGES, panelUrl, withPanelLang, type PanelPage } from './panel'
+import { PANEL_PAGES, connectUrl, panelUrl, withPanelLang, type PanelPage } from './panel'
 import { formatUnits, parseUnits, shortAddr } from './format'
 import { drawQr } from './qr'
 import { button, el, field, input } from './dom'
@@ -1619,6 +1619,7 @@ function drawSettings(parent: HTMLElement): void {
   parent.append(el('h2', { text: t('more') }))
   const origin = linkOrigin(location.origin)
   const list = el('div', { class: 'list' })
+  list.append(linkOut(connectUrl(origin, session.ui.links.connect, getLang()), t('pageConnect')))
   for (const page of PANEL_PAGES) list.append(linkOut(panelUrl(origin, page, getLang()), t(PAGE_KEY[page])))
   parent.append(list)
   parent.append(el('h2', { text: t('addToken') }))

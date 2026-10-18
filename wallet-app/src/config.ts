@@ -7,6 +7,7 @@ import { b64Decode, utf8 } from './bytes'
 import { canonicalSigned } from './canonical'
 import { APP_VERSION } from './version'
 import { EXPLORER_TX, HUB_URL, hostAllowed, LEDGER_URLS, RPC_FALLBACK, RPC_PRIMARY } from './chains'
+import { CONNECT_PATH, connectPath } from './panel'
 
 /** Desktop updater PUBKEY_B64. The private key stays offline. */
 export const CONFIG_PUBKEY_B64 = '4qt9g0KOI32agOxfEU+/W28zA8iRjt8pYSkcj/VTW5k='
@@ -24,7 +25,7 @@ export interface WalletUi {
   homeCards: HomeCard[]
   banner: { text: string; level: 'info' | 'warn'; href?: string } | null
   flags: { send: boolean; agent: boolean; invite: boolean }
-  links: { hub: string; explorer: string; ledger: string[]; rpc: string[] }
+  links: { hub: string; explorer: string; ledger: string[]; rpc: string[]; connect: string }
 }
 
 export const DEFAULT_UI: WalletUi = {
@@ -38,6 +39,7 @@ export const DEFAULT_UI: WalletUi = {
     explorer: EXPLORER_TX,
     ledger: [...LEDGER_URLS],
     rpc: [RPC_PRIMARY, RPC_FALLBACK],
+    connect: CONNECT_PATH,
   },
 }
 
@@ -154,6 +156,7 @@ export function acceptConfig(raw: unknown, previousMin: string | null, appVersio
       if (rpc.length) links.rpc = rpc
     }
     if (!links.ledger.length) links.ledger = [...LEDGER_URLS]
+    links.connect = connectPath(l.connect)
   }
   const updateRequired = compareVersions(appVersion, minVersion) < 0
   if (updateRequired) flags.send = false

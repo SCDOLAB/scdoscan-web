@@ -44,6 +44,7 @@ The agent ledger, RPC, pay links, and join links use the page's own origin first
 - Referral links are `{origin}/join?ref=<code>`. A code returned by the ledger is rebuilt locally.
 - Old pay and wallet QR codes whose host is the legacy explorer are recognised and are not contacted. No other path on that host is used.
 - Links to `/wallet/hub`, `/wallet/news`, `/wallet/events`, `/wallet/invite`, `/wallet/agents`, `/wallet/pool`, and `/wallet/help` get `?lang=en` or `?lang=zh`. The wallet offers English and 華語. 華語 strings are Traditional. Panel links still use `zh`.
+- Settings links to the connected-wallets page on this origin. The path is `links.connect` from the signed config, or `/wallet/connect/`. It gets the same `?lang=en` or `?lang=zh`.
 
 ## Agent
 

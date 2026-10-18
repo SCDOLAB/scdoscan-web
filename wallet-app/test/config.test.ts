@@ -3,6 +3,7 @@ import { ed25519 } from '@noble/curves/ed25519'
 import { b64Encode, utf8 } from '../src/bytes'
 import { canonicalSigned } from '../src/canonical'
 import { acceptConfig, CONFIG_PUBKEY_B64, verifyConfigSignature } from '../src/config'
+import { connectUrl } from '../src/panel'
 
 const priv = ed25519.utils.randomPrivateKey()
 const pubB64 = b64Encode(ed25519.getPublicKey(priv))
@@ -63,6 +64,18 @@ describe('signed wallet ui', () => {
     expect(acc.config.strings.zh).toEqual({ tagline: '華語' })
     expect(acc.config.strings.en).toBeUndefined()
     expect(Object.keys(acc.config.strings)).toEqual(['zh'])
+  })
+
+  it('keeps a connect path from the signed config and drops other hosts', () => {
+    const doc = sign({
+      minVersion: '0.1.0',
+      links: { connect: 'https://scdo.com.au/wallet/devices/' },
+    })
+    const acc = acceptConfig(doc, null, '0.1.0', pubB64)
+    expect(acc.config.links.connect).toBe('/wallet/devices/')
+    expect(connectUrl('https://apeccapital.org', acc.config.links.connect, 'zh')).toBe('https://apeccapital.org/wallet/devices/?lang=zh')
+    const bad = sign({ minVersion: '0.1.0', links: { connect: 'https://evil.example/wallet/connect/' } })
+    expect(acceptConfig(bad, null, '0.1.0', pubB64).config.links.connect).toBe('/wallet/connect/')
   })
 
   it('pauses send when this build is older than minVersion', () => {
